@@ -1,0 +1,14 @@
+[project]
+name = "urbantrack"
+version = "0.1.0"
+description = "Urban Track - cross-verified certification of professional experience for urban development experts in Africa."
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 100
+extend-exclude = ["env", "**/migrations/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+# RUF012 not enabled by default; kept here as documentation if the rule set grows.
+ignore = []

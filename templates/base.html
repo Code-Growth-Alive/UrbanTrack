@@ -1,0 +1,109 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Urban Track — The trust layer of urban development{% endblock %}</title>
+
+  {# Tailwind CSS via the browser JS build (project decision: no npm pipeline). #}
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            military: {
+              50: '#f2f4ec', 100: '#e1e6cf', 300: '#a9b57a',
+              500: '#5c6b2f', 700: '#3f4a20', 900: '#2a3116',
+            },
+            accent: {
+              50: '#fdf2f8', 300: '#f9a8d4', 500: '#ec4899',
+              700: '#be185d',
+            },
+            charcoal: {
+              50: '#f5f5f4', 300: '#a8a8a6', 700: '#3f3f3e', 900: '#1c1c1b',
+            },
+          },
+        },
+      },
+    };
+  </script>
+
+  <style type="text/tailwindcss">
+    @layer components {
+      /* Primary button — institutional trust (military green) */
+      .btn-primary {
+        @apply inline-flex items-center justify-center gap-2 rounded-md bg-military-500
+               px-4 py-2 text-sm font-semibold text-white shadow-sm transition
+               hover:bg-military-700 focus:outline-none focus-visible:ring-2
+               focus-visible:ring-military-300 disabled:opacity-50;
+      }
+      /* Action button — live actions, CTAs (pink accent, used sparingly) */
+      .btn-accent {
+        @apply inline-flex items-center justify-center gap-2 rounded-md bg-accent-500
+               px-4 py-2 text-sm font-semibold text-white shadow-sm transition
+               hover:bg-accent-700 focus:outline-none focus-visible:ring-2
+               focus-visible:ring-accent-300 disabled:opacity-50;
+      }
+      .btn-outline {
+        @apply inline-flex items-center justify-center gap-2 rounded-md border
+               border-military-500 px-4 py-2 text-sm font-semibold text-military-700
+               transition hover:bg-military-50 focus:outline-none focus-visible:ring-2
+               focus-visible:ring-military-300;
+      }
+      .card {
+        @apply rounded-xl border border-charcoal-900/10 bg-white p-6 shadow-sm;
+      }
+      /* Badge "Certified via cross-confirmation" (green + check icon) */
+      .badge-certified {
+        @apply inline-flex items-center gap-1 rounded-full bg-military-100 px-2.5
+               py-0.5 text-xs font-semibold text-military-700;
+      }
+      /* Badge "Pending confirmation" (neutral pink/orange) */
+      .badge-pending {
+        @apply inline-flex items-center gap-1 rounded-full bg-accent-50 px-2.5
+               py-0.5 text-xs font-semibold text-accent-700;
+      }
+    }
+  </style>
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="flex min-h-screen flex-col bg-white font-sans text-charcoal-900 antialiased">
+
+  <!-- Header / main navigation: military green = institutional trust -->
+  <header class="bg-military-900 text-white">
+    <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+      <a href="{% url 'home' %}" class="flex items-center gap-2 text-lg font-bold tracking-tight">
+        <span aria-hidden="true" class="grid h-8 w-8 place-items-center rounded-md bg-accent-500 text-sm font-black">UT</span>
+        Urban&nbsp;Track
+      </a>
+      <nav class="hidden gap-6 text-sm font-medium md:flex" aria-label="Main navigation">
+        <a href="#" class="text-military-100 hover:text-white">Projects</a>
+        <a href="#" class="text-military-100 hover:text-white">Experts</a>
+        <a href="#" class="text-military-100 hover:text-white">Jobs</a>
+        <a href="#" class="text-military-100 hover:text-white">About</a>
+      </nav>
+      <div class="flex items-center gap-3">
+        <a href="#" class="hidden text-sm font-medium text-military-100 hover:text-white sm:block">Log in</a>
+        <a href="#" class="btn-accent !px-3 !py-1.5">Join</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <main class="flex-1">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer: charcoal = strong contrast -->
+  <footer class="bg-charcoal-900 text-charcoal-300">
+    <div class="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-6 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+      <p>&copy; {% now "Y" %} Urban Track — The trust layer of urban development in Africa.</p>
+      <p>Every claim traces back to a documented project and a cross-confirmed contribution.</p>
+    </div>
+  </footer>
+
+</body>
+</html>

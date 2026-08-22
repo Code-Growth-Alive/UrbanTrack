@@ -1,2 +1,126 @@
+"""
+Project model: a real-world urban development project published by a company.
 
-# Create your models here.
+This is the Urban Track equivalent of a ResearchGate "claimed publication":
+the company that carried out the project publishes it and declares the
+experts who contributed (see certification.ProjectContribution).
+"""
+
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.db import models
+from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
+
+
+class ProjectStatus(models.TextChoices):
+    DRAFT = "draft", _("Draft")
+    PUBLISHED = "published", _("Published")
+    ARCHIVED = "archived", _("Archived")
+
+
+class ProjectVisibility(models.TextChoices):
+    PUBLIC = "public", _("Public")
+    PRIVATE = "private", _("Private")
+
+
+class Project(models.Model):
+    """
+    A project carried out by a company, published to certify expert contributions.
+
+    Lifecycle: ``draft`` -> ``published`` -> ``archived``. Publishing is what
+    triggers the cross-confirmation invitations (certification app). Only
+    ``published`` + ``public`` projects are reachable on the public site.
+
+    Field names follow the mandated data model (spec section 4). Two
+    additive fields were required by the business logic and are flagged as
+    deviations-by-addition in the README: ``published_by`` (ownership of the
+    publishing company user) and timestamps.
+    """
+
+    official_name = models.CharField(_("official name"), max_length=255)
+    description = models.TextField(_("description"))
+    deliverables = models.TextField(
+        _("deliverables"),
+        help_text=_("One deliverable per line."),
+    )
+    duration_start = models.DateField(_("duration start"))
+    duration_end = models.DateField(
+        _("duration end"), null=True, blank=True,
+        help_text=_("Leave empty for an ongoing project."),
+    )
+    budget = models.DecimalField(
+        _("budget"), max_digits=16, decimal_places=2, null=True, blank=True
+    )
+    client_name = models.CharField(_("client name"), max_length=255)
+    status = models.CharField(
+        _("status"),
+        max_length=20,
+        choices=ProjectStatus.choices,
+        default=ProjectStatus.DRAFT,
+        db_index=True,
+    )
+    visibility = models.CharField(
+        _("visibility"),
+        max_length=20,
+        choices=ProjectVisibility.choices,
+        default=ProjectVisibility.PRIVATE,
+    )
+    published_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="published_projects",
+        limit_choices_to={"role": "company"},
+        verbose_name=_("published by"),
+    )
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("updated at"), auto_now=True)
+
+    class Meta:
+        verbose_name = _("project")
+        verbose_name_plural = _("projects")
+        ordering = ["-duration_start", "-id"]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(duration_end__gte=models.F("duration_start"))
+                | models.Q(duration_end__isnull=True),
+                name="project_duration_end_after_start",
+            ),
+        ]
+
+    def __str__(self):
+        return self.official_name
+
+    def clean(self):
+        if (
+            self.duration_start
+            and self.duration_end
+            and self.duration_end < self.duration_start
+        ):
+            raise ValidationError(
+                {"duration_end": _("The end date must be after the start date.")}
+            )
+
+    def get_absolute_url(self):
+        return reverse("projects:detail", args=[self.pk])
+
+    @property
+    def deliverables_lines(self):
+        """Deliverables as a list — one per line in the stored text."""
+        return [line.strip() for line in self.deliverables.splitlines() if line.strip()]
+
+    @property
+    def is_publicly_visible(self):
+        """True only when published AND public — the public-site gate."""
+        return (
+            self.status == ProjectStatus.PUBLISHED
+            and self.visibility == ProjectVisibility.PUBLIC
+        )
+
+    def confirmed_contributions(self):
+        """Contributions certified by independent double confirmation."""
+        from certification.models import ContributionStatus
+
+        return self.contributions.filter(status=ContributionStatus.CONFIRMED).select_related(
+            "expert"
+        )

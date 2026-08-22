@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.official_name }} — Urban Track{% endblock %}
+
+{% block content %}
+  <!-- Header -->
+  <section class="bg-military-700 text-white">
+    <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <p class="text-sm font-medium uppercase tracking-wide text-military-300">
+        {{ project.client_name }}
+      </p>
+      <h1 class="mt-1 max-w-3xl text-3xl font-black tracking-tight sm:text-4xl">
+        {{ project.official_name }}
+      </h1>
+      <p class="mt-3 text-military-100">
+        {{ project.duration_start|date:"M Y" }}
+        {% if project.duration_end %}– {{ project.duration_end|date:"M Y" }}{% else %}– ongoing{% endif %}
+      </p>
+    </div>
+  </section>
+
+  <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+    <div class="grid gap-8 lg:grid-cols-3">
+      <div class="space-y-8 lg:col-span-2">
+        <section>
+          <h2 class="section-title mb-2">Description</h2>
+          <p class="whitespace-pre-line leading-relaxed text-charcoal-700">{{ project.description }}</p>
+        </section>
+
+        <section>
+          <h2 class="section-title mb-3">Deliverables</h2>
+          <ul class="list-disc space-y-1 pl-5 text-charcoal-700">
+            {% for deliverable in project.deliverables_lines %}
+              <li>{{ deliverable }}</li>
+            {% endfor %}
+          </ul>
+        </section>
+
+        <!-- Certified contributors: the cross-confirmation proof -->
+        <section>
+          <h2 class="section-title mb-4">Certified contributors</h2>
+          {% for contribution in confirmed_contributions %}
+            <article class="card-expert mb-3 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <span class="role-chip">{{ contribution.get_role_type_display }}</span>
+                <p class="mt-2 font-bold">
+                  <a href="{% url 'accounts:public_profile' contribution.expert.professional_id %}" class="hover:text-accent-700 hover:underline">
+                    {{ contribution.expert.get_full_name|default:contribution.expert.username }}
+                  </a>
+                </p>
+                <p class="font-mono text-xs text-charcoal-300">{{ contribution.expert.professional_id }}</p>
+              </div>
+              <span class="badge-certified">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-3.5 w-3.5"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
+                Certified via cross-confirmation
+              </span>
+            </article>
+          {% empty %}
+            <p class="card border-dashed text-sm text-charcoal-700">
+              No certified contributor yet — contributions appear once the named experts confirm them.
+            </p>
+          {% endfor %}
+        </section>
+      </div>
+
+      <aside class="space-y-6">
+        <div class="card">
+          <h2 class="section-title mb-3">Key facts</h2>
+          <dl class="space-y-2 text-sm">
+            <div class="flex justify-between gap-4"><dt class="text-charcoal-300">Client</dt><dd class="text-right font-semibold">{{ project.client_name }}</dd></div>
+            <div class="flex justify-between gap-4"><dt class="text-charcoal-300">Published by</dt><dd class="text-right font-semibold">{{ project.published_by.organisation_name|default:project.published_by.get_full_name }}</dd></div>
+            <div class="flex justify-between gap-4"><dt class="text-charcoal-300">Start</dt><dd class="font-semibold">{{ project.duration_start|date:"d M Y" }}</dd></div>
+            <div class="flex justify-between gap-4"><dt class="text-charcoal-300">End</dt><dd class="font-semibold">{% if project.duration_end %}{{ project.duration_end|date:"d M Y" }}{% else %}Ongoing{% endif %}</dd></div>
+          </dl>
+        </div>
+        <div class="card bg-military-50 border-military-500/30">
+          <p class="flex items-start gap-2 text-sm text-military-900">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="mt-0.5 h-4 w-4 shrink-0"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
+            Every contribution on this page was declared by the publishing company and personally confirmed by the named expert.
+          </p>
+        </div>
+      </aside>
+    </div>
+  </div>
+{% endblock %}

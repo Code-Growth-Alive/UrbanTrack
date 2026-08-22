@@ -109,3 +109,125 @@ class User(AbstractUser):
     @property
     def is_donor(self):
         return self.role == Role.DONOR
+
+
+class CvTemplate(models.TextChoices):
+    """Pluggable CV skins consumed by the cv_generator app (Epic 7)."""
+
+    ACADEMIC_HARVARD_MIT = "academic_harvard_mit", _("Academic (Harvard/MIT)")
+    AFD = "afd", _("AFD")
+    WORLD_BANK = "world_bank", _("World Bank")
+
+
+class Skill(models.Model):
+    """A professional skill tag attachable to expert portfolios."""
+
+    name = models.CharField(_("name"), max_length=120, unique=True)
+
+    class Meta:
+        verbose_name = _("skill")
+        verbose_name_plural = _("skills")
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
+class ExpertProfile(models.Model):
+    """
+    Public portfolio of an individual expert (ResearchGate-style profile).
+
+    Fed exclusively by cross-confirmed data: ``confirmed`` contributions
+    surface on the public profile; self-declared content lives here only as
+    context (headline, bio, skills, trainings) and never counts toward the
+    certification badge.
+
+    ``cv_template`` is reserved now for the multi-template CV generator
+    (Epic 7): it records which skin the expert prefers.
+    """
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="expert_profile",
+        verbose_name=_("user"),
+    )
+    headline = models.CharField(_("headline"), max_length=255, blank=True)
+    bio = models.TextField(_("bio"), blank=True)
+    city = models.CharField(_("city"), max_length=120, blank=True)
+    country = models.CharField(
+        _("country"), max_length=120, blank=True,
+        help_text=_("ISO country name; supports pan-African then international scaling."),
+    )
+    skills = models.ManyToManyField(
+        Skill, blank=True, related_name="experts", verbose_name=_("skills")
+    )
+    cv_template = models.CharField(
+        _("CV template"),
+        max_length=40,
+        choices=CvTemplate.choices,
+        default=CvTemplate.ACADEMIC_HARVARD_MIT,
+        help_text=_("Reserved for the CV generator (Epic 7)."),
+    )
+    updated_at = models.DateTimeField(_("updated at"), auto_now=True)
+
+    class Meta:
+        verbose_name = _("expert profile")
+        verbose_name_plural = _("expert profiles")
+
+    def __str__(self):
+        return f"Profile of {self.user} ({self.user.professional_id})"
+
+    def get_absolute_url(self):
+        """Public URL anchored to the permanent OX-ID (traceability)."""
+        from django.urls import reverse
+
+        return reverse("accounts:public_profile", args=[self.user.professional_id])
+
+    def confirmed_contributions(self):
+        """Certified experiences only — the public-profile contract."""
+        from certification.models import ContributionStatus
+
+        return self.user.contributions.filter(
+            status=ContributionStatus.CONFIRMED
+        ).select_related("project", "expert").order_by("-project__duration_start")
+
+    def trust_score(self):
+        """
+        RG-Score equivalent: certified contributions weighted by role.
+
+        Director 4 / Manager 3 / Specialist 2 / Assistant 1. Defined here in
+        Epic 1 so Epic 4's UI and Epic 10's matchmaking share one definition.
+        """
+        weights = {
+            "director": 4,
+            "manager": 3,
+            "specialist": 2,
+            "assistant": 1,
+        }
+        score = 0
+        for contribution in self.confirmed_contributions():
+            score += weights.get(contribution.role_type, 1)
+        return score
+
+
+class Training(models.Model):
+    """A training entry of an expert portfolio (contextual, non-certifying)."""
+
+    profile = models.ForeignKey(
+        ExpertProfile,
+        on_delete=models.CASCADE,
+        related_name="trainings",
+        verbose_name=_("profile"),
+    )
+    title = models.CharField(_("title"), max_length=255)
+    institution = models.CharField(_("institution"), max_length=255)
+    year = models.PositiveIntegerField(_("year"), null=True, blank=True)
+
+    class Meta:
+        verbose_name = _("training")
+        verbose_name_plural = _("trainings")
+        ordering = ["-year", "title"]
+
+    def __str__(self):
+        return f"{self.title} ({self.institution})"

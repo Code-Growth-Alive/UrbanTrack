@@ -17,6 +17,8 @@ urlpatterns = [
         TemplateView.as_view(template_name="home.html"),
         name="home",
     ),
+    path("", include("accounts.urls")),
+    path("", include("projects.urls")),
     # Browsable-API login/logout for the DRF surface.
     path("api/", include("rest_framework.urls")),
 ]

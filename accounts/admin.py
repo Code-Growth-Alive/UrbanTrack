@@ -2,7 +2,12 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.utils.translation import gettext_lazy as _
 
-from .models import User
+from .models import ExpertProfile, Skill, Training, User
+
+
+class TrainingInline(admin.TabularInline):
+    model = Training
+    extra = 0
 
 
 @admin.register(User)
@@ -51,3 +56,14 @@ class UserAdmin(DjangoUserAdmin):
     )
     search_fields = ("username", "email", "professional_id", "organisation_name")
     readonly_fields = ("professional_id",)
+
+
+@admin.register(ExpertProfile)
+class ExpertProfileAdmin(admin.ModelAdmin):
+    list_display = ("user", "headline", "country", "cv_template", "trust_score")
+    search_fields = ("user__username", "user__professional_id", "headline")
+    list_filter = ("cv_template", "country")
+    inlines = [TrainingInline]
+
+
+admin.site.register(Skill)

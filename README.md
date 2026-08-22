@@ -9,7 +9,45 @@ ResearchGate's co-author logic applied to the sector.
 
 ## Status
 
-Epic -1 (technical bootstrap) complete. Full roadmap at the bottom.
+Epics -1, 0 and 1 complete: bootstrap, design system foundations, core data
+models and the cross-confirmation state machine (68 tests). Full roadmap at
+the bottom.
+
+## Core workflow implemented (certification)
+
+```
+company declares contributor (auto-links by email if account exists)
+        │
+publish project ──► unknown email: magic-link ExpertInvitation (UUID, ~14 d)
+                 └► registered expert: notification email
+        │
+expert confirms as-is ──────────────────────────► CONFIRMED ("Certified" badge)
+expert adjusts wording ──► company re-validates ─► CONFIRMED
+expert rejects ─────────────────────────────────► REJECTED (terminal)
+expert disputes ────────────────────────────────► DISPUTED (admin arbitration only)
+no response: ≤2 reminders (cron command) ───────► EXPIRED
+```
+
+All transitions live in `certification/services.py`; rule 8 (certified data
+immutability) is enforced in `ProjectContribution.save()` plus a DB check
+constraint. Public pages: `/experts/<OX-ID>/` ↔ `/projects/<id>/` are
+mutually traceable; only published+public projects and confirmed
+contributions are served.
+
+## Flagged deviations (spec section 4 field list)
+
+Additive fields required by the business rules — none of the mandated
+fields were altered:
+
+- `Project.published_by` — ownership by the company user (needed for the
+  publishing flow and contribution attribution).
+- `ProjectContribution.pending_company_validation` — distinguishes "waiting
+  for the expert's first answer" from "company must re-validate adjusted
+  wording", which share the same `pending_confirmation` status value.
+- `ProjectContribution.rejection_reason` / `dispute_reason` — audit trail
+  for arbitration (rule 7).
+- `cv_template` lives on `ExpertProfile` (the generator reads profile +
+  confirmed contributions; per-expert template preference).
 
 ## Stack
 
@@ -85,14 +123,14 @@ Reusable component classes defined there: `.btn-primary`, `.btn-accent`,
 | Epic | Scope | Status |
 |---|---|---|
 | -1 | Bootstrap: repo, apps, SQLite, Tailwind JS, User + OX-ID, CI | ✅ done |
-| 0 | Design system & UI foundations | 🚧 next (tokens/components already seeded) |
-| 1 | Core data models (`Project`, `ProjectContribution`, `ExpertInvitation`, `ExpertProfile`) | pending |
-| 2 | Project publishing (company side) | pending |
+| 0 | Design system & UI foundations (tokens, components, badges, profile typography) | ✅ done |
+| 1 | Core data models + cross-confirmation state machine + integrity constraints | ✅ done |
+| 2 | Project publishing screens (company side) | 🚧 next (service layer ready) |
 | 3 | Expert invitation & landing (magic link) | pending |
 | 4 | Certification & public profile | pending |
 | 5 | Edge cases: reminders/expiry (sync command), disputes | pending |
 | 6 | Email infrastructure (SendGrid) & security | pending |
-| 7 | Multi-template CV generator (WeasyPrint). **BLOCKED**: World Bank template awaits reference material from Jerome — other two templates proceed regardless | pending |
+| 7 | Multi-template CV generator (WeasyPrint): World Bank template, AFD and European model | pending |
 | 9 | External connectors (World Bank API, AFD API) | pending |
 | 10 | AI matchmaking & success prediction | pending |
 | 8 | Job board | pending |

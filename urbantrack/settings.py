@@ -13,6 +13,7 @@ Tailwind browser JS build configured in `templates/base.html`.
 """
 
 import os
+import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -190,3 +191,8 @@ INVITATION_REMINDER_AFTER_DAYS = 5  # days of silence before each reminder
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Test-suite speed-up: PBKDF2 (default, ~600k iterations) dominates runtime;
+# a weak hasher is acceptable because tests never persist real credentials.
+if "test" in sys.argv:
+    PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]

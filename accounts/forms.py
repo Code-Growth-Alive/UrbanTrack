@@ -55,16 +55,12 @@ class SignUpForm(forms.Form):
         help_text=_("Required for companies and donor agencies."),
     )
     password1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
-    password2 = forms.CharField(
-        label=_("Confirm password"), widget=forms.PasswordInput
-    )
+    password2 = forms.CharField(label=_("Confirm password"), widget=forms.PasswordInput)
 
     def clean_email(self):
         email = User.objects.normalize_email(self.cleaned_data["email"])
         if User.objects.filter(email__iexact=email).exists():
-            raise forms.ValidationError(
-                _("An account already exists with this email address.")
-            )
+            raise forms.ValidationError(_("An account already exists with this email address."))
         return email
 
     def clean(self):

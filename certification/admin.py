@@ -37,9 +37,13 @@ class ProjectContributionAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         fields = super().get_readonly_fields(request, obj)
         if obj and obj.status == ContributionStatus.CONFIRMED:
-            return tuple(fields) + ProjectContribution.PROTECTED_FIELDS + (
-                "status",
-                "confirmed_at",
+            return (
+                tuple(fields)
+                + ProjectContribution.PROTECTED_FIELDS
+                + (
+                    "status",
+                    "confirmed_at",
+                )
             )
         return fields
 

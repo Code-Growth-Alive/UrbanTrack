@@ -97,9 +97,7 @@ def _role_label(role_type, lang):
 def _period(project, lang):
     start = project.duration_start.strftime("%m/%Y")
     end = (
-        project.duration_end.strftime("%m/%Y")
-        if project.duration_end
-        else LABELS[lang]["ongoing"]
+        project.duration_end.strftime("%m/%Y") if project.duration_end else LABELS[lang]["ongoing"]
     )
     return f"{start} – {end}"
 
@@ -178,17 +176,34 @@ def demo_cv_context(lang="en"):
             )
         ),
         "skills": [
-            ["Urban planning", "Sanitation engineering", "Resilience strategy",
-             "Feasibility studies", "Donor reporting", "GIS analysis"],
-            ["Planification urbaine", "Ingénierie de l'assainissement",
-             "Stratégie de résilience", "Études de faisabilité",
-             "Reporting bailleurs", "Analyse SIG"],
+            [
+                "Urban planning",
+                "Sanitation engineering",
+                "Resilience strategy",
+                "Feasibility studies",
+                "Donor reporting",
+                "GIS analysis",
+            ],
+            [
+                "Planification urbaine",
+                "Ingénierie de l'assainissement",
+                "Stratégie de résilience",
+                "Études de faisabilité",
+                "Reporting bailleurs",
+                "Analyse SIG",
+            ],
         ][0 if lang == "en" else 1],
         "trainings": [
-            {"degree": "MSc Urban Engineering",
-             "institution": "Ecole Polytechnique Fédérale de Lausanne", "year": "2012"},
-            {"degree": "BSc Civil Engineering",
-             "institution": "Université Cheikh Anta Diop, Dakar", "year": "2009"},
+            {
+                "degree": "MSc Urban Engineering",
+                "institution": "Ecole Polytechnique Fédérale de Lausanne",
+                "year": "2012",
+            },
+            {
+                "degree": "BSc Civil Engineering",
+                "institution": "Université Cheikh Anta Diop, Dakar",
+                "year": "2009",
+            },
         ],
         "experiences": [
             {

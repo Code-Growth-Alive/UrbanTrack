@@ -28,9 +28,7 @@ class UserModelTests(TestCase):
         self.assertEqual(user.role, Role.EXPERT)
 
     def test_all_three_roles_available(self):
-        self.assertEqual(
-            set(Role.values), {"expert", "company", "donor"}
-        )
+        self.assertEqual(set(Role.values), {"expert", "company", "donor"})
 
     def test_professional_id_assigned_on_creation(self):
         user = User.objects.create_user(username="kwame", email="kwame@example.com")
@@ -69,9 +67,7 @@ class UserModelTests(TestCase):
             User.objects.create_user(username="b", email="dup@example.com")
 
     def test_email_domain_normalised(self):
-        user = User.objects.create_user(
-            username="n", email="someone@EXAMPLE.COM"
-        )
+        user = User.objects.create_user(username="n", email="someone@EXAMPLE.COM")
         self.assertEqual(user.email, "someone@example.com")
 
     def test_role_helpers(self):
@@ -92,7 +88,5 @@ class UserModelTests(TestCase):
         self.assertFalse(company.is_expert)
 
     def test_str_includes_professional_id(self):
-        user = User.objects.create_user(
-            username="ida", email="ida@example.com", first_name="Ida"
-        )
+        user = User.objects.create_user(username="ida", email="ida@example.com", first_name="Ida")
         self.assertIn(user.professional_id, str(user))

@@ -71,15 +71,11 @@ def _ensure_linked(contribution, actor):
 
     if contribution.expert_id:
         if contribution.expert_id != actor.pk:
-            raise PermissionDeniedError(
-                _("Only the named expert can act on this contribution.")
-            )
+            raise PermissionDeniedError(_("Only the named expert can act on this contribution."))
         return actor
 
     if _actor_email(actor).lower() != contribution.invited_email.lower():
-        raise PermissionDeniedError(
-            _("Only the named expert can act on this contribution.")
-        )
+        raise PermissionDeniedError(_("Only the named expert can act on this contribution."))
 
     contribution.expert = User.objects.get(pk=actor.pk)
     contribution.invited_email = actor.email
@@ -91,9 +87,7 @@ def _assert_company(contribution, actor):
     if not getattr(actor, "is_authenticated", False):
         raise PermissionDeniedError(_("Authentication required."))
     if contribution.added_by_id != actor.pk and not actor.is_superuser:
-        raise PermissionDeniedError(
-            _("Only the publishing company can validate this wording.")
-        )
+        raise PermissionDeniedError(_("Only the publishing company can validate this wording."))
 
 
 def declare_contributor(project, *, email, role_type, contribution_bullets, added_by):
@@ -120,9 +114,7 @@ def declare_contributor(project, *, email, role_type, contribution_bullets, adde
                 % {"role": existing.get_role_display()}
             )
         if existing.pk == added_by.pk:
-            raise ValidationError(
-                _("The publishing company cannot declare itself as contributor.")
-            )
+            raise ValidationError(_("The publishing company cannot declare itself as contributor."))
 
     contribution = ProjectContribution(
         project=project,
@@ -171,8 +163,7 @@ def _notify_registered_expert(contribution):
     """Email path for experts who already have an account (rule 2)."""
     send_mail(
         subject=(
-            f"[Urban Track] Confirm your contribution to "
-            f"'{contribution.project.official_name}'"
+            f"[Urban Track] Confirm your contribution to '{contribution.project.official_name}'"
         ),
         message=(
             f"Hello {contribution.expert.get_full_name() or contribution.expert.username},\n\n"
@@ -287,9 +278,9 @@ def send_invitation_reminder(invitation):
 def expire_stale_invitations(now=None):
     """Mark every overdue non-expired invitation as ``expired`` (rule 6)."""
     now = now or timezone.now()
-    stale = ExpertInvitation.objects.filter(
-        expires_at__lt=now
-    ).exclude(status=InvitationStatus.EXPIRED)
+    stale = ExpertInvitation.objects.filter(expires_at__lt=now).exclude(
+        status=InvitationStatus.EXPIRED
+    )
     return stale.update(status=InvitationStatus.EXPIRED)
 
 
@@ -297,9 +288,7 @@ def confirm_as_is(contribution, actor):
     """Rule 3: the expert personally confirms what was declared -> certified."""
     expert = _ensure_linked(contribution, actor)
     if contribution.status not in ContributionStatus.actionable():
-        raise InvalidTransitionError(
-            f"Cannot confirm from status '{contribution.status}'."
-        )
+        raise InvalidTransitionError(f"Cannot confirm from status '{contribution.status}'.")
     contribution.pending_company_validation = False
     contribution.status = ContributionStatus.CONFIRMED
     contribution.confirmed_at = timezone.now()
@@ -320,9 +309,7 @@ def adjust_contribution(contribution, actor, *, contribution_bullets, role_type=
     if contribution.status in ContributionStatus.terminal() or (
         contribution.status == ContributionStatus.DISPUTED
     ):
-        raise InvalidTransitionError(
-            f"Cannot adjust from status '{contribution.status}'."
-        )
+        raise InvalidTransitionError(f"Cannot adjust from status '{contribution.status}'.")
     old_status = contribution.status
     contribution.contribution_bullets = contribution_bullets.strip()
     if role_type:
@@ -347,13 +334,9 @@ def approve_adjustment(contribution, actor):
     """
     _assert_company(contribution, actor)
     if not contribution.pending_company_validation:
-        raise InvalidTransitionError(
-            _("No expert-adjusted wording awaits validation.")
-        )
+        raise InvalidTransitionError(_("No expert-adjusted wording awaits validation."))
     if contribution.status != ContributionStatus.PENDING_CONFIRMATION:
-        raise InvalidTransitionError(
-            f"Cannot approve from status '{contribution.status}'."
-        )
+        raise InvalidTransitionError(f"Cannot approve from status '{contribution.status}'.")
     contribution.pending_company_validation = False
     contribution.status = ContributionStatus.CONFIRMED
     contribution.confirmed_at = timezone.now()
@@ -365,9 +348,7 @@ def reject_contribution(contribution, actor, reason=""):
     """Expert refuses the declared contribution (terminal state)."""
     _ensure_linked(contribution, actor)
     if contribution.status not in ContributionStatus.actionable():
-        raise InvalidTransitionError(
-            f"Cannot reject from status '{contribution.status}'."
-        )
+        raise InvalidTransitionError(f"Cannot reject from status '{contribution.status}'.")
     contribution.rejection_reason = reason.strip()
     contribution.status = ContributionStatus.REJECTED
     contribution.save()
@@ -385,9 +366,7 @@ def dispute_contribution(contribution, actor, reason=""):
     if not reason.strip():
         raise ValidationError({"dispute_reason": _("A dispute reason is required.")})
     if contribution.status in ContributionStatus.terminal():
-        raise InvalidTransitionError(
-            f"Cannot dispute from status '{contribution.status}'."
-        )
+        raise InvalidTransitionError(f"Cannot dispute from status '{contribution.status}'.")
     contribution.dispute_reason = reason.strip()
     contribution.status = ContributionStatus.DISPUTED
     contribution.save()

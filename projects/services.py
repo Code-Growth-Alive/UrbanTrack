@@ -28,9 +28,7 @@ def publish_project(project):
         get the internal notification path instead (deduplication rule 5).
     """
     if project.status != ProjectStatus.DRAFT:
-        raise PublishingError(
-            f"Only a draft project can be published (current: {project.status})."
-        )
+        raise PublishingError(f"Only a draft project can be published (current: {project.status}).")
     project.full_clean()
     project.status = ProjectStatus.PUBLISHED
     project.save(update_fields=["status", "updated_at"])

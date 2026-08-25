@@ -136,19 +136,14 @@ class ExpertDirectoryTests(TestCase):
         self.client.force_login(self.company)
         oxid = self.expert.professional_id
 
-        by_name = self.client.get(
-            reverse("accounts:expert_search"), {"q": "Seydou"}
-        ).json()
-        by_email = self.client.get(
-            reverse("accounts:expert_search"), {"q": "seydou@"}
-        ).json()
+        by_name = self.client.get(reverse("accounts:expert_search"), {"q": "Seydou"}).json()
+        by_email = self.client.get(reverse("accounts:expert_search"), {"q": "seydou@"}).json()
         by_id = self.client.get(reverse("accounts:expert_search"), {"q": oxid}).json()
         empty = self.client.get(reverse("accounts:expert_search")).json()
 
         for payload in (by_name, by_email, by_id, empty):
             self.assertIn(
-                {"email": "seydou@example.com", "name": "Seydou Ba",
-                 "professional_id": oxid},
+                {"email": "seydou@example.com", "name": "Seydou Ba", "professional_id": oxid},
                 payload["results"],
             )
 
@@ -159,18 +154,14 @@ class InitialsPropertyTests(TestCase):
         self.assertEqual(user.initials, "AD")
 
     def test_falls_back_to_username(self):
-        user = make_expert_user(
-            username="kofi.mensah@example.com", first_name="", last_name=""
-        )
+        user = make_expert_user(username="kofi.mensah@example.com", first_name="", last_name="")
         self.assertEqual(user.initials, "KO")
 
 
 class DashboardAccessTests(TestCase):
     def test_anonymous_redirected_to_login(self):
         response = self.client.get(reverse("accounts:dashboard"))
-        self.assertRedirects(
-            response, "/login/?next=/dashboard/", fetch_redirect_response=False
-        )
+        self.assertRedirects(response, "/login/?next=/dashboard/", fetch_redirect_response=False)
 
     def test_signup_lands_on_dashboard(self):
         response = self.client.post(
@@ -215,9 +206,7 @@ class ExpertDashboardTests(TestCase):
         response = self.client.get(reverse("accounts:dashboard"))
         self.assertContains(response, "Certified track record")
         self.assertContains(response, "Trust score")
-        review_url = reverse(
-            "certification:contribution_review", args=[self.contribution.pk]
-        )
+        review_url = reverse("certification:contribution_review", args=[self.contribution.pk])
         self.assertNotContains(response, review_url)
 
     def test_adjusted_wording_hidden_until_company_validates(self):
@@ -230,9 +219,7 @@ class ExpertDashboardTests(TestCase):
         )
         response = self.client.get(reverse("accounts:dashboard"))
         # Still pending overall but awaiting the COMPANY: not reviewable.
-        review_url = reverse(
-            "certification:contribution_review", args=[self.contribution.pk]
-        )
+        review_url = reverse("certification:contribution_review", args=[self.contribution.pk])
         self.assertNotContains(response, review_url)
 
 
@@ -279,9 +266,7 @@ class CompanyDashboardTests(TestCase):
         )
         from certification.services import adjust_contribution
 
-        adjust_contribution(
-            contribution, expert, contribution_bullets="Corrected wording"
-        )
+        adjust_contribution(contribution, expert, contribution_bullets="Corrected wording")
         response = self.client.get(reverse("accounts:dashboard"))
         self.assertContains(response, "awaiting your validation")
         self.assertContains(response, "Validate now")

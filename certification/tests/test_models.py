@@ -1,6 +1,5 @@
 """Tests for ProjectContribution / ExpertInvitation models and integrity rules."""
 
-
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
@@ -122,12 +121,8 @@ class ContributionModelTests(TestCase):
         self.assertEqual(contribution.contribution_bullets, "Adjusted wording")
 
     def test_bullets_lines_helper(self):
-        contribution = make_contribution(
-            self.company, contribution_bullets="A\n B\n\nC "
-        )
-        self.assertEqual(
-            contribution.contribution_bullets_lines, ["A", "B", "C"]
-        )
+        contribution = make_contribution(self.company, contribution_bullets="A\n B\n\nC ")
+        self.assertEqual(contribution.contribution_bullets_lines, ["A", "B", "C"])
 
 
 class InvitationModelTests(TestCase):
@@ -151,9 +146,7 @@ class InvitationModelTests(TestCase):
 
     def test_magic_link_path_format(self):
         contribution = make_contribution(self.company)
-        invitation = ExpertInvitation.objects.create(
-            contribution=contribution, email="a@b.com"
-        )
+        invitation = ExpertInvitation.objects.create(contribution=contribution, email="a@b.com")
         self.assertEqual(
             invitation.magic_link_path, f"/certification/invitations/{invitation.token}/"
         )

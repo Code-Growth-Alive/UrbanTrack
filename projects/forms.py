@@ -47,15 +47,9 @@ class ProjectForm(forms.ModelForm):
                     "class": INPUT_CLASS,
                 }
             ),
-            "duration_start": forms.DateInput(
-                attrs={"type": "date", "class": INPUT_CLASS}
-            ),
-            "duration_end": forms.DateInput(
-                attrs={"type": "date", "class": INPUT_CLASS}
-            ),
-            "budget": forms.NumberInput(
-                attrs={"class": INPUT_CLASS, "min": 0, "step": 1}
-            ),
+            "duration_start": forms.DateInput(attrs={"type": "date", "class": INPUT_CLASS}),
+            "duration_end": forms.DateInput(attrs={"type": "date", "class": INPUT_CLASS}),
+            "budget": forms.NumberInput(attrs={"class": INPUT_CLASS, "min": 0, "step": 1}),
             "client_name": forms.TextInput(
                 attrs={"class": INPUT_CLASS, "placeholder": _("e.g. City of Dakar")}
             ),
@@ -81,15 +75,15 @@ class ProjectMediaForm(forms.Form):
 
     kind = forms.ChoiceField(label=_("Type"), choices=KIND_CHOICES, initial="image")
     caption = forms.CharField(
-        label=_("Caption"), max_length=200, required=False,
+        label=_("Caption"),
+        max_length=200,
+        required=False,
         widget=forms.HiddenInput,
     )
     url = forms.URLField(
         label=_("Video URL"),
         required=False,
-        help_text=_(
-            "For videos only. Accepts youtube.com/watch, youtu.be and shorts URLs."
-        ),
+        help_text=_("For videos only. Accepts youtube.com/watch, youtu.be and shorts URLs."),
     )
     file = forms.FileField(
         label=_("File"),

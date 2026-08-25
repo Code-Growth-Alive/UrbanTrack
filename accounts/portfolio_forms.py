@@ -42,15 +42,12 @@ class ProfileForm(forms.ModelForm):
             ),
             "city": forms.TextInput(attrs={"class": INPUT_CLASS}),
             "country": forms.TextInput(attrs={"class": INPUT_CLASS}),
-            "cv_template": forms.Select(
-                attrs={"class": INPUT_CLASS + " appearance-none pr-9"}
-            ),
+            "cv_template": forms.Select(attrs={"class": INPUT_CLASS + " appearance-none pr-9"}),
         }
         labels = {"cv_template": _("Preferred CV template")}
         help_texts = {
             "cv_template": _(
-                "Default skin used for CV exports and by recruiters opening "
-                "your profile."
+                "Default skin used for CV exports and by recruiters opening your profile."
             ),
         }
 
@@ -95,16 +92,12 @@ class TrainingForm(forms.ModelForm):
         fields = ("title", "institution", "year")
         widgets = {
             "title": forms.TextInput(
-                attrs={"class": INPUT_CLASS,
-                       "placeholder": _("MSc Urban Engineering")}
+                attrs={"class": INPUT_CLASS, "placeholder": _("MSc Urban Engineering")}
             ),
             "institution": forms.TextInput(
-                attrs={"class": INPUT_CLASS,
-                       "placeholder": _("Institution, city")}
+                attrs={"class": INPUT_CLASS, "placeholder": _("Institution, city")}
             ),
-            "year": forms.NumberInput(
-                attrs={"class": INPUT_CLASS, "min": 1950, "max": 2100}
-            ),
+            "year": forms.NumberInput(attrs={"class": INPUT_CLASS, "min": 1950, "max": 2100}),
         }
 
 

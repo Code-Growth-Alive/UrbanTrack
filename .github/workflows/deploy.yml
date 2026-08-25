@@ -28,22 +28,16 @@ jobs:
       name: staging
       url: https://staging.urbantrack.app
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Run migrations
         run: echo "Run python manage.py migrate --settings=urbantrack.settings.staging"
-        # Replace with actual deployment command (e.g. railway, render, fly.io)
 
       - name: Collect static files
         run: echo "Run python manage.py collectstatic --noinput"
-        # Replace with actual deployment command
 
       - name: Deploy to staging
         run: echo "Deploy step — configure for your platform"
-        # Examples:
-        # Railway:  railway up --environment staging
-        # Render:   curl -X POST $RENDER_DEPLOY_HOOK
-        # Fly.io:   fly deploy --app urbantrack-staging
 
   # ── Production (manual trigger only) ─────────────────────────────
   deploy-production:
@@ -53,7 +47,7 @@ jobs:
       name: production
       url: https://urbantrack.app
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Run migrations
         run: echo "Run python manage.py migrate --settings=urbantrack.settings.production"
@@ -70,7 +64,7 @@ jobs:
     if: always() && (needs.deploy-staging.result == 'success' || needs.deploy-production.result == 'success')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Wait for deployment to stabilize
         run: sleep 30

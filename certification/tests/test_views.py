@@ -36,9 +36,7 @@ class InvitationFlowTests(TestCase):
         )
         publish_project(self.project)
         self.invitation = self.contribution.invitations.get()
-        self.url = reverse(
-            "certification:invitation_landing", args=[self.invitation.token]
-        )
+        self.url = reverse("certification:invitation_landing", args=[self.invitation.token])
 
     def signup(self):
         return self.client.post(
@@ -53,9 +51,7 @@ class InvitationFlowTests(TestCase):
         )
 
     def test_unknown_token_returns_friendly_404(self):
-        response = self.client.get(
-            reverse("certification:invitation_landing", args=[uuid4()])
-        )
+        response = self.client.get(reverse("certification:invitation_landing", args=[uuid4()]))
         self.assertEqual(response.status_code, 404)
         self.assertContains(response, "no longer valid", status_code=404)
 
@@ -67,9 +63,7 @@ class InvitationFlowTests(TestCase):
         self.invitation.refresh_from_db()
         self.assertEqual(self.invitation.status, InvitationStatus.OPENED)
         self.contribution.refresh_from_db()
-        self.assertEqual(
-            self.contribution.status, ContributionStatus.PENDING_CONFIRMATION
-        )
+        self.assertEqual(self.contribution.status, ContributionStatus.PENDING_CONFIRMATION)
 
     def test_anonymous_action_redirects_to_login(self):
         response = self.client.post(self.url, {"action": "confirm"})
@@ -115,9 +109,7 @@ class InvitationFlowTests(TestCase):
         )
         self.assertEqual(response.status_code, 302)
         self.contribution.refresh_from_db()
-        self.assertEqual(
-            self.contribution.status, ContributionStatus.PENDING_CONFIRMATION
-        )
+        self.assertEqual(self.contribution.status, ContributionStatus.PENDING_CONFIRMATION)
         self.assertTrue(self.contribution.pending_company_validation)
         self.assertEqual(self.contribution.role_type, "manager")
 
@@ -144,9 +136,7 @@ class InvitationFlowTests(TestCase):
 
     def test_reject_is_terminal(self):
         self.signup()
-        response = self.client.post(
-            self.url, {"action": "reject", "reason": "Was not involved."}
-        )
+        response = self.client.post(self.url, {"action": "reject", "reason": "Was not involved."})
         self.assertEqual(response.status_code, 302)
         self.contribution.refresh_from_db()
         self.assertEqual(self.contribution.status, ContributionStatus.REJECTED)

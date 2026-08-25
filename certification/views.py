@@ -94,26 +94,16 @@ def _handle_action(request, contribution, invitation):
             messages.success(
                 request,
                 _("Adjusted wording saved: it now awaits validation by %(company)s.")
-                % {
-                    "company": contribution.added_by.organisation_name
-                    or _("the company")
-                },
+                % {"company": contribution.added_by.organisation_name or _("the company")},
             )
         elif action == "reject":
-            reject_contribution(
-                contribution, request.user, reason=request.POST.get("reason", "")
-            )
+            reject_contribution(contribution, request.user, reason=request.POST.get("reason", ""))
             messages.success(request, _("The contribution was rejected."))
         elif action == "dispute":
-            dispute_contribution(
-                contribution, request.user, reason=request.POST.get("reason", "")
-            )
+            dispute_contribution(contribution, request.user, reason=request.POST.get("reason", ""))
             messages.success(
                 request,
-                _(
-                    "The contribution is now disputed and an administrator "
-                    "will arbitrate."
-                ),
+                _("The contribution is now disputed and an administrator will arbitrate."),
             )
         else:
             raise InvalidActionError()
@@ -165,9 +155,7 @@ def invitation_landing(request, token):
 
     extra = {"named_actor": _actor_matches(contribution, request.user)}
     if not request.user.is_authenticated and not contribution.expert_id:
-        extra["signup_form"] = SignUpForm(
-            initial={"email": contribution.invited_email}
-        )
+        extra["signup_form"] = SignUpForm(initial={"email": contribution.invited_email})
     elif request.user.is_authenticated:
         extra["mismatched_user"] = not extra["named_actor"]
     return render(
@@ -217,15 +205,11 @@ def contribution_review(request, pk):
     outright to anyone else.
     """
     contribution = get_object_or_404(
-        ProjectContribution.objects.select_related(
-            "project", "added_by", "expert"
-        ),
+        ProjectContribution.objects.select_related("project", "added_by", "expert"),
         pk=pk,
     )
     if not _actor_matches(contribution, request.user):
-        raise PermissionDenied(
-            _("Only the named expert can act on this contribution.")
-        )
+        raise PermissionDenied(_("Only the named expert can act on this contribution."))
 
     if request.method == "POST":
         _handle_action(request, contribution, invitation=None)

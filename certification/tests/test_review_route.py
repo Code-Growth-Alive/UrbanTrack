@@ -30,9 +30,7 @@ class ContributionReviewTests(TestCase):
             added_by=self.company,
         )
         publish_project(self.project)
-        self.url = reverse(
-            "certification:contribution_review", args=[self.contribution.pk]
-        )
+        self.url = reverse("certification:contribution_review", args=[self.contribution.pk])
 
     def test_anonymous_redirected_to_login(self):
         response = self.client.get(self.url)

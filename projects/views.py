@@ -87,22 +87,14 @@ class ProjectPublicDetailView(DetailView):
         context["confirmed_contributions"] = self.object.confirmed_contributions().select_related(
             "expert", "project"
         )
-        context["images"] = self.object.media_items.filter(
-            kind=ProjectMedia.MediaKind.IMAGE
-        )
-        context["documents"] = self.object.media_items.filter(
-            kind=ProjectMedia.MediaKind.DOCUMENT
-        )
-        context["videos"] = self.object.media_items.filter(
-            kind=ProjectMedia.MediaKind.VIDEO
-        )
+        context["images"] = self.object.media_items.filter(kind=ProjectMedia.MediaKind.IMAGE)
+        context["documents"] = self.object.media_items.filter(kind=ProjectMedia.MediaKind.DOCUMENT)
+        context["videos"] = self.object.media_items.filter(kind=ProjectMedia.MediaKind.VIDEO)
         return context
 
 
 def _owned_project_or_403(request, pk):
-    project = get_object_or_404(
-        Project.objects.select_related("published_by"), pk=pk
-    )
+    project = get_object_or_404(Project.objects.select_related("published_by"), pk=pk)
     if project.published_by_id != request.user.pk and not request.user.is_superuser:
         raise PermissionDenied(_("Only the publishing company can manage this project."))
     return project
@@ -152,9 +144,7 @@ def project_manage(request, pk):
                         project,
                         email=bound_form.cleaned_data["email"],
                         role_type=bound_form.cleaned_data["role_type"],
-                        contribution_bullets=bound_form.cleaned_data[
-                            "contribution_bullets"
-                        ],
+                        contribution_bullets=bound_form.cleaned_data["contribution_bullets"],
                         added_by=request.user,
                     )
                     # Draft stage: invitation goes out at publish time.
@@ -186,9 +176,7 @@ def project_manage(request, pk):
                     if requested in ProjectVisibility.values:
                         project.visibility = requested
                         project.save(update_fields=["visibility", "updated_at"])
-                        messages.success(
-                            request, _("Project visibility updated.")
-                        )
+                        messages.success(request, _("Project visibility updated."))
                 return redirect("projects:manage", pk=project.pk)
             elif action == "add_link":
                 link_form = ProjectLinkForm(request.POST)
@@ -259,9 +247,7 @@ def project_manage(request, pk):
     link_form = ProjectLinkForm()
     media_form = ProjectMediaForm()
 
-    existing_experts = User.objects.filter(role=Role.EXPERT).order_by("-date_joined")[
-        :200
-    ]
+    existing_experts = User.objects.filter(role=Role.EXPERT).order_by("-date_joined")[:200]
     return render(
         request,
         "projects/manage.html",

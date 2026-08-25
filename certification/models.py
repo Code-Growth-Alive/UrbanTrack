@@ -139,8 +139,7 @@ class ProjectContribution(models.Model):
                 name="uniq_contribution_project_email_role",
             ),
             models.CheckConstraint(
-                condition=~models.Q(status="confirmed")
-                | models.Q(confirmed_at__isnull=False),
+                condition=~models.Q(status="confirmed") | models.Q(confirmed_at__isnull=False),
                 name="confirmed_contribution_has_confirmed_at",
             ),
         ]
@@ -168,13 +167,13 @@ class ProjectContribution(models.Model):
             self.invited_email = self.expert.email
 
         if self.pk:
-            old = ProjectContribution.objects.filter(pk=self.pk).values(
-                *self.PROTECTED_FIELDS, "status"
-            ).first()
+            old = (
+                ProjectContribution.objects.filter(pk=self.pk)
+                .values(*self.PROTECTED_FIELDS, "status")
+                .first()
+            )
             tampered = [
-                field
-                for field in self.PROTECTED_FIELDS
-                if old[field] != getattr(self, field)
+                field for field in self.PROTECTED_FIELDS if old[field] != getattr(self, field)
             ]
             if (
                 old["status"] == ContributionStatus.CONFIRMED
@@ -217,9 +216,7 @@ class ExpertInvitation(models.Model):
         verbose_name=_("contribution"),
     )
     email = models.EmailField(_("email"))
-    token = models.UUIDField(
-        _("token"), unique=True, editable=False, default=uuid.uuid4
-    )
+    token = models.UUIDField(_("token"), unique=True, editable=False, default=uuid.uuid4)
     sent_at = models.DateTimeField(_("sent at"), auto_now_add=True)
     expires_at = models.DateTimeField(_("expires at"))
     status = models.CharField(
@@ -243,10 +240,7 @@ class ExpertInvitation(models.Model):
     def is_active(self):
         from django.utils import timezone
 
-        return (
-            self.status != InvitationStatus.EXPIRED
-            and self.expires_at > timezone.now()
-        )
+        return self.status != InvitationStatus.EXPIRED and self.expires_at > timezone.now()
 
     @property
     def magic_link_path(self):
@@ -259,8 +253,6 @@ class ExpertInvitation(models.Model):
         from django.utils import timezone
 
         if not self.expires_at:
-            self.expires_at = timezone.now() + timedelta(
-                days=settings.INVITATION_EXPIRY_DAYS
-            )
+            self.expires_at = timezone.now() + timedelta(days=settings.INVITATION_EXPIRY_DAYS)
         self.email = self.email.strip().lower()
         super().save(*args, **kwargs)

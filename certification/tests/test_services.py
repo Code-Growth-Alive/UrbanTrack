@@ -164,18 +164,14 @@ class ConfirmRejectDisputeTests(TestCase):
         self.expert = make_expert()
 
     def test_confirm_as_is_certifies_and_sets_confirmed_at(self):
-        contribution = linked_contribution(
-            self.company, self.expert, project=self.project
-        )
+        contribution = linked_contribution(self.company, self.expert, project=self.project)
         confirm_as_is(contribution, self.expert)
         contribution.refresh_from_db()
         self.assertTrue(contribution.is_certified)
         self.assertIsNotNone(contribution.confirmed_at)
 
     def test_only_named_expert_can_confirm(self):
-        contribution = linked_contribution(
-            self.company, self.expert, project=self.project
-        )
+        contribution = linked_contribution(self.company, self.expert, project=self.project)
         stranger = make_expert(username="stranger", email="s@example.com")
         with self.assertRaises(PermissionDeniedError):
             confirm_as_is(contribution, stranger)
@@ -198,26 +194,20 @@ class ConfirmRejectDisputeTests(TestCase):
         self.assertTrue(contribution.is_certified)
 
     def test_double_confirmation_refused(self):
-        contribution = linked_contribution(
-            self.company, self.expert, project=self.project
-        )
+        contribution = linked_contribution(self.company, self.expert, project=self.project)
         confirm_as_is(contribution, self.expert)
         with self.assertRaises(InvalidTransitionError):
             confirm_as_is(contribution, self.expert)
 
     def test_rejected_is_terminal(self):
-        contribution = linked_contribution(
-            self.company, self.expert, project=self.project
-        )
+        contribution = linked_contribution(self.company, self.expert, project=self.project)
         reject_contribution(contribution, self.expert, reason="Was not on this project")
         self.assertEqual(contribution.status, ContributionStatus.REJECTED)
         with self.assertRaises(InvalidTransitionError):
             confirm_as_is(contribution, self.expert)
 
     def test_dispute_requires_reason_and_freezes_flow(self):
-        contribution = linked_contribution(
-            self.company, self.expert, project=self.project
-        )
+        contribution = linked_contribution(self.company, self.expert, project=self.project)
         with self.assertRaises(ValidationError):
             dispute_contribution(contribution, self.expert, reason="")
         dispute_contribution(contribution, self.expert, reason="Wrong dates")
@@ -233,9 +223,7 @@ class AdjustmentCycleTests(TestCase):
 
     def test_adjustment_returns_to_pending_for_company(self):
         contribution = linked_contribution(self.company, self.expert)
-        adjust_contribution(
-            contribution, self.expert, contribution_bullets="- Actually did more"
-        )
+        adjust_contribution(contribution, self.expert, contribution_bullets="- Actually did more")
         contribution.refresh_from_db()
         self.assertEqual(contribution.status, ContributionStatus.PENDING_CONFIRMATION)
         self.assertTrue(contribution.pending_company_validation)
@@ -248,9 +236,7 @@ class AdjustmentCycleTests(TestCase):
 
     def test_full_adjustment_cycle_ends_certified(self):
         contribution = linked_contribution(self.company, self.expert)
-        adjust_contribution(
-            contribution, self.expert, contribution_bullets="- Adjusted bullets"
-        )
+        adjust_contribution(contribution, self.expert, contribution_bullets="- Adjusted bullets")
         mail.outbox.clear()
         approve_adjustment(contribution, self.company)
         contribution.refresh_from_db()
@@ -259,9 +245,7 @@ class AdjustmentCycleTests(TestCase):
 
     def test_third_party_cannot_approve(self):
         contribution = linked_contribution(self.company, self.expert)
-        adjust_contribution(
-            contribution, self.expert, contribution_bullets="- Adjusted"
-        )
+        adjust_contribution(contribution, self.expert, contribution_bullets="- Adjusted")
         other_company = make_company(username="other", email="other@corp.com")
         with self.assertRaises(PermissionDeniedError):
             approve_adjustment(contribution, other_company)
@@ -297,9 +281,7 @@ class ArbitrationTests(TestCase):
         contribution = linked_contribution(self.company, self.expert)
         dispute_contribution(contribution, self.expert, reason="Contested")
 
-        resolve_dispute(
-            contribution, self.admin, outcome="return_to_expert", note="clarify"
-        )
+        resolve_dispute(contribution, self.admin, outcome="return_to_expert", note="clarify")
         self.assertEqual(contribution.status, ContributionStatus.PENDING_CONFIRMATION)
 
         dispute_contribution(contribution, self.expert, reason="Still contested")
@@ -327,18 +309,14 @@ class InvitationLifecycleTests(TestCase):
             added_by=self.company,
         )
         mail.outbox.clear()
-        self.invitation = notify_contributions_for_project(
-            self.project
-        )["invitations"][0]
+        self.invitation = notify_contributions_for_project(self.project)["invitations"][0]
 
     def test_mark_opened_moves_status_chain(self):
         mark_invitation_opened(self.invitation)
         self.invitation.refresh_from_db()
         self.contribution.refresh_from_db()
         self.assertEqual(self.invitation.status, InvitationStatus.OPENED)
-        self.assertEqual(
-            self.contribution.status, ContributionStatus.PENDING_CONFIRMATION
-        )
+        self.assertEqual(self.contribution.status, ContributionStatus.PENDING_CONFIRMATION)
 
     def test_reminder_budget_enforced(self):
         send_invitation_reminder(self.invitation)

@@ -40,9 +40,7 @@ SECRET_KEY = env(
 DEBUG = env("DJANGO_DEBUG", "True").lower() in ("1", "true", "yes")
 
 ALLOWED_HOSTS = [
-    h.strip()
-    for h in env("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
-    if h.strip()
+    h.strip() for h in env("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()
 ]
 
 
@@ -171,9 +169,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 # Transactional provider decision: SendGrid (documented in README).
 # Default backend is console so development never sends real email;
 # production overrides via environment variables (SMTP relay).
-EMAIL_BACKEND = env(
-    "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
-)
+EMAIL_BACKEND = env("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", "noreply@urbantrack.africa")
 if EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend":
     EMAIL_HOST = env("EMAIL_HOST", "smtp.sendgrid.net")

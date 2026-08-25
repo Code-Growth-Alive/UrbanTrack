@@ -46,11 +46,15 @@ class Job(models.Model):
     )
     requirements = models.TextField(_("requirements"), blank=True)
     compensation = models.CharField(
-        _("compensation"), max_length=200, blank=True,
+        _("compensation"),
+        max_length=200,
+        blank=True,
         help_text=_("e.g. “Competitive”, a range, or leave empty."),
     )
     deadline = models.DateField(
-        _("application deadline"), null=True, blank=True,
+        _("application deadline"),
+        null=True,
+        blank=True,
         help_text=_("Optional: applications stay open when empty."),
     )
     status = models.CharField(
@@ -107,9 +111,7 @@ class ApplicationStatus(models.TextChoices):
 class JobApplication(models.Model):
     """One expert's application to a job."""
 
-    job = models.ForeignKey(
-        Job, on_delete=models.CASCADE, related_name="applications"
-    )
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name="applications")
     applicant = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -135,9 +137,7 @@ class JobApplication(models.Model):
         verbose_name_plural = _("job applications")
         ordering = ["-applied_at"]
         constraints = [
-            models.UniqueConstraint(
-                fields=["job", "applicant"], name="unique_application_per_job"
-            ),
+            models.UniqueConstraint(fields=["job", "applicant"], name="unique_application_per_job"),
         ]
 
     def __str__(self):

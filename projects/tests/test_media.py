@@ -70,20 +70,20 @@ class ManageMediaTests(TestCase):
     def test_add_and_remove_link(self):
         response = self.client.post(
             self.url,
-            {"action": "add_link", "label": "Appraisal report", "url": "https://example.org/report"},
+            {
+                "action": "add_link",
+                "label": "Appraisal report",
+                "url": "https://example.org/report",
+            },
         )
         self.assertRedirects(response, self.url)
         self.assertEqual(ProjectLink.objects.count(), 1)
         link = ProjectLink.objects.get()
-        response = self.client.post(
-            self.url, {"action": "delete_link", "link_pk": link.pk}
-        )
+        response = self.client.post(self.url, {"action": "delete_link", "link_pk": link.pk})
         self.assertEqual(ProjectLink.objects.count(), 0)
 
     def test_add_document_and_public_display(self):
-        upload = SimpleUploadedFile(
-            "report.pdf", b"%PDF-1.4 fake", content_type="application/pdf"
-        )
+        upload = SimpleUploadedFile("report.pdf", b"%PDF-1.4 fake", content_type="application/pdf")
         response = self.client.post(
             self.url,
             {
@@ -99,9 +99,7 @@ class ManageMediaTests(TestCase):
         self.assertEqual(item.kind, "document")
         self.assertTrue(item.file)
 
-        detail = self.client.get(
-            reverse("projects:detail", args=[self.project.pk])
-        )
+        detail = self.client.get(reverse("projects:detail", args=[self.project.pk]))
         self.assertContains(detail, "Final report")
         self.assertContains(detail, item.file.url)
 

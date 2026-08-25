@@ -50,9 +50,7 @@ class JobPublicDetailView(DetailView):
         user = self.request.user
         context["my_application"] = job.application_for(user)
         if user.is_authenticated and user.is_expert:
-            context[
-                "certified_count"
-            ] = user.contributions.filter(
+            context["certified_count"] = user.contributions.filter(
                 status=ContributionStatus.CONFIRMED
             ).count()
         return context
@@ -82,9 +80,8 @@ def my_applications(request):
     """Expert view of their own applications."""
     if not request.user.is_expert:
         raise PermissionDenied(_("Only expert accounts have applications."))
-    applications = (
-        JobApplication.objects.filter(applicant=request.user)
-        .select_related("job", "job__published_by")
+    applications = JobApplication.objects.filter(applicant=request.user).select_related(
+        "job", "job__published_by"
     )
     return render(
         request,
@@ -146,9 +143,7 @@ def job_manage(request, pk):
                     pk=request.POST.get("application_pk"),
                     job=job,
                 )
-                decide_application(
-                    application, request.user, accept=(action == "accept")
-                )
+                decide_application(application, request.user, accept=(action == "accept"))
                 messages.success(
                     request,
                     _("Decision recorded: the applicant has been notified."),
@@ -160,10 +155,9 @@ def job_manage(request, pk):
             messages.error(request, str(error))
         return redirect("jobs:manage", pk=job.pk)
 
-    applications = (
-        job.applications.select_related("applicant", "applicant__expert_profile")
-        .prefetch_related("applicant__contributions")
-    )
+    applications = job.applications.select_related(
+        "applicant", "applicant__expert_profile"
+    ).prefetch_related("applicant__contributions")
     pending_count = applications.filter(status=ApplicationStatus.PENDING).count()
     return render(
         request,

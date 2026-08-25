@@ -55,9 +55,7 @@ class ProjectDirectoryTests(TestCase):
 
         archive_project(self.public_project)
         self.assertNotContains(self.client.get(reverse("projects:list")), "Public project")
-        response = self.client.get(
-            reverse("projects:detail", args=[self.public_project.pk])
-        )
+        response = self.client.get(reverse("projects:detail", args=[self.public_project.pk]))
         self.assertEqual(response.status_code, 404)
 
 
@@ -204,9 +202,7 @@ class CertificationSurfacingTests(TestCase):
         )
         confirm_as_is(contribution, expert)
 
-        profile = self.client.get(
-            reverse("accounts:public_profile", args=[expert.professional_id])
-        )
+        profile = self.client.get(reverse("accounts:public_profile", args=[expert.professional_id]))
         detail = self.client.get(reverse("projects:detail", args=[project.pk]))
         self.assertContains(profile, project.official_name)
         self.assertContains(detail, "Awa Diop")

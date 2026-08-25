@@ -12,8 +12,15 @@ class JobApplicationInline(admin.TabularInline):
 
 @admin.register(Job)
 class JobAdmin(admin.ModelAdmin):
-    list_display = ("title", "published_by", "city", "country", "contract_type",
-                    "deadline", "status")
+    list_display = (
+        "title",
+        "published_by",
+        "city",
+        "country",
+        "contract_type",
+        "deadline",
+        "status",
+    )
     list_filter = ("status", "contract_type")
     search_fields = ("title", "published_by__email", "city", "country")
     inlines = [JobApplicationInline]

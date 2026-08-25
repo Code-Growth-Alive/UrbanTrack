@@ -105,9 +105,7 @@ class DeadlineReminderTests(TestCase):
 
         company = make_company()
         expert = make_expert()
-        closing_soon = make_job(
-            company, deadline=date.today() + timedelta(days=2)
-        )
+        closing_soon = make_job(company, deadline=date.today() + timedelta(days=2))
         far_future = make_job(company, deadline=date.today() + timedelta(days=30))
         apply_to_job(closing_soon, expert, "one")
         apply_to_job(far_future, expert, "two")
@@ -180,8 +178,6 @@ class JobViewTests(TestCase):
 
     def test_close_job_stops_applications(self):
         self.client.force_login(self.company)
-        self.client.post(
-            reverse("jobs:manage", args=[self.job.pk]), {"action": "close"}
-        )
+        self.client.post(reverse("jobs:manage", args=[self.job.pk]), {"action": "close"})
         self.job.refresh_from_db()
         self.assertFalse(self.job.is_open)

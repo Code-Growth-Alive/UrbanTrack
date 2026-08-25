@@ -81,9 +81,7 @@ def decide_application(application, actor, accept):
     if application.status != ApplicationStatus.PENDING:
         raise JobsError(_("This application was already reviewed."))
 
-    application.status = (
-        ApplicationStatus.ACCEPTED if accept else ApplicationStatus.REJECTED
-    )
+    application.status = ApplicationStatus.ACCEPTED if accept else ApplicationStatus.REJECTED
     application.decided_at = timezone.now()
     application.save(update_fields=["status", "decided_at"])
 
@@ -152,8 +150,7 @@ def send_deadline_reminders(days_ahead=3):
         )
         for application in pending:
             _send(
-                _("Urban Track: reminder: “%(title)s” closes soon")
-                % {"title": job.title},
+                _("Urban Track: reminder: “%(title)s” closes soon") % {"title": job.title},
                 _(
                     "Hi %(first)s,\n\n"
                     "Your application to “%(title)s” is still under review and "

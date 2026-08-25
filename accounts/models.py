@@ -117,7 +117,7 @@ class User(AbstractUser):
         if parts:
             return "".join(part[0] for part in parts[:2]).upper()
         cleaned = self.username.replace("@", " ").strip()
-        return (cleaned[:2].upper() or "?")
+        return cleaned[:2].upper() or "?"
 
 
 class CvTemplate(models.TextChoices):
@@ -165,7 +165,9 @@ class ExpertProfile(models.Model):
     bio = models.TextField(_("bio"), blank=True)
     city = models.CharField(_("city"), max_length=120, blank=True)
     country = models.CharField(
-        _("country"), max_length=120, blank=True,
+        _("country"),
+        max_length=120,
+        blank=True,
         help_text=_("ISO country name; supports pan-African then international scaling."),
     )
     skills = models.ManyToManyField(
@@ -197,9 +199,11 @@ class ExpertProfile(models.Model):
         """Certified experiences only: the public-profile contract."""
         from certification.models import ContributionStatus
 
-        return self.user.contributions.filter(
-            status=ContributionStatus.CONFIRMED
-        ).select_related("project", "expert").order_by("-project__duration_start")
+        return (
+            self.user.contributions.filter(status=ContributionStatus.CONFIRMED)
+            .select_related("project", "expert")
+            .order_by("-project__duration_start")
+        )
 
     def trust_score(self):
         """

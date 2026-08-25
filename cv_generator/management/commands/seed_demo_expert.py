@@ -21,8 +21,12 @@ DEMO_PROFILE = {
 }
 
 SKILLS = [
-    "Urban planning", "Sanitation engineering", "Resilience strategy",
-    "Feasibility studies", "Donor reporting", "GIS analysis",
+    "Urban planning",
+    "Sanitation engineering",
+    "Resilience strategy",
+    "Feasibility studies",
+    "Donor reporting",
+    "GIS analysis",
 ]
 
 TRAININGS = [

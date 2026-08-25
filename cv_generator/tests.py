@@ -3,7 +3,6 @@ CV generator tests: multi-skin rendering, certification-only data,
 builder/preview/pdf routes and the portfolio self-edit screen.
 """
 
-
 from django.test import TestCase
 from django.urls import reverse
 
@@ -102,11 +101,8 @@ class CertificationOnlyDataTests(TestCase):
             contribution_bullets="Original wording",
             added_by=self.company,
         )
-        adjust_contribution(
-            contribution, self.expert, contribution_bullets="Adjusted wording"
-        )
-        html = render_cv_html(cv_context_from_user(self.expert, "en"),
-                              "world_bank", "en")
+        adjust_contribution(contribution, self.expert, contribution_bullets="Adjusted wording")
+        html = render_cv_html(cv_context_from_user(self.expert, "en"), "world_bank", "en")
         self.assertNotIn("Adjusted wording", html)
         self.assertNotIn("Original wording", html)
 
@@ -121,9 +117,7 @@ class CvViewTests(TestCase):
         self.assertEqual(response.status_code, 302)
         company = make_company()
         self.client.force_login(company)
-        self.assertEqual(
-            self.client.get(reverse("cv_generator:builder")).status_code, 403
-        )
+        self.assertEqual(self.client.get(reverse("cv_generator:builder")).status_code, 403)
 
     def test_builder_lists_skins_and_examples(self):
         self.client.force_login(self.expert)
@@ -139,9 +133,7 @@ class CvViewTests(TestCase):
         self.assertEqual(preview.status_code, 200)
         self.assertIn("Moussa Fall", preview.content.decode())
 
-        pdf_response = self.client.get(
-            reverse("cv_generator:pdf", args=["academic_harvard_mit"])
-        )
+        pdf_response = self.client.get(reverse("cv_generator:pdf", args=["academic_harvard_mit"]))
         self.assertEqual(pdf_response.status_code, 200)
         self.assertEqual(pdf_response["Content-Type"], "application/pdf")
 

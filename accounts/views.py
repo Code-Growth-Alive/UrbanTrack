@@ -175,16 +175,12 @@ def dashboard(request):
             .select_related("project", "added_by")
             .order_by("-created_at")
         )
-        confirmed = (
-            profile.confirmed_contributions() if profile else []
-        )
+        confirmed = profile.confirmed_contributions() if profile else []
         context.update(
             pending_reviews=pending,
             confirmed_contributions=confirmed,
             trust_score=profile.trust_score() if profile else 0,
-            my_applications=(
-                request.user.job_applications.select_related("job")[:5]
-            ),
+            my_applications=(request.user.job_applications.select_related("job")[:5]),
         )
 
     return render(request, "accounts/dashboard.html", context)
@@ -212,6 +208,7 @@ class SignUpView(FormView):
 # Portfolio self-service (experts edit their own contextual profile data)
 # ---------------------------------------------------------------------------
 
+
 @login_required
 def profile_edit(request):
     """Edit headline, bio, location, skills, trainings and CV preference."""
@@ -236,9 +233,7 @@ def profile_edit(request):
             messages.success(request, _("Portfolio updated."))
             return redirect("accounts:profile_edit")
     else:
-        initial_skills = ", ".join(
-            skill.name for skill in profile.skills.all().order_by("name")
-        )
+        initial_skills = ", ".join(skill.name for skill in profile.skills.all().order_by("name"))
         profile_form = ProfileForm(instance=profile)
         skills_form = SkillsForm(initial={"skills": initial_skills})
         formset = TrainingFormSet(instance=profile)

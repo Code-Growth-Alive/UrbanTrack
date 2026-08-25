@@ -41,8 +41,11 @@ class JobForm(forms.ModelForm):
             "contract_type": forms.Select(attrs={"class": INPUT_CLASS + " appearance-none pr-9"}),
             "description": forms.Textarea(attrs={"rows": 6, "class": INPUT_CLASS}),
             "requirements": forms.Textarea(
-                attrs={"rows": 4, "class": INPUT_CLASS,
-                       "placeholder": _("One requirement per line.")}
+                attrs={
+                    "rows": 4,
+                    "class": INPUT_CLASS,
+                    "placeholder": _("One requirement per line."),
+                }
             ),
             "compensation": forms.TextInput(attrs={"class": INPUT_CLASS}),
             "deadline": forms.DateInput(attrs={"type": "date", "class": INPUT_CLASS}),
@@ -54,8 +57,6 @@ class ApplicationForm(forms.Form):
 
     cover_letter = forms.CharField(
         label=_("Cover letter"),
-        widget=forms.Textarea(
-            attrs={"rows": 6, "class": INPUT_CLASS.replace("mt-1 ", "")}
-        ),
+        widget=forms.Textarea(attrs={"rows": 6, "class": INPUT_CLASS.replace("mt-1 ", "")}),
         help_text=_("Reference your certified projects: recruiters see them first."),
     )

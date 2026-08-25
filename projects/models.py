@@ -46,7 +46,9 @@ class Project(models.Model):
     )
     duration_start = models.DateField(_("duration start"))
     duration_end = models.DateField(
-        _("duration end"), null=True, blank=True,
+        _("duration end"),
+        null=True,
+        blank=True,
         help_text=_("Leave empty for an ongoing project."),
     )
     budget = models.DecimalField(
@@ -92,14 +94,8 @@ class Project(models.Model):
         return self.official_name
 
     def clean(self):
-        if (
-            self.duration_start
-            and self.duration_end
-            and self.duration_end < self.duration_start
-        ):
-            raise ValidationError(
-                {"duration_end": _("The end date must be after the start date.")}
-            )
+        if self.duration_start and self.duration_end and self.duration_end < self.duration_start:
+            raise ValidationError({"duration_end": _("The end date must be after the start date.")})
 
     def get_absolute_url(self):
         return reverse("projects:detail", args=[self.pk])
@@ -113,8 +109,7 @@ class Project(models.Model):
     def is_publicly_visible(self):
         """True only when published AND public: the public-site gate."""
         return (
-            self.status == ProjectStatus.PUBLISHED
-            and self.visibility == ProjectVisibility.PUBLIC
+            self.status == ProjectStatus.PUBLISHED and self.visibility == ProjectVisibility.PUBLIC
         )
 
     def confirmed_contributions(self):
@@ -129,9 +124,7 @@ class Project(models.Model):
 class ProjectLink(models.Model):
     """An external reference (news article, official page, report…) on a project."""
 
-    project = models.ForeignKey(
-        Project, on_delete=models.CASCADE, related_name="links"
-    )
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="links")
     label = models.CharField(_("label"), max_length=120)
     url = models.URLField(_("URL"), max_length=500)
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
@@ -156,9 +149,7 @@ class ProjectMedia(models.Model):
         DOCUMENT = "document", _("Document")
         VIDEO = "video", _("Video")
 
-    project = models.ForeignKey(
-        Project, on_delete=models.CASCADE, related_name="media_items"
-    )
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="media_items")
     kind = models.CharField(_("kind"), max_length=20, choices=MediaKind.choices)
     file = models.FileField(
         _("file"),

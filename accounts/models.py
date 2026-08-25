@@ -110,6 +110,15 @@ class User(AbstractUser):
     def is_donor(self):
         return self.role == Role.DONOR
 
+    @property
+    def initials(self):
+        """Avatar initials from the name, falling back to the username."""
+        parts = f"{self.first_name} {self.last_name}".split()
+        if parts:
+            return "".join(part[0] for part in parts[:2]).upper()
+        cleaned = self.username.replace("@", " ").strip()
+        return (cleaned[:2].upper() or "?")
+
 
 class CvTemplate(models.TextChoices):
     """Pluggable CV skins consumed by the cv_generator app (Epic 7)."""
@@ -185,7 +194,7 @@ class ExpertProfile(models.Model):
         return reverse("accounts:public_profile", args=[self.user.professional_id])
 
     def confirmed_contributions(self):
-        """Certified experiences only — the public-profile contract."""
+        """Certified experiences only: the public-profile contract."""
         from certification.models import ContributionStatus
 
         return self.user.contributions.filter(

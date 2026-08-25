@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}{{ job.title }}: Urban Track{% endblock %}
+
+{% block content %}
+  <section class="bg-military-900 py-12 text-white">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <p class="text-sm font-medium uppercase tracking-wide text-accent-300">{{ job.get_contract_type_display }}</p>
+      <h1 class="mt-1 max-w-3xl text-3xl font-black tracking-tight">{{ job.title }}</h1>
+      <p class="mt-2 text-military-100">
+        {{ job.published_by.organisation_name|default:job.published_by.get_full_name }}
+       : {{ job.city }}, {{ job.country }}
+        {% if job.compensation %}· {{ job.compensation }}{% endif %}
+      </p>
+    </div>
+  </section>
+
+  <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+    <div class="grid gap-8 lg:grid-cols-3">
+      <div class="space-y-8 lg:col-span-2">
+        <section>
+          <h2 class="section-title mb-2">Mission</h2>
+          <p class="whitespace-pre-line leading-relaxed text-charcoal-700">{{ job.description }}</p>
+        </section>
+        {% if job.requirements %}
+          <section>
+            <h2 class="section-title mb-3">Requirements</h2>
+            <ul class="list-disc space-y-1 pl-5 text-charcoal-700">
+              {% for line in job.requirements_lines %}
+                <li>{{ line }}</li>
+              {% endfor %}
+            </ul>
+          </section>
+        {% endif %}
+      </div>
+
+      <aside class="space-y-6">
+        <div class="card">
+          <h2 class="section-title mb-3">Key facts</h2>
+          <dl class="space-y-2 text-sm">
+            <div class="flex justify-between gap-4"><dt class="text-charcoal-300">Location</dt><dd class="text-right font-semibold">{{ job.city }}, {{ job.country }}</dd></div>
+            <div class="flex justify-between gap-4"><dt class="text-charcoal-300">Contract</dt><dd class="text-right font-semibold">{{ job.get_contract_type_display }}</dd></div>
+            <div class="flex justify-between gap-4"><dt class="text-charcoal-300">Deadline</dt><dd class="text-right font-semibold">{% if job.deadline %}{{ job.deadline|date:"d M Y" }}{% else %}Open{% endif %}</dd></div>
+            {% if job.compensation %}
+              <div class="flex justify-between gap-4"><dt class="text-charcoal-300">Compensation</dt><dd class="text-right font-semibold">{{ job.compensation }}</dd></div>
+            {% endif %}
+          </dl>
+
+          <div class="mt-5 border-t border-charcoal-900/10 pt-4">
+            {% if my_application %}
+              <p class="text-sm font-medium text-charcoal-900">You applied on {{ my_application.applied_at|date:"d M Y" }}.</p>
+              <span class="badge-pending mt-2 inline-flex">{{ my_application.get_status_display }}</span>
+            {% elif not user.is_authenticated %}
+              <a href="{% url 'accounts:login' %}?next={{ job.get_absolute_url|urlencode }}" class="btn-primary w-full">Log in to apply</a>
+            {% elif user.is_expert and job.is_open %}
+              <a href="{% url 'jobs:apply' job.pk %}" class="btn-accent w-full">Apply now</a>
+              {% if certified_count is not None %}
+                <p class="form-help mt-2">Your profile shows {{ certified_count }} certified experience{{ certified_count|pluralize }}.</p>
+              {% endif %}
+            {% elif not job.is_open %}
+              <p class="rounded-md bg-charcoal-50 px-3 py-2 text-center text-sm font-medium text-charcoal-700">Applications closed</p>
+            {% else %}
+              <p class="form-help">Company accounts cannot apply to job offers.</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="card bg-military-50 border-military-500/30">
+          <p class="text-sm text-military-900">
+            Applicants are notified of the decision either way: acceptance or
+            polite decline. No ghosting on Urban Track.
+          </p>
+        </div>
+      </aside>
+    </div>
+  </div>
+{% endblock %}

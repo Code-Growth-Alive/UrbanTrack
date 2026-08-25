@@ -1,0 +1,86 @@
+{# AFD skin: burgundy accents, sans-serif, institutional French-agency look. #}
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+<meta charset="UTF-8">
+<title>{{ cv.identity.name }}: {{ labels.curriculum }}</title>
+<style>
+  @page { size: A4; margin: 0 16mm 14mm; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "DejaVu Sans", Helvetica, Arial, sans-serif; font-size: 10pt; color: #222; line-height: 1.5; }
+  header { background: #7c1127; color: #fff; margin: 0 -16mm; padding: 22pt 16mm 16pt; }
+  header .band { border-bottom: 3pt solid #d4a017; padding-bottom: 12pt; }
+  h1 { font-size: 19pt; font-weight: bold; letter-spacing: 0.25pt; }
+  .headline { margin-top: 2pt; font-size: 11pt; color: #f3d9b0; }
+  .meta { margin-top: 8pt; font-size: 9pt; color: #f0e3ea; }
+  h2 { font-size: 10.5pt; text-transform: uppercase; letter-spacing: 1.2pt; color: #7c1127;
+       margin: 15pt 0 6pt; padding-left: 7pt; border-left: 3pt solid #d4a017; font-weight: bold; }
+  p.bio { text-align: justify; color: #333; }
+  ul.skills { list-style: none; }
+  ul.skills li { display: inline-block; background: #f7ecce; border: 0.5pt solid #d4a017;
+                 border-radius: 8pt; padding: 1.5pt 7pt; margin: 0 3pt 3pt 0; font-size: 8.5pt; }
+  .exp { margin-bottom: 9pt; page-break-inside: avoid; }
+  .exp-head { border-bottom: 0.5pt dotted #bbb; padding-bottom: 2pt; }
+  .exp-title { font-weight: bold; color: #5a0d1d; }
+  .exp-period { float: right; font-size: 8.5pt; color: #666; }
+  .exp-sub { font-size: 9pt; color: #444; }
+  .exp ul { list-style: square; margin: 3pt 0 0 13pt; color: #333; }
+  footer { margin-top: 18pt; background: #f5f0f2; margin-left: -16mm; margin-right: -16mm;
+           padding: 8pt 16mm; font-size: 8pt; color: #7c1127; }
+</style>
+</head>
+<body>
+<header>
+  <div class="band">
+    <h1>{{ cv.identity.name }}</h1>
+    {% if cv.identity.headline %}<p class="headline">{{ cv.identity.headline }}</p>{% endif %}
+    <p class="meta">
+      {{ labels.professional_id }} : <strong>{{ cv.identity.professional_id }}</strong>
+      &nbsp;·&nbsp; {{ cv.identity.email }}
+      {% if cv.identity.city %}&nbsp;·&nbsp; {{ cv.identity.city }}, {{ cv.identity.country }}{% endif %}
+    </p>
+  </div>
+</header>
+
+{% if cv.bio %}
+<h2>{{ labels.profile }}</h2>
+<p class="bio">{{ cv.bio }}</p>
+{% endif %}
+
+{% if cv.experiences %}
+<h2>{{ labels.experience }}</h2>
+{% for exp in cv.experiences %}
+<div class="exp">
+  <div class="exp-head">
+    <span class="exp-period">{{ exp.period }}</span>
+    <span class="exp-title">{{ exp.title }}</span>: {{ exp.role }}
+    <p class="exp-sub">{{ labels.client }} : {{ exp.client }}</p>
+  </div>
+  <ul>
+    {% for bullet in exp.bullets %}<li>{{ bullet }}</li>{% endfor %}
+  </ul>
+</div>
+{% endfor %}
+{% endif %}
+
+{% if cv.trainings %}
+<h2>{{ labels.trainings }}</h2>
+<ul style="list-style:none">
+  {% for t in cv.trainings %}
+  <li><strong>{{ t.degree }}</strong>, {{ t.institution }}{% if t.year %} ({{ t.year }}){% endif %}</li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% if cv.skills %}
+<h2>{{ labels.expertise }}</h2>
+<ul class="skills">
+  {% for skill in cv.skills %}<li>{{ skill }}</li>{% endfor %}
+</ul>
+{% endif %}
+
+<footer>
+  {{ labels.certified_cv }} · {{ labels.generated_on }} {{ today }} · {{ labels.references }}
+</footer>
+</body>
+</html>

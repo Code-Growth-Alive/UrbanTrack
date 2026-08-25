@@ -64,10 +64,10 @@ class ProjectContribution(models.Model):
     ``certification.services``.
 
     Additive fields beyond the mandated list (flagged deviation):
-      * ``pending_company_validation`` — distinguishes "awaiting the expert's
+      * ``pending_company_validation``: distinguishes "awaiting the expert's
         first answer" from "the company must re-validate an adjusted wording",
         which share the same status value;
-      * ``dispute_reason`` / ``rejection_reason`` — audit trail for admin
+      * ``dispute_reason`` / ``rejection_reason``: audit trail for admin
         arbitration (rule 7).
     """
 
@@ -147,7 +147,7 @@ class ProjectContribution(models.Model):
 
     def __str__(self):
         target = self.expert or self.invited_email
-        return f"{target} — {self.get_role_type_display()} on {self.project}"
+        return f"{target}: {self.get_role_type_display()} on {self.project}"
 
     def clean(self):
         if self.added_by_id and self.added_by_id == self.expert_id and self.expert_id:
@@ -198,7 +198,7 @@ class ProjectContribution(models.Model):
 
     @property
     def contribution_bullets_lines(self):
-        """Bullets as a list — one per line in the stored text."""
+        """Bullets as a list: one per line in the stored text."""
         return [line.strip() for line in self.contribution_bullets.splitlines() if line.strip()]
 
 

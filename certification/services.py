@@ -1,5 +1,5 @@
 """
-Certification workflow state machine — the core business logic of Urban Track.
+Certification workflow state machine: the core business logic of Urban Track.
 
 Every transition of ``ProjectContribution`` goes through this module so the
 certification rules stay in one auditable place:
@@ -9,14 +9,14 @@ certification rules stay in one auditable place:
 2. Experts are invited: internal notification + email when the account
    exists, magic-link ``ExpertInvitation`` otherwise.
 3. An experience becomes certified ONLY when the named expert personally
-   validates it (:func:`confirm_as_is`) — never one-sided.
+   validates it (:func:`confirm_as_is`): never one-sided.
 4. Adjusting the wording re-triggers validation: the contribution returns to
    ``pending_confirmation`` flagged for company re-validation
    (:func:`adjust_contribution` -> :func:`approve_adjustment`).
 5. Emails matching an existing account are auto-linked, never duplicated.
 6. Reminders are capped (:settings:`INVITATION_MAX_REMINDERS`) and stale
    invitations expire (:func:`expire_stale_invitations`).
-7. Disputes go to admin arbitration (:func:`resolve_dispute`) — the only
+7. Disputes go to admin arbitration (:func:`resolve_dispute`): the only
    human intervention allowed in the certification flow.
 8. Certified data cannot be silently modified: protected-field edits must
    start a new validation cycle (enforced here and in the model save()).
@@ -59,7 +59,7 @@ def _ensure_linked(contribution, actor):
     Return the linked expert user for ``actor``, auto-linking when possible.
 
     Rule 5: an actor whose account email matches ``invited_email`` IS the
-    declared expert — the contribution links to that account instead of any
+    declared expert: the contribution links to that account instead of any
     duplicate. Anonymous or mismatched actors are refused.
     """
     if getattr(actor, "is_authenticated", False) is False:
@@ -179,7 +179,8 @@ def _notify_registered_expert(contribution):
             f"{contribution.added_by.organisation_name or 'A company'} identified you as "
             f"{contribution.get_role_type_display()} on project "
             f"'{contribution.project.official_name}'.\n"
-            f"Log in to Urban Track to confirm, adjust or reject this contribution.\n\n"
+            f"Open your Urban Track dashboard to confirm, adjust or reject "
+            f"this contribution.\n\n"
             f"— Urban Track"
         ),
         from_email=settings.DEFAULT_FROM_EMAIL,
@@ -188,6 +189,27 @@ def _notify_registered_expert(contribution):
     if contribution.status == ContributionStatus.INVITED:
         contribution.status = ContributionStatus.PENDING_CONFIRMATION
         contribution.save(update_fields=["status", "updated_at"])
+
+
+def notify_contribution(contribution):
+    """
+    Dispatch the right channel for ONE contribution (Epic 2 late additions).
+
+    Registered expert -> internal email + status bump; unknown email ->
+    exactly one active magic-link invitation. Idempotent and safe to call
+    repeatedly. Returns ``(kind, payload)`` where kind is ``"notified"`` /
+    ``"invited"`` / ``None`` and payload mirrors the original dispatcher
+    contract (the contribution, resp. the created invitation).
+    """
+    if contribution.status == ContributionStatus.REJECTED:
+        return None, None
+    if contribution.expert_id:
+        _notify_registered_expert(contribution)
+        return "notified", contribution
+    if any(inv.is_active for inv in contribution.invitations.all()):
+        return None, None
+    invitation = create_and_send_invitation(contribution)
+    return "invited", invitation
 
 
 @transaction.atomic
@@ -200,16 +222,11 @@ def notify_contributions_for_project(project):
     unknown emails get exactly one active invitation each.
     """
     dispatched = {"invitations": [], "notified": []}
+    buckets = {"invited": "invitations", "notified": "notified"}
     for contribution in project.contributions.select_related("expert"):
-        if contribution.status == ContributionStatus.REJECTED:
-            continue
-        if contribution.expert_id:
-            _notify_registered_expert(contribution)
-            dispatched["notified"].append(contribution)
-            continue
-        has_active = any(inv.is_active for inv in contribution.invitations.all())
-        if not has_active:
-            dispatched["invitations"].append(create_and_send_invitation(contribution))
+        kind, payload = notify_contribution(contribution)
+        if kind is not None:
+            dispatched[buckets[kind]].append(payload)
     return dispatched
 
 
@@ -379,7 +396,7 @@ def dispute_contribution(contribution, actor, reason=""):
 
 def resolve_dispute(contribution, staff_user, *, outcome, note=""):
     """
-    Admin arbitration (rule 7) — the ONLY human intervention in the flow.
+    Admin arbitration (rule 7): the ONLY human intervention in the flow.
 
     Outcomes: ``confirm`` (certify as declared), ``reject`` (side with the
     expert), ``return_to_expert`` (send back for a fresh confirmation cycle).
@@ -434,7 +451,7 @@ def _request_company_revalidation(contribution, expert_actor):
         message=(
             f"The expert adjusted the wording:\n\n"
             f"{contribution.contribution_bullets}\n\n"
-            f"Validate the adjusted wording in your company dashboard.\n\n— Urban Track"
+            f"Validate the adjusted wording from your company dashboard.\n\n— Urban Track"
         ),
         from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[contribution.added_by.email],

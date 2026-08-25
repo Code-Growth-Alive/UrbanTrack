@@ -278,7 +278,7 @@ class AdjustmentCycleTests(TestCase):
 
 
 class ArbitrationTests(TestCase):
-    """Rule 7: admins arbitrate disputes — the only human intervention."""
+    """Rule 7: admins arbitrate disputes: the only human intervention."""
 
     def setUp(self):
         self.company = make_company()

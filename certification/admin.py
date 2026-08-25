@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
 from .models import ContributionStatus, ExpertInvitation, ProjectContribution
+from .services import resolve_dispute
 
 
 @admin.register(ProjectContribution)
@@ -31,6 +32,7 @@ class ProjectContributionAdmin(admin.ModelAdmin):
         "project__official_name",
     )
     readonly_fields = ("created_at", "updated_at")
+    actions = ("arbitrate_confirm", "arbitrate_reject", "arbitrate_return_to_expert")
 
     def get_readonly_fields(self, request, obj=None):
         fields = super().get_readonly_fields(request, obj)
@@ -41,9 +43,28 @@ class ProjectContributionAdmin(admin.ModelAdmin):
             )
         return fields
 
-    @admin.action(description=_("Mark selected as disputed (admin arbitration)"))
-    def mark_disputed(self, request, queryset):
-        queryset.update(status=ContributionStatus.DISPUTED)
+    def _arbitrate(self, request, queryset, outcome):
+        """Run the service state machine for every selected dispute."""
+        resolved = 0
+        for contribution in queryset.filter(status=ContributionStatus.DISPUTED):
+            resolve_dispute(contribution, request.user, outcome=outcome)
+            resolved += 1
+        self.message_user(
+            request,
+            f"{resolved} dispute(s) resolved as '{outcome}'.",
+        )
+
+    @admin.action(description=_("Arbitrate: certify as declared"))
+    def arbitrate_confirm(self, request, queryset):
+        self._arbitrate(request, queryset, "confirm")
+
+    @admin.action(description=_("Arbitrate: side with the expert (reject)"))
+    def arbitrate_reject(self, request, queryset):
+        self._arbitrate(request, queryset, "reject")
+
+    @admin.action(description=_("Arbitrate: return to expert for confirmation"))
+    def arbitrate_return_to_expert(self, request, queryset):
+        self._arbitrate(request, queryset, "return_to_expert")
 
 
 @admin.register(ExpertInvitation)

@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}Manage: {{ project.official_name }}: Urban Track{% endblock %}
+
+{% block content %}
+  <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+    <!-- Project header -->
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <p class="text-sm font-medium uppercase tracking-wide text-charcoal-300">{{ project.client_name }}</p>
+        <h1 class="mt-1 text-2xl font-black tracking-tight sm:text-3xl">{{ project.official_name }}</h1>
+        <p class="mt-1 text-sm text-charcoal-700">
+          {{ project.duration_start|date:"M Y" }}
+          {% if project.duration_end %}– {{ project.duration_end|date:"M Y" }}{% else %}– ongoing{% endif %}
+        </p>
+      </div>
+      <span class="role-chip {% if project.status == 'draft' %}!bg-charcoal-50 !text-charcoal-700{% elif project.status == 'published' %}!bg-military-100 !text-military-700{% else %}!bg-accent-50 !text-accent-700{% endif %}">
+        {{ project.get_status_display }}
+      </span>
+    </div>
+
+    <div class="mt-8 grid gap-8 lg:grid-cols-3">
+      <!-- Contributors -->
+      <div class="space-y-6 lg:col-span-2">
+        <section>
+          <h2 class="section-title mb-4">Declared contributors</h2>
+
+          {% for contribution in contributions %}
+            <article class="card-project mb-3">
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <span class="role-chip">{{ contribution.get_role_type_display }}</span>
+                  <p class="mt-2 font-bold leading-snug">
+                    {% if contribution.expert_id and contribution.expert.is_expert %}
+                      {{ contribution.expert.get_full_name|default:contribution.expert.username }}
+                    {% else %}
+                      {{ contribution.invited_email }}
+                    {% endif %}
+                  </p>
+                  <p class="font-mono text-xs text-charcoal-300">
+                    {% if contribution.expert_id and contribution.expert.is_expert %}{{ contribution.expert.professional_id }} · {% endif %}{{ contribution.invited_email }}
+                  </p>
+                </div>
+                {% if contribution.status == "confirmed" %}
+                  <span class="badge-certified">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-3.5 w-3.5"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
+                    Certified
+                  </span>
+                {% elif contribution.status == "pending_confirmation" %}
+                  {% if contribution.pending_company_validation %}
+                    <form method="post" class="flex flex-wrap items-center gap-3">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="approve">
+                      <input type="hidden" name="contribution_pk" value="{{ contribution.pk }}">
+                      <details class="text-xs text-accent-700">
+                        <summary class="cursor-pointer">Adjusted by expert</summary>
+                        <pre class="mt-2 max-w-md whitespace-pre-wrap rounded bg-charcoal-50 p-2 text-left text-[11px] text-charcoal-700">{{ contribution.contribution_bullets }}</pre>
+                      </details>
+                      <button type="submit" class="btn-accent !px-3 !py-1.5 !text-xs">Validate adjustment</button>
+                    </form>
+                  {% else %}
+                    <span class="badge-pending">Pending confirmation</span>
+                  {% endif %}
+                {% elif contribution.status == "rejected" %}
+                  <span class="badge-pending !bg-charcoal-50 !text-charcoal-700">Rejected</span>
+                {% elif contribution.status == "disputed" %}
+                  <span class="badge-pending !bg-red-50 !text-red-700">Disputed: admin arbitration</span>
+                {% else %}
+                  <span class="badge-pending">Invited</span>
+                {% endif %}
+              </div>
+              <ul class="mt-3 list-disc space-y-1 pl-5 text-sm text-charcoal-700">
+                {% for bullet in contribution.contribution_bullets_lines %}
+                  <li>{{ bullet }}</li>
+                {% endfor %}
+              </ul>
+            </article>
+          {% empty %}
+            <p class="card border-dashed text-sm text-charcoal-700">
+              No contributor declared yet: add the experts who worked on this
+              project below.
+            </p>
+          {% endfor %}
+        </section>
+
+        <!-- Declare a contributor (Epic 2) -->
+        <section class="card">
+          <h2 class="section-title">Declare a contributor</h2>
+          <p class="mt-1 text-sm text-charcoal-700">
+            Start typing an existing expert's name, email or OX-ID (suggestions
+            appear below the field), or enter a brand-new email to invite them.
+          </p>
+          <form method="post" class="mt-4 space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="declare">
+
+            {% if form.non_field_errors %}
+              <p class="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">{{ form.non_field_errors.0 }}</p>
+            {% endif %}
+
+            <datalist id="existing-experts">
+              {% for expert in existing_experts %}
+                <option value="{{ expert.email }}">{{ expert.get_full_name|default:expert.username }} · {{ expert.professional_id }}</option>
+              {% endfor %}
+            </datalist>
+
+            <div class="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label for="{{ form.email.id_for_label }}" class="block text-sm font-semibold">{{ form.email.label }}</label>
+                <input
+                  type="email" name="{{ form.email.html_name }}" id="{{ form.email.id_for_label }}"
+                  list="existing-experts" required maxlength="150"
+                  autocomplete="off"
+                  class="form-input"
+                >
+                {% if form.email.errors %}<p class="mt-1 text-xs text-red-700">{{ form.email.errors.0 }}</p>{% endif %}
+              </div>
+              <div>
+                <label for="{{ form.role_type.id_for_label }}" class="block text-sm font-semibold">{{ form.role_type.label }}</label>
+                <select
+                  name="{{ form.role_type.html_name }}" id="{{ form.role_type.id_for_label }}"
+                  class="form-input"
+                >
+                  {% for value, label in form.role_type.field.choices %}
+                    <option value="{{ value }}">{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label for="{{ form.contribution_bullets.id_for_label }}" class="block text-sm font-semibold">{{ form.contribution_bullets.label }}</label>
+              <textarea
+                name="{{ form.contribution_bullets.html_name }}" id="{{ form.contribution_bullets.id_for_label }}"
+                rows="3" required placeholder="One bullet per line"
+                class="form-input"
+              ></textarea>
+              {% if form.contribution_bullets.errors %}<p class="mt-1 text-xs text-red-700">{{ form.contribution_bullets.errors.0 }}</p>{% endif %}
+            </div>
+            <button type="submit" class="btn-primary">Declare contributor</button>
+          </form>
+        </section>
+
+        <!-- Project media: links, images, documents, videos (all optional) -->
+        <section class="card">
+          <h2 class="section-title">Media &amp; references</h2>
+          <p class="mt-1 text-sm text-charcoal-700">
+            Enrich the public page with links, photo galleries, reports and
+            YouTube walkthroughs. Everything here is optional.
+          </p>
+
+          {% if project.links.all or project.media_items.all %}
+            <div class="mt-4 divide-y divide-charcoal-900/10 rounded-lg border border-charcoal-900/10">
+              {% for link in project.links.all %}
+                <div class="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+                  <span class="flex min-w-0 items-center gap-2">
+                    <svg class="h-4 w-4 shrink-0 text-military-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"/></svg>
+                    <a href="{{ link.url }}" target="_blank" rel="noopener" class="truncate font-medium text-charcoal-900 hover:text-military-700">{{ link.label }}</a>
+                  </span>
+                  <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete_link">
+                    <input type="hidden" name="link_pk" value="{{ link.pk }}">
+                    <button type="submit" class="text-xs font-semibold text-red-700 hover:underline">Remove</button>
+                  </form>
+                </div>
+              {% endfor %}
+              {% for item in project.media_items.all %}
+                <div class="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+                  <span class="flex min-w-0 items-center gap-2">
+                    {% if item.kind == "image" %}
+                      <svg class="h-4 w-4 shrink-0 text-accent-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M18 6h.008v.008H18V6z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a48.074 48.074 0 0119.5 0"/></svg>
+                    {% elif item.kind == "document" %}
+                      <svg class="h-4 w-4 shrink-0 text-charcoal-700" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                    {% else %}
+                      <svg class="h-4 w-4 shrink-0 text-red-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15.91 11.672a.375.375 0 010 .656l-5.603 3.113a.375.375 0 01-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112z"/></svg>
+                    {% endif %}
+                    <span class="truncate font-medium text-charcoal-900">
+                      {{ item.caption|default:item }}
+                      <span class="ml-1 align-middle badge-pending !px-1.5 !py-0 !text-[10px]">{{ item.get_kind_display }}</span>
+                    </span>
+                  </span>
+                  <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete_media">
+                    <input type="hidden" name="media_pk" value="{{ item.pk }}">
+                    <button type="submit" class="text-xs font-semibold text-red-700 hover:underline">Remove</button>
+                  </form>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <div class="mt-5 grid gap-6 sm:grid-cols-2">
+            <form method="post" class="space-y-3 rounded-lg border border-dashed border-charcoal-900/20 p-4">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="add_link">
+              <p class="text-sm font-bold">Add a reference link</p>
+              <div>
+                <label for="id_link_label" class="form-label !mt-0">Label</label>
+                <input type="text" name="label" id="id_link_label" required maxlength="120"
+                       placeholder="e.g. World Bank appraisal report" class="form-input">
+              </div>
+              <div>
+                <label for="id_link_url" class="form-label">URL</label>
+                <input type="url" name="url" id="id_link_url" required
+                       placeholder="https://…" class="form-input">
+              </div>
+              <button type="submit" class="btn-outline w-full !py-1.5 !text-xs">Attach link</button>
+            </form>
+
+            <form method="post" enctype="multipart/form-data"
+                  class="space-y-3 rounded-lg border border-dashed border-charcoal-900/20 p-4">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="add_media">
+              <p class="text-sm font-bold">Attach image, document or video</p>
+              <div>
+                <label for="id_media_kind" class="form-label !mt-0">Type</label>
+                <select name="kind" id="id_media_kind" class="form-input">
+                  <option value="image">Image</option>
+                  <option value="document">Document</option>
+                  <option value="video">YouTube video</option>
+                </select>
+              </div>
+              <div>
+                <label for="id_media_caption" class="form-label">Caption (optional)</label>
+                <input type="text" name="caption" id="id_media_caption" maxlength="200"
+                       placeholder="e.g. Inauguration day, March 2025" class="form-input">
+              </div>
+              <div>
+                <label for="id_media_file" class="form-label">File (image / document)</label>
+                <input type="file" name="file" id="id_media_file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                       class="form-input !py-1.5 file:mr-3 file:border-0 file:bg-charcoal-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-charcoal-700 hover:file:bg-charcoal-900/10">
+              </div>
+              <div>
+                <label for="id_media_url" class="form-label">Video URL (videos only)</label>
+                <input type="url" name="url" id="id_media_url"
+                       placeholder="https://youtube.com/watch?v=…" class="form-input">
+              </div>
+              <button type="submit" class="btn-outline w-full !py-1.5 !text-xs">Attach media</button>
+            </form>
+          </div>
+          <p class="form-help mt-3">Videos are embedded by URL: upload files for images and documents.</p>
+        </section>
+      </div>
+
+      <!-- Lifecycle sidebar -->
+      <aside class="space-y-6">
+        <div class="card">
+          <h2 class="section-title mb-3">Project status</h2>
+          {% if project.status == status_draft %}
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="publish">
+              <button type="submit" class="btn-accent w-full">
+                Publish &amp; invite contributors
+              </button>
+            </form>
+            <p class="mt-2 text-xs text-charcoal-300">
+              Publishing sends the confirmation invitation to every declared contributor.
+            </p>
+            <form method="post" class="mt-4 border-t border-charcoal-900/10 pt-4">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="visibility">
+              <label for="id_visibility" class="block text-sm font-semibold">Visibility while drafting</label>
+              <select name="visibility" id="id_visibility"
+                      class="form-input">
+                <option value="private" {% if project.visibility == "private" %}selected{% endif %}>Private</option>
+                <option value="public" {% if project.visibility == "public" %}selected{% endif %}>Public</option>
+              </select>
+              <button type="submit" class="btn-outline mt-3 !px-3 !py-1.5 !text-xs">Save visibility</button>
+            </form>
+          {% elif project.status == status_published %}
+            <div class="flex items-center gap-2 rounded-md bg-military-50 px-3 py-2 text-sm font-medium text-military-900">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
+              Live: invitations dispatched
+            </div>
+            <form method="post" class="mt-4">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="archive">
+              <button type="submit" class="btn-outline w-full !border-charcoal-900/30 !text-charcoal-700 hover:!bg-charcoal-50">Archive project</button>
+            </form>
+          {% else %}
+            <p class="text-sm text-charcoal-700">
+              This project is archived; it no longer appears on the public site.
+            </p>
+          {% endif %}
+        </div>
+
+        <div class="card border-dashed">
+          <a href="{% url 'projects:create' %}" class="text-sm font-semibold text-accent-700 hover:underline">+ Publish another project</a>
+          {% if project.status == status_published and project.is_publicly_visible %}
+            <p class="mt-2 text-xs text-charcoal-300">
+              Public page:
+              <a href="{{ project.get_absolute_url }}" class="font-medium text-military-700 hover:underline">{{ project.get_absolute_url }}</a>
+            </p>
+          {% endif %}
+        </div>
+      </aside>
+    </div>
+  </div>
+{% endblock %}

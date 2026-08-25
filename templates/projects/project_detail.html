@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ project.official_name }} — Urban Track{% endblock %}
+{% block title %}{{ project.official_name }}: Urban Track{% endblock %}
 
 {% block content %}
   <!-- Header -->
@@ -36,6 +36,61 @@
           </ul>
         </section>
 
+        <!-- Media gallery: images, videos, documents (all optional) -->
+        {% if videos %}
+          <section>
+            <h2 class="section-title mb-3">Videos</h2>
+            <div class="grid gap-4 sm:grid-cols-2">
+              {% for item in videos %}
+                <figure class="overflow-hidden rounded-xl border border-charcoal-900/10 bg-charcoal-900 shadow-sm">
+                  <div class="aspect-video">
+                    <iframe src="{{ item.embed_url }}" title="{{ item.caption|default:'Project video' }}"
+                            class="h-full w-full" loading="lazy"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture"
+                            allowfullscreen></iframe>
+                  </div>
+                  {% if item.caption %}<figcaption class="px-3 py-2 text-xs text-white">{{ item.caption }}</figcaption>{% endif %}
+                </figure>
+              {% endfor %}
+            </div>
+          </section>
+        {% endif %}
+
+        {% if images %}
+          <section>
+            <h2 class="section-title mb-3">Gallery</h2>
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {% for item in images %}
+                <figure class="group overflow-hidden rounded-xl border border-charcoal-900/10 shadow-sm">
+                  <img src="{{ item.file.url }}" alt="{{ item.caption|default:'Project image' }}" loading="lazy"
+                       class="aspect-[4/3] w-full object-cover transition group-hover:scale-105">
+                  {% if item.caption %}
+                    <figcaption class="bg-white px-2 py-1.5 text-[11px] text-charcoal-700">{{ item.caption }}</figcaption>
+                  {% endif %}
+                </figure>
+              {% endfor %}
+            </div>
+          </section>
+        {% endif %}
+
+        {% if documents %}
+          <section>
+            <h2 class="section-title mb-3">Documents</h2>
+            <ul class="divide-y divide-charcoal-900/10 rounded-xl border border-charcoal-900/10 bg-white shadow-sm">
+              {% for item in documents %}
+                <li>
+                  <a href="{{ item.file.url }}" target="_blank" rel="noopener"
+                     class="flex items-center gap-3 px-4 py-3 text-sm font-medium hover:bg-military-50">
+                    <svg class="h-5 w-5 shrink-0 text-military-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                    <span class="flex-1">{{ item.caption|default:item.file.name }}</span>
+                    <svg class="h-4 w-4 shrink-0 text-charcoal-300" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>
+                  </a>
+                </li>
+              {% endfor %}
+            </ul>
+          </section>
+        {% endif %}
+
         <!-- Certified contributors: the cross-confirmation proof -->
         <section>
           <h2 class="section-title mb-4">Certified contributors</h2>
@@ -57,7 +112,7 @@
             </article>
           {% empty %}
             <p class="card border-dashed text-sm text-charcoal-700">
-              No certified contributor yet — contributions appear once the named experts confirm them.
+              No certified contributor yet: contributions appear once the named experts confirm them.
             </p>
           {% endfor %}
         </section>
@@ -73,6 +128,20 @@
             <div class="flex justify-between gap-4"><dt class="text-charcoal-300">End</dt><dd class="font-semibold">{% if project.duration_end %}{{ project.duration_end|date:"d M Y" }}{% else %}Ongoing{% endif %}</dd></div>
           </dl>
         </div>
+        {% if project.links.all %}
+          <div class="card">
+            <h2 class="section-title mb-3">References</h2>
+            <ul class="space-y-2 text-sm">
+              {% for link in project.links.all %}
+                <li class="flex items-start gap-2">
+                  <svg class="mt-0.5 h-4 w-4 shrink-0 text-military-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"/></svg>
+                  <a href="{{ link.url }}" target="_blank" rel="noopener"
+                     class="font-medium text-charcoal-900 hover:text-military-700 hover:underline">{{ link.label }}</a>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
         <div class="card bg-military-50 border-military-500/30">
           <p class="flex items-start gap-2 text-sm text-military-900">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="mt-0.5 h-4 w-4 shrink-0"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>

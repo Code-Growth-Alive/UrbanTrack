@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}Confirm your contribution to {{ project.official_name }}: Urban Track{% endblock %}
+
+{% block content %}
+  <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6">
+    <!-- Declaration summary: pre-filled by the publishing company -->
+    <p class="text-sm font-medium uppercase tracking-wide text-charcoal-300">Contribution invitation</p>
+    <h1 class="mt-1 text-2xl font-black tracking-tight sm:text-3xl">
+      {{ company_name }} identified you as
+      <span class="role-chip align-middle">{{ contribution.get_role_type_display }}</span>
+      on
+    </h1>
+    <h2 class="mt-2 text-xl font-bold text-military-700">{{ project.official_name }}</h2>
+    <p class="mt-1 text-sm text-charcoal-700">
+      {{ project.client_name }}
+      · {{ project.duration_start|date:"M Y" }}
+      {% if project.duration_end %}– {{ project.duration_end|date:"M Y" }}{% else %}– ongoing{% endif %}
+    </p>
+
+    <div class="card mt-6">
+      <h3 class="section-title mb-3">Proposed contribution</h3>
+      <ul class="list-disc space-y-1 pl-5 text-sm text-charcoal-700">
+        {% for bullet in contribution.contribution_bullets_lines %}
+          <li>{{ bullet }}</li>
+        {% endfor %}
+      </ul>
+      <p class="mt-4 text-xs text-charcoal-300">
+        {% if invitation %}
+          Invitation sent {{ invitation.sent_at|date:"d M Y" }} · expires {{ invitation.expires_at|date:"d M Y" }}
+        {% else %}
+          Declared by {{ company_name }} · review requested via your dashboard
+        {% endif %}
+      </p>
+    </div>
+
+    <!-- Status-specific panels -->
+    {% if contribution.status == "confirmed" %}
+      <div class="card mt-6 border-military-500 bg-military-50">
+        <p class="flex items-start gap-2 font-semibold text-military-900">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="mt-0.5 h-5 w-5 shrink-0"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
+          Certified: this experience now appears on the expert's public profile with a traceable link to the project.
+        </p>
+        {% if contribution.expert_id %}
+          <a href="{% url 'accounts:public_profile' contribution.expert.professional_id %}" class="btn-outline mt-4">View the public profile</a>
+        {% endif %}
+      </div>
+    {% elif contribution.status == "rejected" %}
+      <div class="card mt-6 border-dashed text-center text-charcoal-700">
+        You rejected this contribution on {{ contribution.updated_at|date:"d M Y" }}. Nothing was certified.
+      </div>
+    {% elif contribution.status == "disputed" %}
+      <div class="card mt-6 border-dashed text-center text-charcoal-700">
+        This declaration is disputed: an administrator will arbitrate and you will be notified of the outcome.
+      </div>
+    {% elif contribution.pending_company_validation %}
+      <div class="card mt-6 border-accent-300 bg-accent-50">
+        <p class="text-sm font-semibold text-accent-700">Awaiting {{ company_name }}</p>
+        <p class="mt-1 text-sm text-charcoal-700">
+          Your adjusted wording was sent back for validation. Once approved, the experience becomes certified.
+        </p>
+      </div>
+    {% elif is_actionable and mismatched_user %}
+      <div class="card mt-6 border-red-300 bg-red-50">
+        <p class="text-sm text-red-800">
+          You are logged in as {{ user.email }}, but this invitation is addressed to
+          <strong>{{ invitation.email }}</strong>. Log in with that account to act.
+        </p>
+      </div>
+    {% elif is_actionable %}
+
+      <!-- Integrated account creation: no friction, email locked to the invitation (spec 02 §4.4) -->
+      {% if not user.is_authenticated and not contribution.expert_id %}
+        <div class="card mt-6 border-military-500" id="create-account">
+          <h3 class="section-title">This is you? Create your free account</h3>
+          <p class="mt-1 text-sm text-charcoal-700">
+            Your professional ID (OX-XXXXXX) is generated instantly, then confirm below.
+            Already registered?
+            <a href="{% url 'accounts:login' %}?next=/certification/invitations/{{ invitation.token }}/" class="font-semibold text-accent-700 hover:underline">Log in</a>.
+          </p>
+          <form method="post" class="mt-4 space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="signup">
+            {% if signup_form and signup_form.errors and not signup_form.non_field_errors %}
+              <p class="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-800">{{ signup_form.non_field_errors.0|default:"Please correct the errors below." }}</p>
+            {% endif %}
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label for="su_first_name" class="block text-sm font-semibold">First name</label>
+                <input type="text" name="first_name" id="su_first_name" required maxlength="150"
+                       value="{{ signup_form.first_name.value|default:'' }}"
+                       class="form-input">
+                {% if signup_form.first_name.errors %}<p class="mt-1 text-xs text-red-700">{{ signup_form.first_name.errors.0 }}</p>{% endif %}
+              </div>
+              <div>
+                <label for="su_last_name" class="block text-sm font-semibold">Last name</label>
+                <input type="text" name="last_name" id="su_last_name" required maxlength="150"
+                       value="{{ signup_form.last_name.value|default:'' }}"
+                       class="form-input">
+                {% if signup_form.last_name.errors %}<p class="mt-1 text-xs text-red-700">{{ signup_form.last_name.errors.0 }}</p>{% endif %}
+              </div>
+            </div>
+            <div>
+              <label for="su_email" class="block text-sm font-semibold">Email address</label>
+              <input type="email" id="su_email" value="{{ invitation.email }}" readonly
+                     class="form-input disabled:bg-charcoal-50 disabled:text-charcoal-700" disabled
+                     aria-describedby="su_email_help">
+              <p id="su_email_help" class="mt-1 text-xs text-charcoal-300">Pre-filled from the invitation.</p>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label for="su_password1" class="block text-sm font-semibold">Password</label>
+                <input type="password" name="password1" id="su_password1" required autocomplete="new-password"
+                       class="form-input">
+                {% if signup_form.password1.errors %}<p class="mt-1 text-xs text-red-700">{{ signup_form.password1.errors.0 }}</p>{% endif %}
+              </div>
+              <div>
+                <label for="su_password2" class="block text-sm font-semibold">Confirm password</label>
+                <input type="password" name="password2" id="su_password2" required autocomplete="new-password"
+                       class="form-input">
+                {% if signup_form.password2.errors %}<p class="mt-1 text-xs text-red-700">{{ signup_form.password2.errors.0 }}</p>{% endif %}
+              </div>
+            </div>
+            <button type="submit" class="btn-accent w-full">Create account &amp; review</button>
+          </form>
+        </div>
+      {% endif %}
+
+      <!-- The three expert actions (spec Epic 3) + dispute escalation (Epic 5) -->
+      <div class="mt-6 space-y-4">
+        <form method="post" class="card flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="confirm">
+          <p class="text-sm text-charcoal-700">
+            Confirm that this declaration reflects what you actually delivered.
+            It becomes certified immediately.
+          </p>
+          <button type="submit" class="btn-primary shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
+            Confirm as-is
+          </button>
+        </form>
+
+        <details class="card">
+          <summary class="cursor-pointer text-sm font-semibold text-accent-700">Adjust the wording before confirming</summary>
+          <form method="post" class="mt-4 space-y-3">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="adjust">
+            <div>
+              <label for="adj_role" class="block text-sm font-semibold">Role</label>
+              <select name="role_type" id="adj_role"
+                      class="form-input sm:w-auto">
+                {% for value, label in role_options %}
+                  <option value="{{ value }}" {% if value == contribution.role_type %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label for="adj_bullets" class="block text-sm font-semibold">Your actual contribution</label>
+              <textarea name="contribution_bullets" id="adj_bullets" rows="4" required
+                        placeholder="One bullet per line"
+                        class="form-input">{{ contribution.contribution_bullets }}</textarea>
+              <p class="mt-1 text-xs text-charcoal-300">
+                Adjustments go back to {{ company_name }} for validation before certification.
+              </p>
+            </div>
+            <button type="submit" class="btn-accent">Send adjusted wording</button>
+          </form>
+        </details>
+
+        <details class="card">
+          <summary class="cursor-pointer text-sm font-semibold text-charcoal-700">I did not contribute to this project</summary>
+          <form method="post" class="mt-4 space-y-3">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="reject">
+            <div>
+              <label for="rej_reason" class="block text-sm font-semibold">Reason (optional)</label>
+              <textarea name="reason" id="rej_reason" rows="2"
+                        class="form-input"></textarea>
+            </div>
+            <button type="submit" class="btn-outline !border-charcoal-900/30 !text-charcoal-700 hover:!bg-charcoal-50">Reject the declaration</button>
+          </form>
+        </details>
+
+        <details class="card">
+          <summary class="cursor-pointer text-sm font-semibold text-charcoal-700">I contributed differently / I contest this declaration</summary>
+          <form method="post" class="mt-4 space-y-3">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="dispute">
+            <div>
+              <label for="dis_reason" class="block text-sm font-semibold">Why do you contest it? (required)</label>
+              <textarea name="reason" id="dis_reason" rows="2" required
+                        class="form-input"></textarea>
+              <p class="mt-1 text-xs text-charcoal-300">An administrator will arbitrate between you and {{ company_name }}.</p>
+            </div>
+            <button type="submit" class="btn-outline !border-red-300 !text-red-700 hover:!bg-red-50">Open a dispute</button>
+          </form>
+        </details>
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}

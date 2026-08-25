@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ expert.get_full_name|default:expert.username }} ({{ expert.professional_id }}) — Urban Track{% endblock %}
+{% block title %}{{ expert.get_full_name|default:expert.username }} ({{ expert.professional_id }}): Urban Track{% endblock %}
 
 {% block content %}
   <!-- Banner: military green = institutional trust; permanent OX-ID chip -->
@@ -8,7 +8,7 @@
     <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <div class="flex flex-col gap-6 sm:flex-row sm:items-center">
         <div class="grid h-24 w-24 shrink-0 place-items-center rounded-full bg-white text-3xl font-black text-military-900">
-          {{ expert.get_full_name|default:expert.username|slice:":1" }}{{ expert.last_name|slice:":1"|upper }}
+          {{ expert.initials }}
         </div>
         <div>
           <h1 class="text-3xl font-black tracking-tight">
@@ -25,7 +25,10 @@
           {% endif %}
         </div>
         <div class="sm:ml-auto sm:text-right">
-          <p class="stat-value !text-white">{{ trust_score }}</p>
+          <p
+            class="stat-value !text-white"
+            title="Certified contributions weighted by role: Director 4 · Manager 3 · Specialist 2 · Assistant 1"
+          >{{ trust_score }}</p>
           <p class="text-xs font-medium uppercase tracking-wide text-military-300">Trust score</p>
         </div>
       </div>

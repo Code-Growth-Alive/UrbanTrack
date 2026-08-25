@@ -9,9 +9,8 @@ ResearchGate's co-author logic applied to the sector.
 
 ## Status
 
-Epics -1, 0 and 1 complete: bootstrap, design system foundations, core data
-models and the cross-confirmation state machine (68 tests). Full roadmap at
-the bottom.
+Epics -1 through 5 complete, plus 7 (CV export) and 8 (job board): 144 tests,
+ruff clean. Full roadmap at the bottom.
 
 ## Core workflow implemented (certification)
 
@@ -36,15 +35,15 @@ contributions are served.
 
 ## Flagged deviations (spec section 4 field list)
 
-Additive fields required by the business rules — none of the mandated
+Additive fields required by the business rules: none of the mandated
 fields were altered:
 
-- `Project.published_by` — ownership by the company user (needed for the
+- `Project.published_by`: ownership by the company user (needed for the
   publishing flow and contribution attribution).
-- `ProjectContribution.pending_company_validation` — distinguishes "waiting
+- `ProjectContribution.pending_company_validation`: distinguishes "waiting
   for the expert's first answer" from "company must re-validate adjusted
   wording", which share the same `pending_confirmation` status value.
-- `ProjectContribution.rejection_reason` / `dispute_reason` — audit trail
+- `ProjectContribution.rejection_reason` / `dispute_reason`: audit trail
   for arbitration (rule 7).
 - `cv_template` lives on `ExpertProfile` (the generator reads profile +
   confirmed contributions; per-expert template preference).
@@ -54,11 +53,12 @@ fields were altered:
 | Concern | Choice |
 |---|---|
 | Backend | Python 3.12 / Django 6.1 (modular monolith) + Django REST Framework |
-| Database | **SQLite** (`db.sqlite3`) — project decision |
-| Frontend | Django templates + **Tailwind CSS via the browser JS build** (`cdn.tailwindcss.com` + inline `tailwind.config`) — no npm pipeline, project decision |
-| Async / scheduled tasks | **No Celery / no Redis** — background work runs as synchronous management commands (cron-triggerable), project decision |
+| Database | **SQLite** (`db.sqlite3`): project decision |
+| Frontend | Django templates + **Tailwind CSS via the vendored browser JS build** (`static/vendor/tailwind.js`, pinned 3.4.17 + inline `tailwind.config`): no Node/npm pipeline, no external CDN, project decision |
+| Async / scheduled tasks | **No Celery / no Redis**: background work runs as synchronous management commands (cron-triggerable), project decision |
 | Email | **SendGrid** chosen as transactional provider (console backend in dev); open/click tracking planned for Epic 6 via webhooks |
-| Auth | Django auth + magic-link flow (planned Epic 3) |
+| PDF | **WeasyPrint** (CV export, Epic 7) |
+| Auth | Django auth + magic-link flow (login accepts email or username) |
 
 ## Install & run
 
@@ -89,11 +89,20 @@ CI runs both on every push/PR (`.github/workflows/ci.yml`).
 ```
 urbantrack/         Django project (single settings module)
 accounts/           custom User: expert | company | donor + permanent OX-XXXXXX professional ID
-projects/           Project model & publishing (company side)        [Epic 1-2]
-certification/      ProjectContribution + ExpertInvitation flows     [Epic 3-5]
-cv_generator/       WeasyPrint multi-template CVs                    [Epic 7]
-jobs/               Job board                                        [Epic 8]
-templates/          base.html (Tailwind tokens + components), home.html
+                    auth (login/signup/logout), role-aware dashboard, portfolio self-edit
+                    (headline, bio, skills, trainings), expert directory, public profiles
+projects/           Project model + publishing flow + company workspace; optional
+                    media: reference links, image gallery, documents (uploads) and
+                    YouTube embeds: all optional                          [Epic 1-2]
+certification/      ProjectContribution + ExpertInvitation flows,
+                    magic-link landing AND logged-in review route          [Epic 3-5]
+cv_generator/       Multi-skin CV engine (academic Harvard/MIT · AFD · World Bank,
+                    FR/EN), preview + WeasyPrint PDF export, on-site examples
+                    via `seed_demo_expert`                                 [Epic 7]
+jobs/               Job board: publish offers, applications with cover letters,
+                    accept/decline decisions (both notified), deadline reminders [Epic 8]
+templates/          base.html (Tailwind tokens + components), split-screen auth shell,
+                    full-screen landing hero (free-license photos in static/img/)
 specs/              product specifications (FR)
 ```
 
@@ -101,12 +110,25 @@ specs/              product specifications (FR)
 
 Tokens live in `templates/base.html` inside `tailwind.config`:
 
-- `military` green — headers/nav/primary buttons, "Certified" badges (dominant color)
-- `accent` pink — CTAs, confirm actions, pending badges (used sparingly)
-- `white` / `charcoal` — surfaces, text, footer
+- `military` green: headers/nav/primary buttons, "Certified" badges (dominant color)
+- `accent` pink: CTAs, confirm actions, pending badges (used sparingly)
+- `white` / `charcoal`: surfaces, text, footer
 
 Reusable component classes defined there: `.btn-primary`, `.btn-accent`,
-`.btn-outline`, `.card`, `.badge-certified`, `.badge-pending`.
+`.btn-outline`, `.card`, `.badge-certified`, `.badge-pending`,
+`.badge-rejected`, plus the form system (`.form-label`, `.form-input`,
+`.form-help`, `.form-error`). `:root { color-scheme: light }` prevents OS
+dark mode from inverting form controls.
+
+## Demo data
+
+```bash
+python manage.py seed_demo_expert   # demo expert w/ certified projects (idempotent)
+```
+
+Creates `aminata.sow@demo.urbantrack / Demo!Expert2025` with two certified
+projects, skills and trainings: log in as her to see the dashboard, CV
+builder examples (all three skins, FR/EN) and the public profile.
 
 ## Business invariants (enforced from Epic 1 onward)
 
@@ -125,15 +147,22 @@ Reusable component classes defined there: `.btn-primary`, `.btn-accent`,
 | -1 | Bootstrap: repo, apps, SQLite, Tailwind JS, User + OX-ID, CI | ✅ done |
 | 0 | Design system & UI foundations (tokens, components, badges, profile typography) | ✅ done |
 | 1 | Core data models + cross-confirmation state machine + integrity constraints | ✅ done |
-| 2 | Project publishing screens (company side) | 🚧 next (service layer ready) |
-| 3 | Expert invitation & landing (magic link) | pending |
-| 4 | Certification & public profile | pending |
-| 5 | Edge cases: reminders/expiry (sync command), disputes | pending |
-| 6 | Email infrastructure (SendGrid) & security | pending |
-| 7 | Multi-template CV generator (WeasyPrint): World Bank template, AFD and European model | pending |
+| 2 | Project publishing screens (create → declare contributors → publish/archive) | ✅ done |
+| 3 | Expert invitation & landing (magic link + inline account creation) | ✅ done |
+| 4 | Certification & public profile (directory, project pages, cross-links, trust score) | ✅ done |
+| 5 | Edge cases: `process_invitations` command (reminders/expiry), disputes + admin arbitration actions | ✅ done |
+| 6 | Email infrastructure (SendGrid) & open/click tracking | 🚧 console backend works; provider integration pending |
+| 7 | Multi-template CV generator (WeasyPrint): Harvard/MIT, AFD and World Bank skins, FR/EN + portfolio self-edit | ✅ done |
+| 8 | Job board: publish, apply, accept/decline notifications, deadline reminders | ✅ done |
 | 9 | External connectors (World Bank API, AFD API) | pending |
 | 10 | AI matchmaking & success prediction | pending |
-| 8 | Job board | pending |
+
+Scheduled tasks (cron entry points):
+
+```bash
+python manage.py process_invitations   # certification reminders (max 2) then expiry
+python manage.py process_jobs          # job-deadline reminders for pending applications
+```
 
 ## Flagged decisions
 

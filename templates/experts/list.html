@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Experts: Urban Track{% endblock %}
+
+{% block content %}
+  <section class="bg-military-700 text-white">
+    <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <h1 class="text-3xl font-black tracking-tight">Experts</h1>
+      <p class="mt-2 max-w-2xl text-military-100">
+        Professionals whose track records are certified through independent
+        cross-confirmation: never self-declared.
+      </p>
+      <form method="get" action="{% url 'accounts:expert_list' %}" class="mt-6 max-w-lg">
+        <div class="flex gap-2">
+          <input type="text" name="q" value="{{ query }}" placeholder="Search by name, skill, city…"
+                 class="form-input flex-1 !bg-white !text-charcoal-900">
+          <button type="submit" class="btn-accent !px-5">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
+            </svg>
+          </button>
+        </div>
+        {% if query %}
+          <p class="mt-2 text-sm text-military-100">Showing results for "<strong>{{ query }}</strong>"
+            — <a href="{% url 'accounts:expert_list' %}" class="underline hover:text-white">clear</a>
+          </p>
+        {% endif %}
+      </form>
+    </div>
+  </section>
+
+  <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+    {% if experts %}
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {% for expert in experts %}
+          <a href="{% url 'accounts:public_profile' expert.professional_id %}" class="card-expert block">
+            <div class="flex items-center gap-3">
+              <span aria-hidden="true" class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-military-100 text-sm font-black text-military-900">
+                {{ expert.initials }}
+              </span>
+              <div class="min-w-0">
+                <p class="truncate font-bold leading-snug">{{ expert.get_full_name|default:expert.username }}</p>
+                <p class="font-mono text-xs text-charcoal-300">ID {{ expert.professional_id }}</p>
+              </div>
+            </div>
+            {% if expert.expert_profile.headline %}
+              <p class="mt-3 line-clamp-2 text-sm text-charcoal-700">{{ expert.expert_profile.headline }}</p>
+            {% endif %}
+            {% with c=expert.expert_profile.confirmed_contributions %}
+              <p class="mt-3 text-xs font-medium uppercase tracking-wide text-charcoal-300">
+                {{ c.count }} certified contribution{{ c.count|pluralize }}
+              </p>
+            {% endwith %}
+          </a>
+        {% endfor %}
+      </div>
+
+      {% if is_paginated %}
+        <nav class="mt-8 flex justify-center gap-2 text-sm" aria-label="Pagination">
+          {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" class="btn-outline !px-3 !py-1.5">Previous</a>
+          {% endif %}
+          <span class="px-3 py-1.5 font-semibold text-charcoal-700">Page {{ page_obj.number }} / {{ paginator.num_pages }}</span>
+          {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}" class="btn-outline !px-3 !py-1.5">Next</a>
+          {% endif %}
+        </nav>
+      {% endif %}
+    {% else %}
+      <div class="card border-dashed text-center text-charcoal-700">
+        <p>No experts yet.</p>
+        <p class="mt-1 text-sm">Profiles appear as soon as the first experts join.</p>
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}

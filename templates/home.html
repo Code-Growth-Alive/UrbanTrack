@@ -1,28 +1,46 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}Urban Track — Cross-verified expertise for urban development in Africa{% endblock %}
+{% block title %}Urban Track: Cross-verified expertise for urban development in Africa{% endblock %}
 
 {% block content %}
-  <!-- Hero: military green dominates institutional surfaces -->
-  <section class="bg-military-700 text-white">
-    <div class="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+  <!-- Hero: full-screen, free-license photo backdrop under a military-green wash -->
+  <section class="relative flex min-h-[calc(100vh-4rem)] items-center overflow-hidden bg-military-900 text-white">
+    <img src="{% static 'img/hero-city.jpg' %}" alt="" aria-hidden="true"
+         class="absolute inset-0 h-full w-full object-cover opacity-40">
+    <div class="absolute inset-0 bg-gradient-to-r from-military-900/95 via-military-900/80 to-military-700/50"></div>
+    <div class="relative mx-auto w-full max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
       <span class="badge-certified mb-6 !bg-military-500/40 !text-military-50">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-3.5 w-3.5"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
         Certified via cross-confirmation
       </span>
-      <h1 class="max-w-3xl text-4xl font-black leading-tight tracking-tight sm:text-5xl">
+      <h1 class="max-w-3xl text-4xl font-black leading-tight tracking-tight sm:text-5xl lg:text-6xl">
         The trust layer of urban development in&nbsp;Africa.
       </h1>
-      <p class="mt-4 max-w-2xl text-lg text-military-100">
+      <p class="mt-5 max-w-2xl text-lg text-military-100">
         Companies publish the projects they carried out and declare their experts.
         Experts confirm their contribution. Only cross-confirmed experience gets
-        the certified badge — like co-authors on ResearchGate.
+        the certified badge: like co-authors on ResearchGate.
       </p>
-      <div class="mt-8 flex flex-wrap gap-3">
-        <a href="#" class="btn-primary !bg-white !text-military-700 hover:!bg-military-100">Publish a project</a>
-        <a href="#" class="btn-accent">Join as an expert</a>
-        <a href="#" class="btn-outline !border-military-300 !text-military-100 hover:!bg-military-700">Browse experts</a>
+      <div class="mt-9 flex flex-wrap gap-3">
+        <a href="{% url 'projects:create' %}" class="btn-primary !bg-white !text-military-700 hover:!bg-military-100">Publish a project</a>
+        <a href="{% url 'accounts:signup' %}" class="btn-accent">Join as an expert</a>
+        <a href="{% url 'accounts:expert_list' %}" class="btn-outline !border-military-300 !text-military-100 hover:!bg-military-700">Browse experts</a>
       </div>
+      <dl class="mt-14 grid max-w-2xl grid-cols-3 gap-6 border-t border-white/15 pt-8 text-sm">
+        <div>
+          <dt class="font-medium text-military-100/70">Certification source</dt>
+          <dd class="mt-1 font-bold">Cross-confirmation, never self-declaration</dd>
+        </div>
+        <div>
+          <dt class="font-medium text-military-100/70">Identity</dt>
+          <dd class="mt-1 font-bold">One permanent OX-XXXXXX professional ID</dd>
+        </div>
+        <div>
+          <dt class="font-medium text-military-100/70">CV export</dt>
+          <dd class="mt-1 font-bold">Harvard-MIT · AFD · World Bank formats</dd>
+        </div>
+      </dl>
     </div>
   </section>
 
@@ -31,14 +49,14 @@
     <h2 class="text-2xl font-bold tracking-tight">How certification works</h2>
     <p class="mt-2 max-w-2xl text-charcoal-700">
       No self-declared CVs. No manual admin validation. An independent double
-      confirmation — the only human intervention is dispute arbitration.
+      confirmation: the only human intervention is dispute arbitration.
     </p>
     <ol class="mt-8 grid gap-6 md:grid-cols-3">
       <li class="card">
         <p class="text-sm font-semibold text-accent-500">Step 1</p>
         <h3 class="mt-1 font-bold">The company publishes a project</h3>
         <p class="mt-2 text-sm text-charcoal-700">
-          Official name, deliverables, duration, budget, client — then declares
+          Official name, deliverables, duration, budget, client: then declares
           each expert who contributed, with role and bullets.
         </p>
       </li>
@@ -55,7 +73,7 @@
         <h3 class="mt-1 font-bold">The experience becomes certified</h3>
         <p class="mt-2 text-sm text-charcoal-700">
           It appears on the expert's public profile with a traceable link to
-          the project page — and feeds every generated CV.
+          the project page: and feeds every generated CV.
         </p>
       </li>
     </ol>

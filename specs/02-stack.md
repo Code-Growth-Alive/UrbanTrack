@@ -1,9 +1,9 @@
-# Urban Track — Spécification technique (stack)
+# Urban Track: Spécification technique (stack)
 
 ## 1. Vue d'ensemble
 - **Backend** : Python / Django (monolithe modulaire, ORM natif adapté au modèle de données relationnel du projet)
-- **Frontend** : Django Templates + **Tailwind CSS** (server-rendered, progressive enhancement via Alpine.js ou HTMX pour l'interactivité légère — formulaire de contributeurs dynamique, confirmation en un clic)
-- **Base de données** : SQLite (données utilisateurs, projets, contributions — relationnel, intégrité forte requise pour la certification)
+- **Frontend** : Django Templates + **Tailwind CSS** (server-rendered, progressive enhancement via Alpine.js ou HTMX pour l'interactivité légère: formulaire de contributeurs dynamique, confirmation en un clic)
+- **Base de données** : SQLite (données utilisateurs, projets, contributions: relationnel, intégrité forte requise pour la certification)
 - **Génération de documents** : WeasyPrint (à intégrer dès le départ, rien n'est en place) pour les CV PDF multi-templates
 - **Tâches asynchrones / planifiées** : Celery + Celery Beat (ou cron) + Redis comme broker, pour les relances automatiques et l'expiration des invitations
 - **Email transactionnel** : SendGrid, Mailgun ou Amazon SES (à trancher), avec suivi ouverture/clic
@@ -11,7 +11,7 @@
 - **API** : Django REST Framework, architecture API-first pour permettre les connecteurs externes (Banque Mondiale, AFD et autres partenaires stratégiques)
 - **OXID / ID unique** : chaque expert a un identifiant unique et permanent, utilisé pour le dédoublonnage et la traçabilité des contributions certifiées (OX-XXXXXX)
 
-## 2. Identité visuelle — Design system Tailwind
+## 2. Identité visuelle: Design system Tailwind
 
 ### 2.1 Palette de couleurs
 | Rôle | Nom du token | Usage |
@@ -44,13 +44,13 @@ theme: {
 
 ### 2.2 Principes d'usage
 - Vert militaire = confiance institutionnelle (dominante, 60–70 % des surfaces)
-- Rose = actions et statuts vivants (boutons "Confirmer", badges "En attente", notifications) — utilisé avec parcimonie pour ne pas diluer son effet d'attention
+- Rose = actions et statuts vivants (boutons "Confirmer", badges "En attente", notifications): utilisé avec parcimonie pour ne pas diluer son effet d'attention
 - Blanc / gris anthracite = lisibilité, structure, hiérarchie typographique
 - Deux badges (pas de flux historique à distinguer, projet greenfield) : "Certifié via confirmation croisée" (vert + icône check) et "En attente de confirmation" (rose/orange neutre)
 
-## 3. Modèle de données (Django) — composants clés
+## 3. Modèle de données (Django): composants clés
 - `Project` (nouveau, à créer) : `official_name`, `description`, `deliverables`, `duration_start/end`, `budget`, `client_name`, `status` (Draft/Published/Archived), `visibility` (Public/Privé)
-- `ProjectContribution` (nouveau — cœur du système) : `project` (FK), `expert` (FK nullable), `invited_email`, `role_type` (Directeur/Manager/Assistant/Spécialiste), `contribution_bullets`, `status` (invited → pending_confirmation → confirmed/rejected/disputed), `added_by` (FK User entreprise), `confirmed_at`
+- `ProjectContribution` (nouveau: cœur du système) : `project` (FK), `expert` (FK nullable), `invited_email`, `role_type` (Directeur/Manager/Assistant/Spécialiste), `contribution_bullets`, `status` (invited → pending_confirmation → confirmed/rejected/disputed), `added_by` (FK User entreprise), `confirmed_at`
 - `ExpertInvitation` (nouveau) : `contribution` (FK), `email`, `token` (UUID unique), `sent_at`, `expires_at` (~14 jours), `status` (sent/opened/converted/expired), `reminder_count`
 - `CVTemplate` (config) : templates pluggables `templates/cv/world_bank.html`, `templates/cv/afd.html`, `templates/cv/academic_harvard_mit.html`, alimentés par la même source de données (profil + contributions certifiées), champ `cv_template` sur le générateur, rendu bilingue FR/EN dupliqué par template
 

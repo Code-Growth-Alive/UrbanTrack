@@ -1,9 +1,9 @@
-# Urban Track — Spécification de description produit
+# Urban Track: Spécification de description produit
 
 ## 1. Nom du produit
 **Urban Track** (anciennement "Urban Track AI"). Le nom est simplifié pour insister sur la fonction première : tracer, prouver et certifier les expériences réelles des experts du développement urbain en Afrique.
 
-> **Contexte projet** : reprise à zéro. Aucun code, aucune base de données, aucun écran n'existe encore. Cette spec décrit donc un projet **greenfield** — tout est à construire, y compris le job board, le générateur de CV et le module de certification. Il n'y a pas d'ancien flux "auto-déclaré" à faire cohabiter avec le nouveau : le flux de confirmation croisée est le seul et unique flux de certification. Il n'y a pas non plus de logique de version (pas de "V1" minimale suivie d'itérations) : ce qui est décrit ici est le périmètre complet du produit.
+> **Contexte projet** : reprise à zéro. Aucun code, aucune base de données, aucun écran n'existe encore. Cette spec décrit donc un projet **greenfield**: tout est à construire, y compris le job board, le générateur de CV et le module de certification. Il n'y a pas d'ancien flux "auto-déclaré" à faire cohabiter avec le nouveau : le flux de confirmation croisée est le seul et unique flux de certification. Il n'y a pas non plus de logique de version (pas de "V1" minimale suivie d'itérations) : ce qui est décrit ici est le périmètre complet du produit.
 
 ## 2. Le problème (pourquoi)
 - **CV invérifiables** : rien ne prouve qu'un expert a réellement fait ce qu'il déclare. 50–90 % des CV du secteur contiennent des informations fausses ou exagérées.
@@ -15,11 +15,11 @@ Urban Track est une plateforme centrale qui applique une **logique de preuve cro
 
 - Sur ResearchGate, une publication n'est crédible que lorsque les co-auteurs déclarés confirment eux-mêmes y avoir contribué. Urban Track applique le même principe aux **projets urbains** : ce n'est plus l'expert qui déclare unilatéralement une expérience, c'est **l'entreprise qui a réalisé le projet qui le publie et qui déclare les contributeurs**. Chaque expert cité est ensuite invité à confirmer, ajuster ou refuser sa contribution.
 - Comme sur ResearchGate, chaque **profil expert** devient une page publique consultable, listant uniquement les expériences **confirmées par les deux parties** (entreprise + expert), avec un badge de certification et un lien traçable vers la fiche projet correspondante.
-- Cette double confirmation indépendante remplace la validation manuelle par un admin dans la majorité des cas — l'admin n'intervient qu'en cas de litige (contribution contestée), exactement comme un modérateur de plateforme scientifique n'intervient qu'en cas de conflit entre auteurs.
+- Cette double confirmation indépendante remplace la validation manuelle par un admin dans la majorité des cas: l'admin n'intervient qu'en cas de litige (contribution contestée), exactement comme un modérateur de plateforme scientifique n'intervient qu'en cas de conflit entre auteurs.
 - À terme, un moteur d'intelligence artificielle exploite cette base certifiée pour recommander les meilleurs experts pour une mission (matchmaking) et estimer la probabilité de succès d'un projet selon l'équipe choisie.
 
 ## 4. Positionnement : la "Trust Layer"
-Urban Track se positionne comme la **couche de confiance** du secteur — l'argument de vente principal face aux donateurs (Banque Mondiale, UE, BAD). Chaque affirmation présente sur la plateforme doit pouvoir remonter à un projet documenté et à une confirmation croisée vérifiable, exactement comme une affirmation scientifique doit remonter à une publication et à ses auteurs vérifiés.
+Urban Track se positionne comme la **couche de confiance** du secteur: l'argument de vente principal face aux donateurs (Banque Mondiale, UE, BAD). Chaque affirmation présente sur la plateforme doit pouvoir remonter à un projet documenté et à une confirmation croisée vérifiable, exactement comme une affirmation scientifique doit remonter à une publication et à ses auteurs vérifiés.
 
 ## 5. Logique "ResearchGate" appliquée module par module
 | Concept ResearchGate | Équivalent Urban Track |
@@ -38,10 +38,10 @@ Urban Track se positionne comme la **couche de confiance** du secteur — l'argu
 Comme il n'y a pas d'existant à faire évoluer, les choix issus des docs de départ deviennent directement des **décisions de scope définitives**, pas des étapes intermédiaires :
 | Sujet | Décision |
 |---|---|
-| Job board | Fait partie intégrante du produit, au même titre que les autres modules — construit après le cœur de certification, pas "en option" |
+| Job board | Fait partie intégrante du produit, au même titre que les autres modules: construit après le cœur de certification, pas "en option" |
 | Certification | Uniquement le flux de confirmation croisée entreprise/expert ; pas de flux "auto-déclaré" à prévoir |
 | CV | Générateur multi-templates (un moteur, plusieurs skins) dès la conception |
-| Ajout de projet | Uniquement le flux "l'entreprise publie et invite, l'expert confirme" (logique ResearchGate) — pas de saisie libre par l'expert |
+| Ajout de projet | Uniquement le flux "l'entreprise publie et invite, l'expert confirme" (logique ResearchGate): pas de saisie libre par l'expert |
 
 ## 8. Identité visuelle (contrainte produit)
 - **Couleur de base** : vert militaire (institutionnel, sérieux, "terrain")

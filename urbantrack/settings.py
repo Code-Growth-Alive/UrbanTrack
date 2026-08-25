@@ -9,7 +9,8 @@ company that publishes a project and the experts who contributed to it
 Configuration is driven by environment variables loaded from a `.env` file
 at the repository root (see `.env.example`). Database is SQLite per project
 decision; async work runs synchronously (no Celery/Redis); styling uses the
-Tailwind browser JS build configured in `templates/base.html`.
+Tailwind browser JS build (vendored at `static/vendor/tailwind.js`)
+configured in `templates/base.html`.
 """
 
 import os
@@ -109,6 +110,11 @@ DATABASES = {
 # https://docs.djangoproject.com/en/6.1/topics/auth/customizing/
 
 AUTH_USER_MODEL = "accounts.User"
+
+# Auth flow URLs (Epic 3: magic-link landing bounces anonymous actors here).
+LOGIN_URL = "accounts:login"
+LOGIN_REDIRECT_URL = "accounts:dashboard"
+LOGOUT_REDIRECT_URL = "home"
 
 AUTH_PASSWORD_VALIDATORS = [
     {

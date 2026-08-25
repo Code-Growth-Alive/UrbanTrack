@@ -19,6 +19,13 @@ urlpatterns = [
     ),
     path("", include("accounts.urls")),
     path("", include("projects.urls")),
+    path("", include("certification.urls")),
+    path("jobs/", include("jobs.urls")),
+    path("cv/", include("cv_generator.urls")),
+    path("about/", TemplateView.as_view(template_name="about.html"), name="about"),
     # Browsable-API login/logout for the DRF surface.
     path("api/", include("rest_framework.urls")),
 ]
+
+handler404 = "urbantrack.views.handler404"
+handler500 = "urbantrack.views.handler500"

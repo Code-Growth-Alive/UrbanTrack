@@ -1,0 +1,8 @@
+# Generated LaTeX auxiliary and log files
+*.aux
+*.log
+*.nav
+*.out
+*.snm
+*.toc
+*.vrb

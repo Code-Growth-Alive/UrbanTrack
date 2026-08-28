@@ -171,12 +171,18 @@ MEDIA_ROOT = BASE_DIR / "media"
 # production overrides via environment variables (SMTP relay).
 EMAIL_BACKEND = env("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", "noreply@urbantrack.africa")
-if EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend":
-    EMAIL_HOST = env("EMAIL_HOST", "smtp.sendgrid.net")
-    EMAIL_PORT = int(env("EMAIL_PORT", "587"))
-    EMAIL_HOST_USER = env("EMAIL_HOST_USER", "apikey")
-    EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", "")
-    EMAIL_USE_TLS = True
+EMAIL_HOST = env("EMAIL_HOST", "smtp.sendgrid.net")
+EMAIL_PORT = int(env("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", "apikey")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_SSL = env("EMAIL_USE_SSL", "False").lower() in ("1", "true", "yes")
+EMAIL_USE_TLS = env("EMAIL_USE_TLS", "False").lower() in ("1", "true", "yes")
+EMAIL_TIMEOUT = int(env("EMAIL_TIMEOUT", "20"))
+
+
+# Absolute base URL used to build clickable links in transactional emails
+# (localhost in development, a real domain in production).
+SITE_BASE_URL = env("SITE_BASE_URL", "http://localhost:8000").rstrip("/")
 
 
 # Urban Track business constants

@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     "certification.apps.CertificationConfig",
     "cv_generator.apps.CvGeneratorConfig",
     "jobs.apps.JobsConfig",
+    "adminpanel.apps.AdminpanelConfig",
 ]
 
 MIDDLEWARE = [

@@ -1,0 +1,61 @@
+{% extends "adminpanel/base.html" %}
+
+{% block admin_title %}Edit user: {{ target.get_full_name|default:target.username }}{% endblock %}
+
+{% block admin_content %}
+  <div class="card max-w-2xl">
+    <p class="text-sm text-charcoal-700">
+      {{ target.email }} · <span class="font-mono">{{ target.professional_id }}</span>
+      · joined {{ target.date_joined|date:"d M Y" }}
+    </p>
+
+    {% if form.non_field_errors %}
+      <ul class="form-error mt-4">{% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}</ul>
+    {% endif %}
+
+    <form method="post" class="mt-6 space-y-4">
+      {% csrf_token %}
+      <div class="grid gap-4 sm:grid-cols-2">
+        {% for field in form %}
+          {% if field.name != "role" and field.name != "password" %}
+            <div>
+              <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}<p class="form-help">{{ field.help_text }}</p>{% endif %}
+              {% if field.errors %}<ul class="form-error">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form.role.id_for_label }}" class="form-label">{{ form.role.label }}</label>
+        {{ form.role }}
+        {% if form.role.errors %}<ul class="form-error">{% for e in form.role.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+
+      <div>
+        <label for="{{ form.password.id_for_label }}" class="form-label">{{ form.password.label }}</label>
+        {{ form.password }}
+        {% if form.password.help_text %}<p class="form-help">{{ form.password.help_text }}</p>{% endif %}
+      </div>
+
+      <div class="flex flex-wrap gap-4 pt-2">
+        <label class="flex items-center gap-2 text-sm font-medium text-charcoal-900">
+          {{ form.is_active }} Active
+        </label>
+        <label class="flex items-center gap-2 text-sm font-medium text-charcoal-900">
+          {{ form.is_staff }} Staff
+        </label>
+        <label class="flex items-center gap-2 text-sm font-medium text-charcoal-900">
+          {{ form.is_superuser }} Superuser
+        </label>
+      </div>
+
+      <div class="flex flex-wrap gap-3 pt-2">
+        <button type="submit" class="btn-primary">Save changes</button>
+        <a href="{% url 'adminpanel:user_list' %}" class="btn-outline">Cancel</a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

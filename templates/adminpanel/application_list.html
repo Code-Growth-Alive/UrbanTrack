@@ -1,0 +1,57 @@
+{% extends "adminpanel/base.html" %}
+
+{% block admin_title %}Applications{% endblock %}
+{% block admin_actions %}
+  <select name="status" onchange="if(this.value) window.location.href = '?status=' + this.value;"
+          class="form-input max-w-[200px] appearance-none pr-9">
+    <option value="" {% if not status %}selected{% endif %}>All statuses</option>
+    <option value="{{ status_pending }}" {% if status == status_pending %}selected{% endif %}>Pending review</option>
+    <option value="{{ status_accepted }}" {% if status == status_accepted %}selected{% endif %}>Accepted</option>
+    <option value="{{ status_rejected }}" {% if status == status_rejected %}selected{% endif %}>Not retained</option>
+  </select>
+{% endblock %}
+
+{% block admin_content %}
+  <div class="overflow-x-auto">
+    <table class="w-full min-w-[720px] border-separate border-spacing-y-2 text-left text-sm">
+      <thead>
+        <tr class="text-xs uppercase tracking-wide text-charcoal-300">
+          <th class="px-4 pb-1 font-medium">Applicant</th>
+          <th class="px-4 pb-1 font-medium">Job</th>
+          <th class="px-4 pb-1 font-medium">Company</th>
+          <th class="px-4 pb-1 font-medium">Status</th>
+          <th class="px-4 pb-1 font-medium">Applied</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for application in applications %}
+          <tr class="bg-white shadow-sm [&>td]:first:rounded-l-lg [&>td]:last:rounded-r-lg">
+            <td class="border border-charcoal-900/5 px-4 py-3">
+              <a href="{% url 'accounts:public_profile' application.applicant.professional_id %}"
+                 class="font-semibold hover:text-accent-700 hover:underline">
+                {{ application.applicant.get_full_name|default:application.applicant.username }}
+              </a>
+              <span class="ml-1 font-mono text-xs text-charcoal-300">{{ application.applicant.professional_id }}</span>
+            </td>
+            <td class="border border-charcoal-900/5 px-4 py-3">
+              <a href="{{ application.job.get_absolute_url }}" class="hover:text-accent-700 hover:underline">{{ application.job.title }}</a>
+            </td>
+            <td class="border border-charcoal-900/5 px-4 py-3 text-charcoal-700">{{ application.job.published_by.organisation_name|default:application.job.published_by.get_full_name }}</td>
+            <td class="border border-charcoal-900/5 px-4 py-3">
+              {% if application.status == status_accepted %}
+                <span class="badge-certified">Accepted</span>
+              {% elif application.status == status_rejected %}
+                <span class="badge-rejected">Not retained</span>
+              {% else %}
+                <span class="badge-pending">Pending review</span>
+              {% endif %}
+            </td>
+            <td class="border border-charcoal-900/5 px-4 py-3 text-charcoal-300">{{ application.applied_at|date:"d M Y" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5" class="card border-dashed text-center text-charcoal-700">No applications found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

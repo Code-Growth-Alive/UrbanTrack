@@ -1,0 +1,44 @@
+{% extends "adminpanel/base.html" %}
+
+{% block admin_title %}Projects{% endblock %}
+
+{% block admin_content %}
+  <div class="overflow-x-auto">
+    <table class="w-full min-w-[720px] border-separate border-spacing-y-2 text-left text-sm">
+      <thead>
+        <tr class="text-xs uppercase tracking-wide text-charcoal-300">
+          <th class="px-4 pb-1 font-medium">Project</th>
+          <th class="px-4 pb-1 font-medium">Company</th>
+          <th class="px-4 pb-1 font-medium">Client</th>
+          <th class="px-4 pb-1 font-medium">Contributors</th>
+          <th class="px-4 pb-1 font-medium">Status</th>
+          <th class="px-4 pb-1 font-medium">Visibility</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for project in projects %}
+          <tr class="bg-white shadow-sm [&>td]:first:rounded-l-lg [&>td]:last:rounded-r-lg">
+            <td class="border border-charcoal-900/5 px-4 py-3 font-semibold">
+              <a href="{{ project.get_absolute_url }}" class="hover:text-accent-700 hover:underline">{{ project.official_name }}</a>
+            </td>
+            <td class="border border-charcoal-900/5 px-4 py-3 text-charcoal-700">{{ project.published_by.organisation_name|default:project.published_by.get_full_name }}</td>
+            <td class="border border-charcoal-900/5 px-4 py-3 text-charcoal-700">{{ project.client_name }}</td>
+            <td class="border border-charcoal-900/5 px-4 py-3">{{ project.contributions.count }}</td>
+            <td class="border border-charcoal-900/5 px-4 py-3">
+              {% if project.status == "published" %}
+                <span class="badge-certified">Published</span>
+              {% elif project.status == "draft" %}
+                <span class="badge-pending">Draft</span>
+              {% else %}
+                <span class="badge-rejected">Archived</span>
+              {% endif %}
+            </td>
+            <td class="border border-charcoal-900/5 px-4 py-3 text-charcoal-700">{{ project.get_visibility_display }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6" class="card border-dashed text-center text-charcoal-700">No projects yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

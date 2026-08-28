@@ -1,0 +1,79 @@
+{% extends "adminpanel/base.html" %}
+
+{% block admin_title %}Users{% endblock %}
+{% block admin_actions %}{% endblock %}
+
+{% block admin_content %}
+  <form method="get" class="mb-4 flex flex-wrap items-center gap-3">
+    <input type="text" name="q" value="{{ query }}" placeholder="Search name, email, OX-ID, organisation…"
+           class="form-input max-w-sm">
+    <select name="role" class="form-input max-w-[160px] appearance-none pr-9">
+      <option value="">All roles</option>
+      <option value="expert" {% if role == 'expert' %}selected{% endif %}>Expert</option>
+      <option value="company" {% if role == 'company' %}selected{% endif %}>Company</option>
+      <option value="donor" {% if role == 'donor' %}selected{% endif %}>Donor</option>
+    </select>
+    <button type="submit" class="btn-outline !px-4 !py-2 !text-sm">Filter</button>
+    <span class="text-sm text-charcoal-300">{{ total }} match{{ total|pluralize }}</span>
+  </form>
+
+  <div class="overflow-x-auto">
+    <table class="w-full min-w-[720px] border-separate border-spacing-y-2 text-left text-sm">
+      <thead>
+        <tr class="text-xs uppercase tracking-wide text-charcoal-300">
+          <th class="px-4 pb-1 font-medium">Account</th>
+          <th class="px-4 pb-1 font-medium">Role</th>
+          <th class="px-4 pb-1 font-medium">Organisation</th>
+          <th class="px-4 pb-1 font-medium">Status</th>
+          <th class="px-4 pb-1 font-medium">Staff</th>
+          <th class="px-4 pb-1"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+          <tr class="bg-white shadow-sm [&>td]:first:rounded-l-lg [&>td]:last:rounded-r-lg">
+            <td class="border border-charcoal-900/5 px-4 py-3">
+              <div class="flex items-center gap-3">
+                {% if user.avatar %}
+                  <img src="{{ user.avatar.url }}" alt="" class="h-8 w-8 rounded-full object-cover">
+                {% else %}
+                  <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-military-100 text-xs font-black text-military-700">{{ user.initials }}</span>
+                {% endif %}
+                <div>
+                  <p class="font-semibold">{{ user.get_full_name|default:user.username }}</p>
+                  <p class="text-xs text-charcoal-300">{{ user.email }} · <span class="font-mono">{{ user.professional_id }}</span></p>
+                </div>
+              </div>
+            </td>
+            <td class="border border-charcoal-900/5 px-4 py-3"><span class="role-chip">{{ user.get_role_display }}</span></td>
+            <td class="border border-charcoal-900/5 px-4 py-3 text-charcoal-700">{{ user.organisation_name|default:"—" }}</td>
+            <td class="border border-charcoal-900/5 px-4 py-3">
+              {% if user.is_active %}<span class="badge-certified">Active</span>{% else %}<span class="badge-rejected">Inactive</span>{% endif %}
+            </td>
+            <td class="border border-charcoal-900/5 px-4 py-3 text-charcoal-700">
+              {% if user.is_superuser %}Superuser{% elif user.is_staff %}Staff{% else %}—{% endif %}
+            </td>
+            <td class="border border-charcoal-900/5 px-4 py-3 text-right">
+              <div class="flex flex-wrap items-center justify-end gap-2">
+                <a href="{% url 'adminpanel:user_edit' user.pk %}" class="btn-outline !px-3 !py-1.5 !text-xs">Edit</a>
+                <form method="post" action="{% url 'adminpanel:user_toggle' user.pk %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn-outline !px-3 !py-1.5 !text-xs {% if user.is_active %}!border-red-300 !text-red-700 hover:!bg-red-50{% else %}!text-military-700{% endif %}">
+                    {% if user.is_active %}Deactivate{% else %}Reactivate{% endif %}
+                  </button>
+                </form>
+                <form method="post" action="{% url 'adminpanel:user_delete' user.pk %}"
+                      onsubmit="return confirm('Permanently delete this account? Prefer deactivation when the user has data.');">
+                  {% csrf_token %}
+                  <button type="submit" class="btn-outline !px-3 !py-1.5 !text-xs !border-red-300 !text-red-700 hover:!bg-red-50">Delete</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6" class="card border-dashed text-center text-charcoal-700">No matching users.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

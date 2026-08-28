@@ -13,6 +13,7 @@ from django.views.generic import TemplateView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("admin-panel/", include("adminpanel.urls")),
     path(
         "",
         TemplateView.as_view(template_name="home.html"),

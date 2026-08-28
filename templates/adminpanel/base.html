@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <p class="text-sm font-medium uppercase tracking-wide text-charcoal-300">System administration</p>
+        <h1 class="mt-1 text-2xl font-black tracking-tight sm:text-3xl">{% block admin_title %}{% endblock %}</h1>
+      </div>
+      {% block admin_actions %}{% endblock %}
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 border-b border-charcoal-900/10 pb-px text-sm font-medium">
+      <a href="{% url 'adminpanel:dashboard' %}"
+         class="{% if request.resolver_match.url_name == 'dashboard' %}border-b-2 border-military-500 text-military-700{% else %}text-charcoal-700 hover:text-military-700{% endif %} -mb-px border-b-2 px-3 py-2">Overview</a>
+      <a href="{% url 'adminpanel:user_list' %}"
+         class="{% if request.resolver_match.url_name|slice:':4' == 'user' %}border-b-2 border-military-500 text-military-700{% else %}text-charcoal-700 hover:text-military-700{% endif %} -mb-px border-b-2 px-3 py-2">Users</a>
+      <a href="{% url 'adminpanel:job_list' %}"
+         class="{% if request.resolver_match.url_name|slice:':3' == 'job' %}border-b-2 border-military-500 text-military-700{% else %}text-charcoal-700 hover:text-military-700{% endif %} -mb-px border-b-2 px-3 py-2">Jobs</a>
+      <a href="{% url 'adminpanel:project_list' %}"
+         class="{% if request.resolver_match.url_name|slice:':7' == 'project' %}border-b-2 border-military-500 text-military-700{% else %}text-charcoal-700 hover:text-military-700{% endif %} -mb-px border-b-2 px-3 py-2">Projects</a>
+      <a href="{% url 'adminpanel:application_list' %}"
+         class="{% if request.resolver_match.url_name|slice:':11' == 'application' %}border-b-2 border-military-500 text-military-700{% else %}text-charcoal-700 hover:text-military-700{% endif %} -mb-px border-b-2 px-3 py-2">Applications</a>
+    </nav>
+
+    <div class="mt-8">
+      {% block admin_content %}{% endblock %}
+    </div>
+  </div>
+{% endblock %}

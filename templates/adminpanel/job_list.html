@@ -1,0 +1,38 @@
+{% extends "adminpanel/base.html" %}
+
+{% block admin_title %}Jobs{% endblock %}
+
+{% block admin_content %}
+  <div class="overflow-x-auto">
+    <table class="w-full min-w-[720px] border-separate border-spacing-y-2 text-left text-sm">
+      <thead>
+        <tr class="text-xs uppercase tracking-wide text-charcoal-300">
+          <th class="px-4 pb-1 font-medium">Job</th>
+          <th class="px-4 pb-1 font-medium">Company</th>
+          <th class="px-4 pb-1 font-medium">Location</th>
+          <th class="px-4 pb-1 font-medium">Applications</th>
+          <th class="px-4 pb-1 font-medium">Status</th>
+          <th class="px-4 pb-1 font-medium">Posted</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for job in jobs %}
+          <tr class="bg-white shadow-sm [&>td]:first:rounded-l-lg [&>td]:last:rounded-r-lg">
+            <td class="border border-charcoal-900/5 px-4 py-3 font-semibold">
+              <a href="{{ job.get_absolute_url }}" class="hover:text-accent-700 hover:underline">{{ job.title }}</a>
+            </td>
+            <td class="border border-charcoal-900/5 px-4 py-3 text-charcoal-700">{{ job.published_by.organisation_name|default:job.published_by.get_full_name }}</td>
+            <td class="border border-charcoal-900/5 px-4 py-3 text-charcoal-700">{{ job.city }}, {{ job.country }}</td>
+            <td class="border border-charcoal-900/5 px-4 py-3">{{ job.applications.count }}</td>
+            <td class="border border-charcoal-900/5 px-4 py-3">
+              {% if job.is_open %}<span class="badge-certified">Open</span>{% else %}<span class="badge-rejected">Closed</span>{% endif %}
+            </td>
+            <td class="border border-charcoal-900/5 px-4 py-3 text-charcoal-300">{{ job.created_at|date:"d M Y" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6" class="card border-dashed text-center text-charcoal-700">No jobs published yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

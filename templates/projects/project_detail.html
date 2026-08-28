@@ -3,6 +3,12 @@
 {% block title %}{{ project.official_name }}: Urban Track{% endblock %}
 
 {% block content %}
+  <style>
+    .lb-input { display: none; }
+    .lb-overlay { opacity: 0; visibility: hidden; pointer-events: none; }
+    .lb-input:checked + .lb-overlay { opacity: 1; visibility: visible; pointer-events: auto; }
+  </style>
+
   <!-- Header -->
   <section class="bg-military-700 text-white">
     <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -61,11 +67,16 @@
             <h2 class="section-title mb-3">Gallery</h2>
             <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {% for item in images %}
-                <figure class="group overflow-hidden rounded-xl border border-charcoal-900/10 shadow-sm">
-                  <img src="{{ item.file.url }}" alt="{{ item.caption|default:'Project image' }}" loading="lazy"
-                       class="aspect-[4/3] w-full object-cover transition group-hover:scale-105">
+                <figure class="group overflow-hidden rounded-xl border border-charcoal-900/10 bg-white shadow-sm">
+                  <label for="lightbox-{{ item.pk }}" class="relative block cursor-zoom-in overflow-hidden">
+                    <img src="{{ item.file.url }}" alt="{{ item.caption|default:'Project image' }}" loading="lazy"
+                         class="aspect-[4/3] w-full object-cover transition duration-300 group-hover:scale-105">
+                    <span class="absolute inset-0 grid place-items-center bg-black/0 text-white opacity-0 transition group-hover:bg-black/30 group-hover:opacity-100">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-8 w-8 drop-shadow"><path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/><path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>
+                    </span>
+                  </label>
                   {% if item.caption %}
-                    <figcaption class="bg-white px-2 py-1.5 text-[11px] text-charcoal-700">{{ item.caption }}</figcaption>
+                    <figcaption class="px-2 py-1.5 text-[11px] text-charcoal-700">{{ item.caption }}</figcaption>
                   {% endif %}
                 </figure>
               {% endfor %}
@@ -151,4 +162,23 @@
       </aside>
     </div>
   </div>
+
+  {% if images %}
+    {# CSS-only lightbox: clicking a gallery image opens it full size. #}
+    {% for item in images %}
+      <input type="checkbox" id="lightbox-{{ item.pk }}" class="lb-input hidden" aria-hidden="true">
+      <div class="lb-overlay invisible fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 opacity-0 transition">
+        <label for="lightbox-{{ item.pk }}" class="absolute inset-0 cursor-zoom-out" aria-label="Close"></label>
+        <figure class="relative max-h-full max-w-5xl">
+          <img src="{{ item.file.url }}" alt="{{ item.caption|default:'Project image' }}"
+               class="max-h-[85vh] w-auto rounded-lg shadow-2xl">
+          {% if item.caption %}
+            <figcaption class="mt-2 text-center text-sm text-white/90">{{ item.caption }}</figcaption>
+          {% endif %}
+        </figure>
+        <label for="lightbox-{{ item.pk }}"
+               class="absolute right-4 top-4 grid h-10 w-10 cursor-zoom-out place-items-center rounded-full bg-white/20 text-xl text-white hover:bg-white/30">✕</label>
+      </div>
+    {% endfor %}
+  {% endif %}
 {% endblock %}

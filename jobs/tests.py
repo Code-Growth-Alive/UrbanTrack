@@ -181,3 +181,110 @@ class JobViewTests(TestCase):
         self.client.post(reverse("jobs:manage", args=[self.job.pk]), {"action": "close"})
         self.job.refresh_from_db()
         self.assertFalse(self.job.is_open)
+
+
+class JobCrudTests(TestCase):
+    def setUp(self):
+        self.company = make_company()
+        self.expert = make_expert()
+        self.job = make_job(self.company)
+
+    def test_owner_can_edit_job(self):
+        self.client.force_login(self.company)
+        response = self.client.post(
+            reverse("jobs:update", args=[self.job.pk]),
+            {
+                "title": "Lead urban planner",
+                "city": "Dakar",
+                "country": "Senegal",
+                "contract_type": "full_time",
+                "description": "Lead everything.",
+                "requirements": "",
+                "compensation": "",
+                "deadline": "",
+            },
+        )
+        self.assertRedirects(response, reverse("jobs:manage", args=[self.job.pk]))
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.title, "Lead urban planner")
+
+    def test_non_owner_cannot_edit_job(self):
+        other = make_company(username="other", email="other@corp.com")
+        self.client.force_login(other)
+        response = self.client.post(
+            reverse("jobs:update", args=[self.job.pk]),
+            {"title": "Hijacked", "city": "X", "country": "Y", "description": "z"},
+        )
+        self.assertEqual(response.status_code, 403)
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.title, "Senior urban planner")
+
+    def test_open_job_cannot_be_deleted_directly(self):
+        self.client.force_login(self.company)
+        response = self.client.post(reverse("jobs:delete", args=[self.job.pk]))
+        self.assertRedirects(response, reverse("jobs:manage", args=[self.job.pk]))
+        self.assertTrue(Job.objects.filter(pk=self.job.pk).exists())
+
+    def test_closed_job_can_be_deleted_by_owner(self):
+        self.job.status = JobStatus.CLOSED
+        self.job.save()
+        self.client.force_login(self.company)
+        response = self.client.post(reverse("jobs:delete", args=[self.job.pk]))
+        self.assertRedirects(response, reverse("jobs:list"))
+        self.assertFalse(Job.objects.filter(pk=self.job.pk).exists())
+
+    def test_my_jobs_lists_own_offers_only(self):
+        other = make_company(username="other2", email="other2@corp.com")
+        make_job(other, title="Not mine")
+        self.client.force_login(self.company)
+        response = self.client.get(reverse("jobs:my_jobs"))
+        self.assertContains(response, self.job.title)
+        self.assertNotContains(response, "Not mine")
+
+    def test_expert_can_edit_pending_application(self):
+        application = apply_to_job(self.job, self.expert, "Original letter.")
+        self.client.force_login(self.expert)
+        response = self.client.post(
+            reverse("jobs:application_update", args=[application.pk]),
+            {"cover_letter": "Updated letter."},
+        )
+        self.assertRedirects(response, reverse("jobs:my_applications"))
+        application.refresh_from_db()
+        self.assertEqual(application.cover_letter, "Updated letter.")
+
+    def test_decided_application_cannot_be_edited(self):
+        application = apply_to_job(self.job, self.expert, "Original letter.")
+        decide_application(application, self.company, accept=True)
+        self.client.force_login(self.expert)
+        response = self.client.post(
+            reverse("jobs:application_update", args=[application.pk]),
+            {"cover_letter": "Edited after decision."},
+        )
+        self.assertRedirects(response, reverse("jobs:my_applications"))
+        application.refresh_from_db()
+        self.assertNotEqual(application.cover_letter, "Edited after decision.")
+
+    def test_expert_can_withdraw_pending_application(self):
+        application = apply_to_job(self.job, self.expert, "Cover letter.")
+        self.client.force_login(self.expert)
+        response = self.client.post(
+            reverse("jobs:application_withdraw", args=[application.pk])
+        )
+        self.assertRedirects(response, reverse("jobs:my_applications"))
+        self.assertFalse(JobApplication.objects.filter(pk=application.pk).exists())
+
+    def test_expert_cannot_edit_or_withdraw_others_application(self):
+        application = apply_to_job(self.job, self.expert, "Cover letter.")
+        stranger = make_expert(username="stranger", email="str@example.com")
+        self.client.force_login(stranger)
+        self.assertEqual(
+            self.client.get(
+                reverse("jobs:application_update", args=[application.pk])
+            ).status_code,
+            403,
+        )
+        response = self.client.post(
+            reverse("jobs:application_withdraw", args=[application.pk])
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(JobApplication.objects.filter(pk=application.pk).exists())

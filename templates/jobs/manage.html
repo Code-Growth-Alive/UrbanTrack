@@ -19,6 +19,7 @@
           {{ job.get_status_display }}
         </span>
         <a href="{{ job.get_absolute_url }}" class="btn-outline !px-3 !py-1.5 !text-xs">View public page</a>
+        <a href="{% url 'jobs:update' job.pk %}" class="btn-outline !px-3 !py-1.5 !text-xs">Edit</a>
       </div>
     </div>
 
@@ -113,6 +114,16 @@
         <input type="hidden" name="action" value="close">
         <p class="text-sm text-charcoal-700">Closing the offer stops new applications; existing ones stay visible.</p>
         <button type="submit" class="btn-outline shrink-0 !border-red-300 !text-red-700 hover:!bg-red-50">Close this offer</button>
+      </form>
+    {% else %}
+      <form method="post" action="{% url 'jobs:delete' job.pk %}"
+            class="card mt-8 flex items-center justify-between gap-4"
+            onsubmit="return confirm('Delete this job offer and all its applications? This cannot be undone.');">
+        {% csrf_token %}
+        <p class="text-sm text-charcoal-700">
+          This offer is closed. Delete it (and its applications) once it is no longer needed.
+        </p>
+        <button type="submit" class="btn-outline shrink-0 !border-red-300 !text-red-700 hover:!bg-red-50">Delete this offer</button>
       </form>
     {% endif %}
   </div>

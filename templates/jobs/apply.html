@@ -1,11 +1,14 @@
 {% extends "base.html" %}
 
-{% block title %}Apply: {{ job.title }}: Urban Track{% endblock %}
+{% block title %}{% if editing %}Edit application: {{ job.title }}{% else %}Apply: {{ job.title }}{% endif %}: Urban Track{% endblock %}
 
 {% block content %}
   <div class="mx-auto max-w-2xl px-4 py-12 sm:px-6">
-    <p class="text-sm font-medium uppercase tracking-wide text-charcoal-300">
-      Application: {{ job.published_by.organisation_name|default:job.published_by.get_full_name }}
+    {% if editing %}
+      <a href="{% url 'jobs:my_applications' %}" class="text-sm font-semibold text-military-700 hover:underline">&larr; Back to my applications</a>
+    {% endif %}
+    <p class="mt-3 text-sm font-medium uppercase tracking-wide text-charcoal-300">
+      {% if editing %}Editing application{% else %}Application{% endif %}: {{ job.published_by.organisation_name|default:job.published_by.get_full_name }}
     </p>
     <h1 class="mt-1 text-2xl font-black tracking-tight">{{ job.title }}</h1>
     <p class="mt-1 text-sm text-charcoal-700">{{ job.city }}, {{ job.country }}
@@ -26,7 +29,7 @@
         {% if form.cover_letter.help_text %}<p class="form-help">{{ form.cover_letter.help_text }}</p>{% endif %}
         {% if form.cover_letter.errors %}<p class="form-error">{{ form.cover_letter.errors.0 }}</p>{% endif %}
       </div>
-      <button type="submit" class="btn-accent w-full sm:w-auto">Send application</button>
+      <button type="submit" class="btn-accent w-full sm:w-auto">{% if editing %}Save changes{% else %}Send application{% endif %}</button>
     </form>
   </div>
 {% endblock %}

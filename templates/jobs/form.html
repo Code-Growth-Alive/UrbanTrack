@@ -1,10 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}Publish a job: Urban Track{% endblock %}
+{% block title %}{% if editing %}Edit job: Urban Track{% else %}Publish a job: Urban Track{% endif %}{% endblock %}
 
 {% block content %}
   <div class="mx-auto max-w-2xl px-4 py-12 sm:px-6">
-    <h1 class="text-2xl font-black tracking-tight">Publish a job offer</h1>
+    {% if editing %}
+      <a href="{% url 'jobs:manage' job.pk %}" class="text-sm font-semibold text-military-700 hover:underline">&larr; Back to {{ job.title }}</a>
+    {% endif %}
+    <h1 class="mt-3 text-2xl font-black tracking-tight">{% if editing %}Edit job offer{% else %}Publish a job offer{% endif %}</h1>
     <p class="mt-1 text-sm text-charcoal-700">
       Only the fields marked * are required. Applicants see your organisation,
       the mission and the deadline: decisions are emailed either way.
@@ -28,7 +31,7 @@
         </div>
       {% endfor %}
 
-      <button type="submit" class="btn-primary w-full sm:w-auto">Publish offer</button>
+      <button type="submit" class="btn-primary w-full sm:w-auto">{% if editing %}Save changes{% else %}Publish offer{% endif %}</button>
     </form>
   </div>
 {% endblock %}

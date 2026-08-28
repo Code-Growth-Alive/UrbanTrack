@@ -31,6 +31,17 @@
           {% else %}
             <span class="badge-pending">Pending review</span>
           {% endif %}
+
+          {% if application.status == status_pending %}
+            <div class="flex flex-wrap items-center gap-2">
+              <a href="{% url 'jobs:application_update' application.pk %}" class="btn-outline !px-3 !py-1.5 !text-xs">Edit</a>
+              <form method="post" action="{% url 'jobs:application_withdraw' application.pk %}"
+                    onsubmit="return confirm('Withdraw this application?');">
+                {% csrf_token %}
+                <button type="submit" class="btn-outline !px-3 !py-1.5 !text-xs !border-red-300 !text-red-700 hover:!bg-red-50">Withdraw</button>
+              </form>
+            </div>
+          {% endif %}
         </article>
       {% empty %}
         <p class="card border-dashed text-sm text-charcoal-700">

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}My job offers: Urban Track{% endblock %}
+
+{% block content %}
+  <div class="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-black tracking-tight">My job offers</h1>
+      <a href="{% url 'jobs:create' %}" class="btn-primary !px-4 !py-2 !text-sm">+ Publish a job</a>
+    </div>
+    <p class="mt-1 text-sm text-charcoal-700">
+      Publish offers, review applications and manage every position in one place.
+    </p>
+
+    <div class="mt-6 space-y-3">
+      {% for job in jobs %}
+        <article class="card-project flex flex-wrap items-center justify-between gap-3 py-4">
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <h2 class="font-bold leading-snug">
+                <a href="{{ job.get_absolute_url }}" class="hover:text-accent-700 hover:underline">{{ job.title }}</a>
+              </h2>
+              {% if job.status == status_open %}
+                <span class="badge-certified">Open</span>
+              {% else %}
+                <span class="badge-rejected">Closed</span>
+              {% endif %}
+            </div>
+            <p class="mt-0.5 text-sm text-charcoal-700">
+              {{ job.city }}, {{ job.country }}
+              · {{ job.applications.count }} application{{ job.applications.count|pluralize }}
+              {% if job.deadline %}· closes {{ job.deadline|date:"d M Y" }}{% endif %}
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <a href="{% url 'jobs:manage' job.pk %}" class="btn-outline !px-3 !py-1.5 !text-xs">Review applications</a>
+            <a href="{% url 'jobs:update' job.pk %}" class="btn-outline !px-3 !py-1.5 !text-xs">Edit</a>
+          </div>
+        </article>
+      {% empty %}
+        <p class="card border-dashed text-sm text-charcoal-700">
+          No job offer yet —
+          <a href="{% url 'jobs:create' %}" class="font-semibold text-accent-700 hover:underline">publish your first one</a>.
+        </p>
+      {% endfor %}
+    </div>
+  </div>
+{% endblock %}

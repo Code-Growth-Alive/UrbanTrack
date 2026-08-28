@@ -1,0 +1,18 @@
+{% extends "emails/base_email.html" %}
+{% block body %}
+  <p>Hi {{ first }},</p>
+  <p>Your application to <strong>“{{ title }}”</strong> ({{ org }}) has been sent.</p>
+  <p>Track its status from your Urban Track dashboard.</p>
+{% endblock %}
+{% block actions %}
+  <tr>
+    <td align="center" style="padding:8px 32px 8px 32px;">
+      <a href="{{ my_applications_url }}"
+         style="display:inline-block; background-color:#5c6b2f; color:#ffffff;
+                text-decoration:none; font-size:15px; font-weight:bold;
+                padding:13px 28px; border-radius:8px;">
+        Track my applications
+      </a>
+    </td>
+  </tr>
+{% endblock %}

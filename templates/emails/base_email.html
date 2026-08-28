@@ -1,0 +1,64 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>{{ subject|default:"Urban Track" }}</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f2f4ec; color:#2a3116; font-family:Arial, Helvetica, sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f2f4ec;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; width:100%;">
+          <!-- Header -->
+          <tr>
+            <td style="padding:0 0 24px 0; text-align:center;">
+              <span style="font-size:22px; font-weight:bold; color:#3f4a20; letter-spacing:-0.5px;">Urban Track</span>
+              <div style="font-size:12px; color:#5c6b2f; margin-top:2px; letter-spacing:1px; text-transform:uppercase;">The trust layer of urban development</div>
+            </td>
+          </tr>
+
+          <!-- Card -->
+          <tr>
+            <td style="background-color:#ffffff; border-radius:16px; padding:12px; border:1px solid #e1e6cf; box-shadow:0 4px 12px rgba(42,49,22,0.06);">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff; border-radius:12px;">
+                <tr>
+                  <td style="padding:32px 32px 8px 32px;">
+                    {% if heading %}
+                    <h1 style="margin:0 0 8px 0; font-size:24px; color:#2a3116; font-weight:700;">{{ heading }}</h1>
+                    {% endif %}
+                    {% if preheader %}
+                    <p style="margin:0 0 16px 0; font-size:15px; color:#3f4a20; line-height:1.5;">{{ preheader }}</p>
+                    {% endif %}
+                    <div style="height:1px; background-color:#e1e6cf; margin:8px 0 24px 0;"></div>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td style="padding:0 32px 8px 32px; font-size:15px; line-height:1.6; color:#3f3f3e;">
+                    {% block body %}{% endblock %}
+                  </td>
+                </tr>
+
+                {% block actions %}{% endblock %}
+
+                <tr>
+                  <td style="padding:24px 32px 32px 32px;">
+                    <div style="height:1px; background-color:#e1e6cf; margin-bottom:16px;"></div>
+                    <p style="margin:0; font-size:12px; color:#5c6b2f; line-height:1.5;">
+                      You received this email because of your activity on Urban&nbsp;Track.
+                      <br>© {% now "Y" %} Urban Track — the trust layer of urban development in Africa.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

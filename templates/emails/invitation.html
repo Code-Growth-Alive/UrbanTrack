@@ -1,0 +1,25 @@
+{% extends "emails/base_email.html" %}
+{% block body %}
+  <p>You have been identified as a contributor to the project
+     <strong>“{{ contribution.project.official_name }}”</strong>
+     by {{ company }}.</p>
+  <p>Proposed role: <strong>{{ contribution.get_role_type_display }}</strong>.</p>
+  <p>Please review your contribution and confirm it before
+     <strong>{{ invitation.expires_at|date:"F j, Y" }}</strong>.</p>
+{% endblock %}
+{% block actions %}
+  <tr>
+    <td align="center" style="padding:8px 32px 8px 32px;">
+      <a href="{{ confirm_url }}"
+         style="display:inline-block; background-color:#5c6b2f; color:#ffffff;
+                text-decoration:none; font-size:15px; font-weight:bold;
+                padding:13px 28px; border-radius:8px;">
+        Review &amp; confirm my contribution
+      </a>
+      <p style="margin:14px 0 0 0; font-size:13px; color:#a8a8a6;">
+        If the button does not work, open this link:<br>
+        <a href="{{ confirm_url }}" style="color:#5c6b2f; word-break:break-all;">{{ confirm_url }}</a>
+      </p>
+    </td>
+  </tr>
+{% endblock %}

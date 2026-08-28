@@ -1,0 +1,19 @@
+{% extends "emails/base_email.html" %}
+{% block body %}
+  <p>The offer <strong>“{{ title }}”</strong> closes on <strong>{{ deadline }}</strong>
+     and still has <strong>{{ count }}</strong> unreviewed
+     application(s).</p>
+  <p>Review them from your company dashboard before the deadline.</p>
+{% endblock %}
+{% block actions %}
+  <tr>
+    <td align="center" style="padding:8px 32px 8px 32px;">
+      <a href="{{ manage_url }}"
+         style="display:inline-block; background-color:#5c6b2f; color:#ffffff;
+                text-decoration:none; font-size:15px; font-weight:bold;
+                padding:13px 28px; border-radius:8px;">
+        Review applications
+      </a>
+    </td>
+  </tr>
+{% endblock %}

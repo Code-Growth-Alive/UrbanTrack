@@ -1,0 +1,25 @@
+{% extends "emails/base_email.html" %}
+{% block body %}
+  <p>Hi {{ first }},</p>
+  {% if accepted %}
+    <p>Congratulations! Your application to <strong>“{{ title }}”</strong>
+       ({{ org }}) has been <strong style="color:#5c6b2f;">accepted</strong>.</p>
+    <p>The company will contact you at {{ email }} to define the next steps.</p>
+  {% else %}
+    <p>After careful review, your application to <strong>“{{ title }}”</strong>
+       ({{ org }}) was not retained this time.</p>
+    <p>Your certified profile keeps growing: new missions are posted regularly.</p>
+  {% endif %}
+{% endblock %}
+{% block actions %}
+  <tr>
+    <td align="center" style="padding:8px 32px 8px 32px;">
+      <a href="{{ dashboard_url }}"
+         style="display:inline-block; background-color:#5c6b2f; color:#ffffff;
+                text-decoration:none; font-size:15px; font-weight:bold;
+                padding:13px 28px; border-radius:8px;">
+        Go to my dashboard
+      </a>
+    </td>
+  </tr>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "emails/base_email.html" %}
+{% block body %}
+  <p>Hello {{ name }},</p>
+  <p>{{ company }} identified you as <strong>{{ contribution.get_role_type_display }}</strong>
+     on the project <strong>“{{ contribution.project.official_name }}”</strong>.</p>
+  <p>Open your Urban Track dashboard to confirm, adjust or reject this contribution.</p>
+{% endblock %}
+{% block actions %}
+  <tr>
+    <td align="center" style="padding:8px 32px 8px 32px;">
+      <a href="{{ dashboard_url }}"
+         style="display:inline-block; background-color:#5c6b2f; color:#ffffff;
+                text-decoration:none; font-size:15px; font-weight:bold;
+                padding:13px 28px; border-radius:8px;">
+        Open my dashboard
+      </a>
+    </td>
+  </tr>
+{% endblock %}

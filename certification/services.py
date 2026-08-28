@@ -24,10 +24,11 @@ certification rules stay in one auditable place:
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.mail import send_mail
 from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+
+from urbantrack.emails import absolute_url, send_branded_mail
 
 from .models import (
     ContributionStatus,
@@ -138,7 +139,7 @@ def _invitation_body(invitation):
         f"Proposed role: {c.get_role_type_display()}.\n"
         f"Review and confirm your contribution before "
         f"{invitation.expires_at:%Y-%m-%d}:\n"
-        f"{invitation.magic_link_path}\n\n"
+        f"{absolute_url(invitation.magic_link_path)}\n\n"
         f"— Urban Track, the trust layer of urban development."
     )
 
@@ -147,26 +148,43 @@ def create_and_send_invitation(contribution):
     """Create the magic-link invitation and send the invitation email."""
     invitation = ExpertInvitation(contribution=contribution, email=contribution.invited_email)
     invitation.save()
-    send_mail(
+    confirm_url = absolute_url(invitation.magic_link_path)
+    send_branded_mail(
         subject=(
             f"[Urban Track] You have been identified as a contributor to "
             f"'{contribution.project.official_name}'"
         ),
-        message=_invitation_body(invitation),
-        from_email=settings.DEFAULT_FROM_EMAIL,
+        text=_invitation_body(invitation),
         recipient_list=[invitation.email],
+        template="emails/invitation.html",
+        context={
+            "heading": "You have been identified as a contributor",
+            "preheader": (
+                "An expert on the project "
+                f"'{contribution.project.official_name}' — confirm before "
+                f"{invitation.expires_at:%Y-%m-%d}."
+            ),
+            "contribution": contribution,
+            "invitation": invitation,
+            "company": (
+                contribution.added_by.organisation_name
+                or contribution.added_by.get_full_name()
+            ),
+            "confirm_url": confirm_url,
+        },
     )
     return invitation
 
 
 def _notify_registered_expert(contribution):
     """Email path for experts who already have an account (rule 2)."""
-    send_mail(
+    name = contribution.expert.get_full_name() or contribution.expert.username
+    send_branded_mail(
         subject=(
             f"[Urban Track] Confirm your contribution to '{contribution.project.official_name}'"
         ),
-        message=(
-            f"Hello {contribution.expert.get_full_name() or contribution.expert.username},\n\n"
+        text=(
+            f"Hello {name},\n\n"
             f"{contribution.added_by.organisation_name or 'A company'} identified you as "
             f"{contribution.get_role_type_display()} on project "
             f"'{contribution.project.official_name}'.\n"
@@ -174,8 +192,21 @@ def _notify_registered_expert(contribution):
             f"this contribution.\n\n"
             f"— Urban Track"
         ),
-        from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[contribution.invited_email],
+        template="emails/expert_notification.html",
+        context={
+            "heading": "Confirm your contribution",
+            "preheader": (
+                f"{contribution.added_by.organisation_name or 'A company'} identified you "
+                f"on '{contribution.project.official_name}'."
+            ),
+            "contribution": contribution,
+            "company": (
+                contribution.added_by.organisation_name or "A company"
+            ),
+            "name": name,
+            "dashboard_url": absolute_url("/accounts/dashboard/"),
+        },
     )
     if contribution.status == ContributionStatus.INVITED:
         contribution.status = ContributionStatus.PENDING_CONFIRMATION
@@ -261,14 +292,30 @@ def send_invitation_reminder(invitation):
         raise InvalidTransitionError(_("Reminder budget exhausted."))
     if not invitation.is_active:
         raise InvalidTransitionError(_("This invitation is no longer active."))
-    send_mail(
+    contribution = invitation.contribution
+    confirm_url = absolute_url(invitation.magic_link_path)
+    send_branded_mail(
         subject=(
             f"[Urban Track] Reminder: confirm your contribution to "
-            f"'{invitation.contribution.project.official_name}'"
+            f"'{contribution.project.official_name}'"
         ),
-        message=_invitation_body(invitation),
-        from_email=settings.DEFAULT_FROM_EMAIL,
+        text=_invitation_body(invitation),
         recipient_list=[invitation.email],
+        template="emails/reminder.html",
+        context={
+            "heading": "A gentle reminder",
+            "preheader": (
+                f"Confirm your contribution to '{contribution.project.official_name}' "
+                f"before {invitation.expires_at:%Y-%m-%d}."
+            ),
+            "contribution": contribution,
+            "invitation": invitation,
+            "company": (
+                contribution.added_by.organisation_name
+                or contribution.added_by.get_full_name()
+            ),
+            "confirm_url": confirm_url,
+        },
     )
     invitation.reminder_count += 1
     invitation.save(update_fields=["reminder_count"])
@@ -407,31 +454,54 @@ def resolve_dispute(contribution, staff_user, *, outcome, note=""):
 
 
 def _notify_company_of_certification(contribution, expert):
-    send_mail(
+    name = expert.get_full_name() or expert.email
+    send_branded_mail(
         subject=(
-            f"[Urban Track] {expert.get_full_name() or expert.email} confirmed "
+            f"[Urban Track] {name} confirmed "
             f"their contribution to '{contribution.project.official_name}'"
         ),
-        message=(
+        text=(
             "The experience is now certified via cross-confirmation and "
             "appears on the expert's public profile.\n\n— Urban Track"
         ),
-        from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[contribution.added_by.email],
+        template="emails/company_confirmation.html",
+        context={
+            "heading": "Contribution certified",
+            "preheader": (
+                f"{name} confirmed their contribution to "
+                f"'{contribution.project.official_name}'."
+            ),
+            "contribution": contribution,
+            "name": name,
+            "expert_email": expert.email,
+            "dashboard_url": absolute_url("/accounts/dashboard/"),
+        },
     )
 
 
 def _request_company_revalidation(contribution, expert_actor):
-    send_mail(
+    name = expert_actor.get_full_name() or expert_actor.username
+    send_branded_mail(
         subject=(
-            f"[Urban Track] Action needed: {expert_actor.get_full_name()} adjusted "
+            f"[Urban Track] Action needed: {name} adjusted "
             f"their contribution to '{contribution.project.official_name}'"
         ),
-        message=(
+        text=(
             f"The expert adjusted the wording:\n\n"
             f"{contribution.contribution_bullets}\n\n"
             f"Validate the adjusted wording from your company dashboard.\n\n— Urban Track"
         ),
-        from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[contribution.added_by.email],
+        template="emails/company_revalidation.html",
+        context={
+            "heading": "Action needed: validate adjusted wording",
+            "preheader": (
+                f"{name} adjusted their contribution to "
+                f"'{contribution.project.official_name}'."
+            ),
+            "contribution": contribution,
+            "name": name,
+            "validate_url": absolute_url("/accounts/dashboard/"),
+        },
     )

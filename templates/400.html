@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Bad request: Urban Track{% endblock %}
+
+{% block content %}
+  <div class="mx-auto flex max-w-2xl flex-col items-center px-4 py-24 text-center sm:px-6">
+    <p class="font-black text-7xl text-military-900">400</p>
+    <h1 class="mt-4 text-2xl font-bold tracking-tight">The request could not be understood.</h1>
+    <p class="mt-2 text-sm text-charcoal-700">
+      The page or link you followed sent an invalid request. Please go back
+      and retry, or use the homepage to navigate to what you were looking for.
+    </p>
+    <div class="mt-8 flex flex-wrap justify-center gap-3">
+      <a href="/" class="btn-primary">Back to the homepage</a>
+      <a href="{% url 'accounts:expert_list' %}" class="btn-outline">Browse experts</a>
+    </div>
+  </div>
+{% endblock %}

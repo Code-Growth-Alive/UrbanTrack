@@ -6,6 +6,7 @@ Server-rendered pages live at the root; the DRF API is mounted under
 mobile app). No health-check or versioned endpoints by project decision.
 """
 
+from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import TemplateView
@@ -27,5 +28,15 @@ urlpatterns = [
     path("api/", include("rest_framework.urls")),
 ]
 
+# In development, serve uploaded media (project pictures, CVs, documents)
+# directly; the staticfiles app already serves static assets during runserver,
+# and production reverse-proxies both from a CDN/web server.
+if settings.DEBUG:
+    from django.conf.urls.static import static
+
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+handler400 = "urbantrack.views.handler400"
+handler403 = "urbantrack.views.handler403"
 handler404 = "urbantrack.views.handler404"
 handler500 = "urbantrack.views.handler500"

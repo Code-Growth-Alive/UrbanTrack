@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Access denied: Urban Track{% endblock %}
+
+{% block content %}
+  <div class="mx-auto flex max-w-2xl flex-col items-center px-4 py-24 text-center sm:px-6">
+    <p class="font-black text-7xl text-military-900">403</p>
+    <h1 class="mt-4 text-2xl font-bold tracking-tight">You don't have access to this page.</h1>
+    <p class="mt-2 text-sm text-charcoal-700">
+      Some content is restricted to the account that owns it. Please sign in
+      with the appropriate account or contact support if you believe this is a mistake.
+    </p>
+    <div class="mt-8 flex flex-wrap justify-center gap-3">
+      <a href="{% url 'accounts:login' %}" class="btn-primary">Sign in</a>
+      <a href="/" class="btn-outline">Back to the homepage</a>
+    </div>
+  </div>
+{% endblock %}

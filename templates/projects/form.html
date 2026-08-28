@@ -1,14 +1,22 @@
 {% extends "base.html" %}
 
-{% block title %}Publish a project: Urban Track{% endblock %}
+{% block title %}{% if editing %}Edit project: Urban Track{% else %}Publish a project: Urban Track{% endif %}{% endblock %}
 
 {% block content %}
   <div class="mx-auto max-w-2xl px-4 py-12 sm:px-6">
-    <h1 class="text-2xl font-black tracking-tight">Publish a project</h1>
+    {% if editing %}
+      <a href="{% url 'projects:manage' project.pk %}" class="text-sm font-semibold text-military-700 hover:underline">&larr; Back to {{ project.official_name }}</a>
+    {% endif %}
+    <h1 class="mt-3 text-2xl font-black tracking-tight">{% if editing %}Edit project{% else %}Publish a project{% endif %}</h1>
     <p class="mt-1 text-sm text-charcoal-700">
-      Step 1 of 2: describe the project. You will declare the contributing
-      experts on the next screen: they personally confirm before anything is
-      certified.
+      {% if editing %}
+        Update the core details of this project. The contributors and their
+        certification history are managed on the workspace page.
+      {% else %}
+        Step 1 of 2: describe the project. You will declare the contributing
+        experts on the next screen: they personally confirm before anything is
+        certified.
+      {% endif %}
     </p>
 
     <form method="post" class="card mt-6 space-y-4">
@@ -29,7 +37,7 @@
         </div>
       {% endfor %}
 
-      <button type="submit" class="btn-primary w-full sm:w-auto">Save draft &amp; continue</button>
+      <button type="submit" class="btn-primary w-full sm:w-auto">{% if editing %}Save changes{% else %}Save draft &amp; continue{% endif %}</button>
     </form>
   </div>
 {% endblock %}

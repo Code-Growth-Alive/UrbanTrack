@@ -14,9 +14,22 @@
           {% if project.duration_end %}– {{ project.duration_end|date:"M Y" }}{% else %}– ongoing{% endif %}
         </p>
       </div>
-      <span class="role-chip {% if project.status == 'draft' %}!bg-charcoal-50 !text-charcoal-700{% elif project.status == 'published' %}!bg-military-100 !text-military-700{% else %}!bg-accent-50 !text-accent-700{% endif %}">
-        {{ project.get_status_display }}
-      </span>
+      <div class="flex flex-wrap items-center gap-3">
+        <span class="role-chip {% if project.status == 'draft' %}!bg-charcoal-50 !text-charcoal-700{% elif project.status == 'published' %}!bg-military-100 !text-military-700{% else %}!bg-accent-50 !text-accent-700{% endif %}">
+          {{ project.get_status_display }}
+        </span>
+        {% if project.is_publicly_visible %}
+          <a href="{{ project.get_absolute_url }}" class="btn-outline !px-3 !py-1.5 !text-xs">View public page</a>
+        {% endif %}
+        <a href="{% url 'projects:edit' project.pk %}" class="btn-outline !px-3 !py-1.5 !text-xs">Edit</a>
+        {% if project.status != 'published' %}
+          <form method="post" action="{% url 'projects:delete' project.pk %}"
+                onsubmit="return confirm('Delete this draft project? This cannot be undone.');">
+            {% csrf_token %}
+            <button type="submit" class="btn-outline !px-3 !py-1.5 !text-xs !border-red-300 !text-red-700 hover:!bg-red-50">Delete</button>
+          </form>
+        {% endif %}
+      </div>
     </div>
 
     <div class="mt-8 grid gap-8 lg:grid-cols-3">

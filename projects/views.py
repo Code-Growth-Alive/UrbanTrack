@@ -9,6 +9,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.translation import gettext as _
+from django.views.decorators.http import require_http_methods
 from django.views.generic import DetailView, ListView
 
 from accounts.models import Role, User
@@ -121,6 +122,46 @@ def project_create(request):
     else:
         form = ProjectForm()
     return render(request, "projects/form.html", {"form": form})
+
+
+@login_required
+def project_edit(request, pk):
+    """Owner edits the core fields of a project (draft or published)."""
+    project = _owned_project_or_403(request, pk)
+
+    if request.method == "POST":
+        form = ProjectForm(request.POST, instance=project)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _("Project updated."))
+            return redirect("projects:manage", pk=project.pk)
+    else:
+        form = ProjectForm(instance=project)
+    return render(
+        request,
+        "projects/form.html",
+        {"form": form, "project": project, "editing": True},
+    )
+
+
+@require_http_methods(["POST"])
+@login_required
+def project_delete(request, pk):
+    """Owner deletes a draft project (published projects keep their certificate history)."""
+    project = _owned_project_or_403(request, pk)
+    if project.status == ProjectStatus.PUBLISHED:
+        messages.error(
+            request,
+            _(
+                "This project is published and its certified contributions must be "
+                "preserved. Archive it instead of deleting."
+            ),
+        )
+        return redirect("projects:manage", pk=project.pk)
+    official_name = project.official_name
+    project.delete()
+    messages.success(request, _("Draft project “%(name)s” deleted.") % {"name": official_name})
+    return redirect("accounts:dashboard")
 
 
 @login_required

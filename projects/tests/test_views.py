@@ -207,3 +207,44 @@ class CertificationSurfacingTests(TestCase):
         self.assertContains(profile, project.official_name)
         self.assertContains(detail, "Awa Diop")
         self.assertContains(profile, "Trust score")
+
+
+class ProjectCrudTests(TestCase):
+    """Owner is able to edit and delete their own projects."""
+
+    def setUp(self):
+        self.company = make_company()
+        self.project = make_project(self.company)
+
+    def test_owner_can_edit_project_fields(self):
+        self.client.force_login(self.company)
+        data = dict(PROJECT_DATA)
+        data["official_name"] = "Renamed coastal rebuild"
+        response = self.client.post(
+            reverse("projects:edit", args=[self.project.pk]), data
+        )
+        self.assertRedirects(response, reverse("projects:manage", args=[self.project.pk]))
+        self.project.refresh_from_db()
+        self.assertEqual(self.project.official_name, "Renamed coastal rebuild")
+
+    def test_non_owner_cannot_edit_project(self):
+        other = make_company(username="other", email="other@corp.com")
+        self.client.force_login(other)
+        response = self.client.post(
+            reverse("projects:edit", args=[self.project.pk]), dict(PROJECT_DATA)
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_draft_project_can_be_deleted_by_owner(self):
+        self.client.force_login(self.company)
+        response = self.client.post(reverse("projects:delete", args=[self.project.pk]))
+        self.assertRedirects(response, reverse("accounts:dashboard"))
+        self.assertFalse(Project.objects.filter(pk=self.project.pk).exists())
+
+    def test_published_project_cannot_be_deleted(self):
+        self.project.status = ProjectStatus.PUBLISHED
+        self.project.save()
+        self.client.force_login(self.company)
+        response = self.client.post(reverse("projects:delete", args=[self.project.pk]))
+        self.assertRedirects(response, reverse("projects:manage", args=[self.project.pk]))
+        self.assertTrue(Project.objects.filter(pk=self.project.pk).exists())

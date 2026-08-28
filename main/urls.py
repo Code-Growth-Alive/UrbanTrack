@@ -37,7 +37,7 @@ if settings.DEBUG:
 
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-handler400 = "urbantrack.views.handler400"
-handler403 = "urbantrack.views.handler403"
-handler404 = "urbantrack.views.handler404"
-handler500 = "urbantrack.views.handler500"
+handler400 = "main.views.handler400"
+handler403 = "main.views.handler403"
+handler404 = "main.views.handler404"
+handler500 = "main.views.handler500"

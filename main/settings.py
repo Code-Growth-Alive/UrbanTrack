@@ -74,7 +74,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "urbantrack.urls"
+ROOT_URLCONF = "main.urls"
 
 TEMPLATES = [
     {
@@ -91,7 +91,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "urbantrack.wsgi.application"
+WSGI_APPLICATION = "main.wsgi.application"
 
 
 # Database

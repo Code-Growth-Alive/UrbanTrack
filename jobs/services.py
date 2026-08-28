@@ -8,7 +8,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
-from urbantrack.emails import absolute_url, send_branded_mail
+from main.emails import absolute_url, send_branded_mail
 
 from .models import ApplicationStatus, Job, JobApplication
 

@@ -87,7 +87,7 @@ CI runs both on every push/PR (`.github/workflows/ci.yml`).
 ## Layout
 
 ```
-urbantrack/         Django project (single settings module)
+main/               Django project (single settings module)
 accounts/           custom User: expert | company | donor + permanent OX-XXXXXX professional ID
                     auth (login/signup/logout), role-aware dashboard, portfolio self-edit
                     (headline, bio, skills, trainings), expert directory, public profiles

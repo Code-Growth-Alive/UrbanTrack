@@ -19,7 +19,7 @@ class ErrorPageTests(TestCase):
         self.assertContains(response, "This page doesn't exist", status_code=404)
 
     def test_403_page_renders_custom_template(self):
-        from urbantrack.views import handler403
+        from main.views import handler403
 
         response = handler403(self.request)
         self.assertEqual(response.status_code, 403)
@@ -28,7 +28,7 @@ class ErrorPageTests(TestCase):
         )
 
     def test_400_page_renders_custom_template(self):
-        from urbantrack.views import handler400
+        from main.views import handler400
 
         response = handler400(self.request)
         self.assertEqual(response.status_code, 400)
@@ -37,7 +37,7 @@ class ErrorPageTests(TestCase):
         )
 
     def test_500_page_renders_custom_template(self):
-        from urbantrack.views import handler500
+        from main.views import handler500
 
         response = handler500(self.request)
         self.assertEqual(response.status_code, 500)

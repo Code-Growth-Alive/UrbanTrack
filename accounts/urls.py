@@ -4,8 +4,10 @@ from .views import (
     ExpertListView,
     LogInView,
     LogOutView,
+    PasswordChangeView,
     PublicExpertProfileView,
     SignUpView,
+    account_settings,
     dashboard,
     expert_search,
     profile_edit,
@@ -16,6 +18,8 @@ app_name = "accounts"
 
 urlpatterns = [
     path("dashboard/", dashboard, name="dashboard"),
+    path("settings/", account_settings, name="settings"),
+    path("settings/password/", PasswordChangeView.as_view(), name="password_change"),
     path("portfolio/edit/", profile_edit, name="profile_edit"),
     path("portfolio/cv-template/", set_cv_template, name="set_cv_template"),
     path("experts/", ExpertListView.as_view(), name="expert_list"),

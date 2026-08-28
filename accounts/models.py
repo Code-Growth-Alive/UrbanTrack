@@ -54,6 +54,12 @@ class User(AbstractUser):
         blank=True,
         help_text=_("Required for company and donor agency accounts."),
     )
+    avatar = models.ImageField(
+        _("profile picture"),
+        upload_to="avatars/",
+        blank=True,
+        help_text=_("Shared across all roles; used on dashboards and public profiles."),
+    )
     professional_id = models.CharField(
         _("professional ID"),
         max_length=16,

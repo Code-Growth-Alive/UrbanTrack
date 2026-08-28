@@ -7,8 +7,12 @@
   <section class="bg-military-900 text-white">
     <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <div class="flex flex-col gap-6 sm:flex-row sm:items-center">
-        <div class="grid h-24 w-24 shrink-0 place-items-center rounded-full bg-white text-3xl font-black text-military-900">
-          {{ expert.initials }}
+        <div class="grid h-24 w-24 shrink-0 place-items-center overflow-hidden rounded-full bg-white text-3xl font-black text-military-900">
+          {% if expert.avatar %}
+            <img src="{{ expert.avatar.url }}" alt="Profile picture" class="h-full w-full object-cover">
+          {% else %}
+            {{ expert.initials }}
+          {% endif %}
         </div>
         <div>
           <h1 class="text-3xl font-black tracking-tight">

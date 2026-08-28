@@ -154,16 +154,54 @@
       </nav>
       <div class="flex items-center gap-3">
         {% if user.is_authenticated %}
-          {% if user.is_expert %}
-            <a href="{% url 'accounts:public_profile' user.professional_id %}" class="hidden text-sm font-medium text-military-100 hover:text-white sm:block">
-              {{ user.get_full_name|default:user.username }}
-            </a>
-          {% else %}
-            <span class="hidden text-sm font-medium text-military-100 sm:block">{{ user.get_full_name|default:user.username }}</span>
-          {% endif %}
-          <form method="post" action="{% url 'accounts:logout' %}" class="m-0">
+          <details class="group relative hidden sm:block">
+            <summary
+              class="flex cursor-pointer list-none items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-military-100 hover:bg-white/5 hover:text-white"
+              aria-haspopup="true"
+            >
+              {% if user.avatar %}
+                <img src="{{ user.avatar.url }}" alt="" class="h-6 w-6 rounded-full object-cover">
+              {% elif user.is_expert and user.professional_id %}
+                <span aria-hidden="true" class="grid h-6 w-6 place-items-center rounded-full bg-accent-500 text-xs font-black text-white">{{ user.initials }}</span>
+              {% endif %}
+              <span>{{ user.get_full_name|default:user.username }}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-3.5 w-3.5 text-military-300"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+            </summary>
+            <div class="absolute right-0 z-20 mt-2 w-56 rounded-lg border border-white/10 bg-white p-1.5 text-charcoal-900 shadow-xl">
+              <a href="{% url 'accounts:dashboard' %}" class="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium hover:bg-military-50">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4 text-military-700"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
+                Dashboard
+              </a>
+              {% if user.is_expert and user.professional_id %}
+                <a href="{% url 'accounts:public_profile' user.professional_id %}" class="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium hover:bg-military-50">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4 text-military-700"><path d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 00-13.074.003z"/></svg>
+                  My public profile
+                </a>
+              {% endif %}
+              <a href="{% url 'accounts:settings' %}" class="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium hover:bg-military-50">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4 text-military-700"><path fill-rule="evenodd" d="M7.84 1.804A1 1 0 018.82 1h2.36a1 1 0 01.98.804l.331 1.652a6.993 6.993 0 011.929 1.115l1.598-.54a1 1 0 011.186.447l1.18 2.044a1 1 0 01-.205 1.251l-1.267 1.113a7.047 7.047 0 010 2.228l1.267 1.113a1 1 0 01.206 1.25l-1.18 2.045a1 1 0 01-1.187.447l-1.598-.54a6.993 6.993 0 01-1.929 1.115l-.33 1.652a1 1 0 01-.98.804H8.82a1 1 0 01-.98-.804l-.331-1.652a6.993 6.993 0 01-1.929-1.115l-1.598.54a1 1 0 01-1.186-.447l-1.18-2.044a1 1 0 01.205-1.251l1.267-1.114a7.05 7.05 0 010-2.227L1.821 7.773a1 1 0 01-.206-1.25l1.18-2.045a1 1 0 011.187-.447l1.598.54A6.993 6.993 0 017.51 3.456l.33-1.652zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
+                Account settings
+              </a>
+              {% if user.is_staff or user.is_superuser %}
+                <a href="{% url 'adminpanel:dashboard' %}" class="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium hover:bg-military-50">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4 text-military-700"><path d="M10 3.5a1.5 1.5 0 013 0V4a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a1 1 0 00-1 1v1a1 1 0 001 1h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a1 1 0 00-1-1h-1a1 1 0 00-1 1v1a1 1 0 01-1 1H5a1 1 0 01-1-1v-3a1 1 0 00-1-1H2a1 1 0 01-1-1v-3a1 1 0 011-1h1a1 1 0 001-1v-1a1 1 0 00-1-1H2.5" transform="scale(0.6) translate(6,6)"/></svg>
+                  System admin
+                </a>
+              {% endif %}
+              <div class="my-1 border-t border-charcoal-900/10"></div>
+              <form method="post" action="{% url 'accounts:logout' %}" class="m-0">
+                {% csrf_token %}
+                <button type="submit" class="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm font-medium text-charcoal-700 hover:bg-red-50 hover:text-red-700">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4"><path fill-rule="evenodd" d="M3 4.25A2.25 2.25 0 015.25 2h5.5A2.25 2.25 0 0113 4.25v2a.75.75 0 01-1.5 0v-2a.75.75 0 00-.75-.75h-5.5a.75.75 0 00-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 00.75-.75v-2a.75.75 0 011.5 0v2A2.25 2.25 0 018.75 18h-5.5A2.25 2.25 0 011 15.75V4.25zm10.6 9.92a.75.75 0 010-1.06l1.25-1.25H9.25a.75.75 0 010-1.5h5.6l-1.25-1.25a.75.75 0 111.06-1.06l2.5 2.5a.75.75 0 010 1.06l-2.5 2.5a.75.75 0 01-1.06 0z" clip-rule="evenodd"/></svg>
+                  Log out
+                </button>
+              </form>
+            </div>
+          </details>
+          <a href="{% url 'accounts:dashboard' %}" class="text-sm font-medium text-military-100 hover:text-white sm:hidden">{{ user.get_full_name|default:user.username }}</a>
+          <button type="button" form="logout-form-mobile" class="text-sm font-medium text-military-100 hover:text-white sm:hidden">Log out</button>
+          <form id="logout-form-mobile" method="post" action="{% url 'accounts:logout' %}" class="m-0 hidden">
             {% csrf_token %}
-            <button type="submit" class="text-sm font-medium text-military-100 hover:text-white">Log out</button>
           </form>
         {% else %}
           <a href="{% url 'accounts:login' %}" class="hidden text-sm font-medium text-military-100 hover:text-white sm:block">Log in</a>

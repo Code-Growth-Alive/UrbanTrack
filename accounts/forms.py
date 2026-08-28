@@ -8,6 +8,14 @@ from django.utils.translation import gettext_lazy as _
 
 from .models import Role, User
 
+INPUT_CLASS = (
+    "mt-1 block w-full rounded-md border border-charcoal-900/25 bg-white px-3 "
+    "py-2 text-sm font-normal text-charcoal-900 shadow-none "
+    "placeholder:font-normal placeholder:text-charcoal-300 "
+    "focus:border-military-500 focus:outline-none focus:ring-2 "
+    "focus:ring-military-300"
+)
+
 
 class EmailOrUsernameAuthenticationForm(AuthenticationForm):
     """
@@ -93,3 +101,37 @@ class SignUpForm(forms.Form):
         user.set_password(data["password1"])
         user.save()
         return user
+
+
+class AccountSettingsForm(forms.ModelForm):
+    """
+    Shared account settings: personal details, organisation name and the
+    profile picture (avatar). Email and username stay immutable once set;
+    password changes go through ``PasswordChangeView``.
+    """
+
+    class Meta:
+        model = User
+        fields = ("first_name", "last_name", "organisation_name", "avatar")
+        widgets = {
+            "first_name": forms.TextInput(attrs={"class": INPUT_CLASS}),
+            "last_name": forms.TextInput(attrs={"class": INPUT_CLASS}),
+            "organisation_name": forms.TextInput(
+                attrs={
+                    "class": INPUT_CLASS,
+                    "placeholder": _("Only used for company and donor accounts."),
+                }
+            ),
+            "avatar": forms.ClearableFileInput(
+                attrs={
+                    "class": (
+                        INPUT_CLASS
+                        + " !p-1.5 file:mr-3 file:rounded file:border-0 file:bg-military-100 "
+                        "file:px-3 file:py-1 file:text-xs file:font-semibold file:text-military-700"
+                    )
+                }
+            ),
+        }
+        help_texts = {
+            "avatar": _("JPG or PNG portrait. Leave empty to keep your current picture."),
+        }

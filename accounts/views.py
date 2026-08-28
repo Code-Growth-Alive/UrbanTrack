@@ -8,13 +8,14 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView as DjangoLoginView
 from django.contrib.auth.views import LogoutView as DjangoLogoutView
+from django.contrib.auth.views import PasswordChangeView as DjangoPasswordChangeView
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.views.decorators.http import require_GET
 from django.views.generic import DetailView, FormView, ListView
 
-from .forms import EmailOrUsernameAuthenticationForm, SignUpForm
+from .forms import AccountSettingsForm, EmailOrUsernameAuthenticationForm, SignUpForm
 from .models import Role, User
 
 
@@ -268,3 +269,44 @@ def set_cv_template(request):
             request.user.expert_profile.save(update_fields=["cv_template", "updated_at"])
             messages.success(request, _("Preferred CV template saved."))
     return redirect("cv_generator:builder")
+
+
+# ---------------------------------------------------------------------------
+# Account settings: personal details + profile picture + password
+# ---------------------------------------------------------------------------
+
+
+@login_required
+def account_settings(request):
+    """Edit personal details and the profile picture shared by all roles."""
+    from django.contrib import messages
+    from django.utils.translation import gettext as _
+
+    if request.method == "POST":
+        form = AccountSettingsForm(request.POST, request.FILES, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _("Account settings updated."))
+            return redirect("accounts:settings")
+    else:
+        form = AccountSettingsForm(instance=request.user)
+
+    return render(
+        request,
+        "accounts/settings.html",
+        {"form": form},
+    )
+
+
+class PasswordChangeView(DjangoPasswordChangeView):
+    """Change password inside the account settings wizard."""
+
+    template_name = "accounts/password_change.html"
+    success_url = reverse_lazy("accounts:settings")
+
+    def form_valid(self, form):
+        from django.contrib import messages
+        from django.utils.translation import gettext as _
+
+        messages.success(self.request, _("Your password has been changed."))
+        return super().form_valid(form)

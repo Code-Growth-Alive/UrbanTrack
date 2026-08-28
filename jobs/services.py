@@ -4,11 +4,11 @@ that announce them live here so views and management commands share one
 implementation (same pattern as certification.services).
 """
 
-from django.conf import settings
-from django.core.mail import send_mail
 from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext as _
+
+from urbantrack.emails import absolute_url, send_branded_mail
 
 from .models import ApplicationStatus, Job, JobApplication
 
@@ -17,13 +17,13 @@ class JobsError(Exception):
     """Domain error raised for invalid job-board transitions."""
 
 
-def _send(subject, body, recipient_list):
-    send_mail(
-        subject,
-        body,
-        settings.DEFAULT_FROM_EMAIL,
-        recipient_list,
-        fail_silently=False,
+def _send(subject, body, recipient_list, template, context=None):
+    send_branded_mail(
+        subject=subject,
+        text=body,
+        recipient_list=recipient_list,
+        template=template,
+        context=context,
     )
 
 
@@ -41,6 +41,7 @@ def apply_to_job(job, applicant, cover_letter):
     application = JobApplication.objects.create(
         job=job, applicant=applicant, cover_letter=cover_letter
     )
+    first_name = applicant.first_name or _("there")
     _send(
         _("Urban Track: application received"),
         _(
@@ -50,12 +51,22 @@ def apply_to_job(job, applicant, cover_letter):
             "— Urban Track"
         )
         % {
-            "first": applicant.first_name or _("there"),
+            "first": first_name,
             "title": job.title,
             "org": job.published_by.organisation_name,
         },
         [applicant.email],
+        template="emails/job_application_received.html",
+        context={
+            "heading": "Application received",
+            "preheader": f"Your application to '{job.title}' has been sent.",
+            "first": first_name,
+            "title": job.title,
+            "org": job.published_by.organisation_name,
+            "my_applications_url": absolute_url("/jobs/mine/"),
+        },
     )
+    applicant_name = applicant.get_full_name() or applicant.username
     _send(
         _("Urban Track: new application for “%(title)s”") % {"title": job.title},
         _(
@@ -63,12 +74,21 @@ def apply_to_job(job, applicant, cover_letter):
             "Review it from your company dashboard:\n%(url)s\n\n— Urban Track"
         )
         % {
-            "name": applicant.get_full_name() or applicant.username,
+            "name": applicant_name,
             "pid": getattr(applicant.expert_profile, "professional_id", "") or "",
             "title": job.title,
-            "url": f"https://urbantrack.example/jobs/{job.pk}/manage/",
+            "url": absolute_url(f"/jobs/{job.pk}/manage/"),
         },
         [job.published_by.email],
+        template="emails/job_new_application.html",
+        context={
+            "heading": "New application received",
+            "preheader": f"{applicant_name} just applied to '{job.title}'.",
+            "name": applicant_name,
+            "pid": getattr(applicant.expert_profile, "professional_id", "") or "",
+            "title": job.title,
+            "manage_url": absolute_url(f"/jobs/{job.pk}/manage/"),
+        },
     )
     return application
 
@@ -100,16 +120,28 @@ def decide_application(application, actor, accept):
             "Your certified profile keeps growing: new missions are posted regularly.\n\n"
             "— Urban Track"
         )
+    first_name = application.applicant.first_name or _("there")
     _send(
         _("Urban Track: decision on your application"),
         body
         % {
-            "first": application.applicant.first_name or _("there"),
+            "first": first_name,
             "title": application.job.title,
             "org": application.job.published_by.organisation_name,
             "email": application.applicant.email,
         },
         [application.applicant.email],
+        template="emails/job_decision.html",
+        context={
+            "heading": "Decision on your application",
+            "preheader": f"Your application to '{application.job.title}' was reviewed.",
+            "first": first_name,
+            "accepted": accept,
+            "title": application.job.title,
+            "org": application.job.published_by.organisation_name,
+            "email": application.applicant.email,
+            "dashboard_url": absolute_url("/accounts/dashboard/"),
+        },
     )
     return application
 
@@ -165,6 +197,16 @@ def send_deadline_reminders(days_ahead=3):
                     "days": job.days_until_deadline,
                 },
                 [application.applicant.email],
+                template="emails/job_deadline_expert.html",
+                context={
+                    "heading": "An offer closes soon",
+                    "preheader": f"'{job.title}' closes on {job.deadline:%Y-%m-%d}.",
+                    "first": application.applicant.first_name or _("there"),
+                    "title": job.title,
+                    "deadline": job.deadline.strftime("%d %b %Y"),
+                    "days": job.days_until_deadline,
+                    "job_url": absolute_url(f"/jobs/{job.pk}/"),
+                },
             )
             experts_reminded += 1
         if pending:
@@ -182,6 +224,15 @@ def send_deadline_reminders(days_ahead=3):
                     "count": pending.count(),
                 },
                 [job.published_by.email],
+                template="emails/job_deadline_company.html",
+                context={
+                    "heading": "Applications awaiting review",
+                    "preheader": f"'{job.title}' closes on {job.deadline:%Y-%m-%d}.",
+                    "title": job.title,
+                    "deadline": job.deadline.strftime("%d %b %Y"),
+                    "count": pending.count(),
+                    "manage_url": absolute_url(f"/jobs/{job.pk}/manage/"),
+                },
             )
             companies_reminded += 1
     return {"experts_reminded": experts_reminded, "companies_reminded": companies_reminded}

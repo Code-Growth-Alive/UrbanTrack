@@ -1,0 +1,177 @@
+unformatted: File would be reformatted
+   --> accounts/tests/test_settings.py:102:47
+    |
+101 |     def test_avatar_shown_on_public_profile(self):
+    -         self.user.avatar = SimpleUploadedFile(
+    -             "me.png", make_png(), content_type="image/png"
+    -         )
+102 +         self.user.avatar = SimpleUploadedFile("me.png", make_png(), content_type="image/png")
+103 |         self.user.save()
+    |
+
+unformatted: File would be reformatted
+ --> adminpanel/admin.py:1:1
+  |
+  -
+1 | # Register your models here.
+  |
+
+unformatted: File would be reformatted
+ --> adminpanel/models.py:1:1
+  |
+  -
+1 | # Create your models here.
+  |
+
+unformatted: File would be reformatted
+  --> adminpanel/tests.py:53:39
+   |
+52 |         job = make_job(self.company)
+   -         JobApplication.objects.create(
+   -             job=job, applicant=self.expert, cover_letter="Ready."
+   -         )
+53 +         JobApplication.objects.create(job=job, applicant=self.expert, cover_letter="Ready.")
+54 |
+   |
+
+unformatted: File would be reformatted
+   --> adminpanel/views.py:29:64
+    |
+28  | def is_system_admin(user):
+    -     return bool(getattr(user, "is_authenticated", False)) and (
+    -         user.is_superuser or user.is_staff
+    -     )
+29  +     return bool(getattr(user, "is_authenticated", False)) and (user.is_superuser or user.is_staff)
+30  |
+--------------------------------------------------------------------------------
+37  |
+    -     by_role = (
+    -         User.objects.values("role").annotate(count=Count("id")).order_by("role")
+    -     )
+38  +     by_role = User.objects.values("role").annotate(count=Count("id")).order_by("role")
+39  |     role_counts = {row["role"]: row["count"] for row in by_role}
+--------------------------------------------------------------------------------
+146 |         request,
+    -         _("User “%(email)s” was %(state)s.")
+    -         % {"email": user.email, "state": state},
+147 +         _("User “%(email)s” was %(state)s.") % {"email": user.email, "state": state},
+148 |     )
+--------------------------------------------------------------------------------
+202 |         raise PermissionDenied(_("Only system administrators can access this page."))
+    -     applications = (
+    -         JobApplication.objects.select_related("job", "job__published_by", "applicant")
+    -         .order_by("-applied_at")
+    -     )
+203 +     applications = JobApplication.objects.select_related(
+204 +         "job", "job__published_by", "applicant"
+205 +     ).order_by("-applied_at")
+206 |     status = request.GET.get("status", "")
+    |
+
+unformatted: File would be reformatted
+   --> certification/services.py:170:56
+    |
+169 |             "company": (
+    -                 contribution.added_by.organisation_name
+    -                 or contribution.added_by.get_full_name()
+170 +                 contribution.added_by.organisation_name or contribution.added_by.get_full_name()
+171 |             ),
+--------------------------------------------------------------------------------
+202 |             "contribution": contribution,
+    -             "company": (
+    -                 contribution.added_by.organisation_name or "A company"
+    -             ),
+203 +             "company": (contribution.added_by.organisation_name or "A company"),
+204 |             "name": name,
+--------------------------------------------------------------------------------
+310 |             "company": (
+    -                 contribution.added_by.organisation_name
+    -                 or contribution.added_by.get_full_name()
+311 +                 contribution.added_by.organisation_name or contribution.added_by.get_full_name()
+312 |             ),
+--------------------------------------------------------------------------------
+467 |             "preheader": (
+    -                 f"{name} confirmed their contribution to "
+    -                 f"'{contribution.project.official_name}'."
+468 +                 f"{name} confirmed their contribution to '{contribution.project.official_name}'."
+469 |             ),
+--------------------------------------------------------------------------------
+494 |             "preheader": (
+    -                 f"{name} adjusted their contribution to "
+    -                 f"'{contribution.project.official_name}'."
+495 +                 f"{name} adjusted their contribution to '{contribution.project.official_name}'."
+496 |             ),
+    |
+
+unformatted: File would be reformatted
+   --> jobs/tests.py:270:37
+    |
+269 |         self.client.force_login(self.expert)
+    -         response = self.client.post(
+    -             reverse("jobs:application_withdraw", args=[application.pk])
+    -         )
+270 +         response = self.client.post(reverse("jobs:application_withdraw", args=[application.pk]))
+271 |         self.assertRedirects(response, reverse("jobs:my_applications"))
+--------------------------------------------------------------------------------
+278 |         self.assertEqual(
+    -             self.client.get(
+    -                 reverse("jobs:application_update", args=[application.pk])
+    -             ).status_code,
+279 +             self.client.get(reverse("jobs:application_update", args=[application.pk])).status_code,
+280 |             403,
+    -         )
+    -         response = self.client.post(
+    -             reverse("jobs:application_withdraw", args=[application.pk])
+281 |         )
+282 +         response = self.client.post(reverse("jobs:application_withdraw", args=[application.pk]))
+283 |         self.assertEqual(response.status_code, 403)
+    |
+
+unformatted: File would be reformatted
+   --> jobs/views.py:190:37
+    |
+189 |     """Expert edits the cover letter of their own pending application."""
+    -     application = get_object_or_404(
+    -         JobApplication.objects.select_related("job"), pk=pk
+    -     )
+190 +     application = get_object_or_404(JobApplication.objects.select_related("job"), pk=pk)
+191 |     if application.applicant_id != request.user.pk:
+    |
+
+unformatted: File would be reformatted
+  --> main/tests.py:26:29
+   |
+25 |         self.assertEqual(response.status_code, 403)
+   -         self.assertContains(
+   -             response, "You don't have access to this page", status_code=403
+   -         )
+26 +         self.assertContains(response, "You don't have access to this page", status_code=403)
+27 |
+--------------------------------------------------------------------------------
+32 |         self.assertEqual(response.status_code, 400)
+   -         self.assertContains(
+   -             response, "The request could not be understood", status_code=400
+   -         )
+33 +         self.assertContains(response, "The request could not be understood", status_code=400)
+34 |
+--------------------------------------------------------------------------------
+39 |         self.assertEqual(response.status_code, 500)
+   -         self.assertContains(
+   -             response, "Something went wrong on our side.", status_code=500
+   -         )
+40 +         self.assertContains(response, "Something went wrong on our side.", status_code=500)
+   |
+
+unformatted: File would be reformatted
+   --> projects/tests/test_views.py:223:37
+    |
+222 |         data["official_name"] = "Renamed coastal rebuild"
+    -         response = self.client.post(
+    -             reverse("projects:edit", args=[self.project.pk]), data
+    -         )
+223 +         response = self.client.post(reverse("projects:edit", args=[self.project.pk]), data)
+224 |         self.assertRedirects(response, reverse("projects:manage", args=[self.project.pk]))
+    |
+
+10 files would be reformatted, 77 files already formatted
+Error: Process completed with exit code 1.

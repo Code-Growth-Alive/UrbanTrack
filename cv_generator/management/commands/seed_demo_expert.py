@@ -6,7 +6,7 @@ Create a rich demo expert so the CV examples and directory have content:
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from accounts.models import Role, Skill, User
+from accounts.models import Company, Skill, User
 from certification.services import confirm_as_is, declare_contributor
 from projects.models import Project
 from projects.services import publish_project
@@ -17,7 +17,7 @@ DEMO_PROFILE = {
     "password": "Demo!Expert2025",
     "first_name": "Aminata",
     "last_name": "Sow",
-    "role": Role.EXPERT,
+    "email_confirmed": True,
 }
 
 SKILLS = [
@@ -103,17 +103,22 @@ class Command(BaseCommand):
                 profile=profile, title=title, institution=institution, year=year
             )
 
-        company = User.objects.filter(role=Role.COMPANY).order_by("date_joined").first()
-        if company is None:
-            company = User.objects.create_user(
-                username="demo.corp",
-                email="corp@demo.urbantrack",
-                password="Demo!Company2025",
-                role=Role.COMPANY,
-                organisation_name="Demo Urban Corp",
-                first_name="Fatou",
-                last_name="Ndiaye",
-            )
+        company_user, _ = User.objects.get_or_create(
+            username="demo.corp",
+            defaults={
+                "username": "demo.corp",
+                "email": "corp@demo.urbantrack",
+                "password": "Demo!Company2025",
+                "first_name": "Fatou",
+                "last_name": "Ndiaye",
+                "email_confirmed": True,
+            },
+        )
+        company_user.set_password("Demo!Company2025")
+        company_user.save()
+        company, _ = Company.objects.get_or_create(name="Demo Urban Corp")
+        company_user.company = company
+        company_user.save(update_fields=["company"])
         for spec in PROJECTS:
             is_corniche = "Corniche" in spec["official_name"]
             project = Project(
@@ -125,7 +130,7 @@ class Command(BaseCommand):
                 budget=spec["budget"],
                 client_name=spec["client_name"],
                 visibility="public",
-                published_by=company,
+                published_by=company_user,
             )
             project.full_clean(exclude=["published_by"])
             project.save()
@@ -135,7 +140,7 @@ class Command(BaseCommand):
                 email=user.email,
                 role_type=spec["role"],
                 contribution_bullets=spec["bullets"],
-                added_by=company,
+                added_by=company_user,
             )
             confirm_as_is(contribution, user)
 

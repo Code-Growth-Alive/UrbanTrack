@@ -7,7 +7,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from accounts.models import Role, User
+from accounts.models import Company, Role, User
 
 from .models import ApplicationStatus, Job, JobApplication, JobStatus
 from .services import (
@@ -17,14 +17,20 @@ from .services import (
     send_deadline_reminders,
 )
 
+_company_seq = 0
+
 
 def make_company(username="corp", email="corp@example.com"):
+    global _company_seq
+    _company_seq += 1
+    company = Company.objects.create(name=f"Corp & Fils {_company_seq}")
     return User.objects.create_user(
         username=username,
         email=email,
         password="S3cret!pass",
-        role=Role.COMPANY,
-        organisation_name="Corp & Fils",
+        role=Role.USER,
+        company=company,
+        email_confirmed=True,
         first_name="Fatou",
         last_name="Ndiaye",
     )
@@ -35,7 +41,8 @@ def make_expert(username="awa", email="awa@example.com"):
         username=username,
         email=email,
         password="S3cret!pass",
-        role=Role.EXPERT,
+        role=Role.USER,
+        email_confirmed=True,
         first_name="Awa",
         last_name="Diallo",
     )
@@ -132,12 +139,8 @@ class JobViewTests(TestCase):
         detail = self.client.get(reverse("jobs:detail", args=[self.job.pk]))
         self.assertContains(detail, "Log in to apply")
 
-    def test_create_requires_company_role(self):
+    def test_create_requires_login_and_any_user_can_publish(self):
         self.client.force_login(self.expert)
-        response = self.client.get(reverse("jobs:create"))
-        self.assertEqual(response.status_code, 403)
-
-        self.client.force_login(self.company)
         form_data = {
             "title": "GIS analyst",
             "city": "Thiès",
@@ -148,7 +151,7 @@ class JobViewTests(TestCase):
             "compensation": "",
             "deadline": "",
         }
-        response = self.client.post(reverse("jobs:create"), form_data)
+        self.client.post(reverse("jobs:create"), form_data)
         self.assertEqual(Job.objects.filter(title="GIS analyst").count(), 1)
 
     def test_apply_through_view_and_review_by_owner_only(self):
@@ -267,9 +270,7 @@ class JobCrudTests(TestCase):
     def test_expert_can_withdraw_pending_application(self):
         application = apply_to_job(self.job, self.expert, "Cover letter.")
         self.client.force_login(self.expert)
-        response = self.client.post(
-            reverse("jobs:application_withdraw", args=[application.pk])
-        )
+        response = self.client.post(reverse("jobs:application_withdraw", args=[application.pk]))
         self.assertRedirects(response, reverse("jobs:my_applications"))
         self.assertFalse(JobApplication.objects.filter(pk=application.pk).exists())
 
@@ -278,13 +279,9 @@ class JobCrudTests(TestCase):
         stranger = make_expert(username="stranger", email="str@example.com")
         self.client.force_login(stranger)
         self.assertEqual(
-            self.client.get(
-                reverse("jobs:application_update", args=[application.pk])
-            ).status_code,
+            self.client.get(reverse("jobs:application_update", args=[application.pk])).status_code,
             403,
         )
-        response = self.client.post(
-            reverse("jobs:application_withdraw", args=[application.pk])
-        )
+        response = self.client.post(reverse("jobs:application_withdraw", args=[application.pk]))
         self.assertEqual(response.status_code, 403)
         self.assertTrue(JobApplication.objects.filter(pk=application.pk).exists())

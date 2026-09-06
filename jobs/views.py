@@ -50,7 +50,7 @@ class JobPublicDetailView(DetailView):
         job = self.object
         user = self.request.user
         context["my_application"] = job.application_for(user)
-        if user.is_authenticated and user.is_expert:
+        if user.is_authenticated:
             context["certified_count"] = user.contributions.filter(
                 status=ContributionStatus.CONFIRMED
             ).count()
@@ -59,10 +59,7 @@ class JobPublicDetailView(DetailView):
 
 @login_required
 def job_create(request):
-    """Company/donor publishes a job offer."""
-    if not (request.user.is_company or request.user.is_donor or request.user.is_superuser):
-        raise PermissionDenied(_("Only company accounts can publish job offers."))
-
+    """Any user publishes a job offer."""
     if request.method == "POST":
         form = JobForm(request.POST)
         if form.is_valid():
@@ -114,9 +111,7 @@ def job_delete(request, pk):
 
 @login_required
 def my_jobs(request):
-    """Company/donor view of all their job offers (management hub)."""
-    if not (request.user.is_company or request.user.is_donor or request.user.is_superuser):
-        raise PermissionDenied(_("Only company accounts have job offers."))
+    """A user's own job offers (management hub)."""
     jobs = (
         request.user.published_jobs.select_related("published_by")
         .prefetch_related("applications")
@@ -136,9 +131,7 @@ def my_jobs(request):
 
 @login_required
 def my_applications(request):
-    """Expert view of their own applications."""
-    if not request.user.is_expert:
-        raise PermissionDenied(_("Only expert accounts have applications."))
+    """A user's own applications."""
     applications = JobApplication.objects.filter(applicant=request.user).select_related(
         "job", "job__published_by"
     )
@@ -156,10 +149,8 @@ def my_applications(request):
 
 @login_required
 def job_apply(request, pk):
-    """Expert applies to one job."""
+    """A user applies to one job."""
     job = get_object_or_404(Job, pk=pk)
-    if not request.user.is_expert:
-        raise PermissionDenied(_("Only expert accounts can apply to jobs."))
     existing = job.application_for(request.user)
 
     if request.method == "POST" and not existing:
@@ -187,9 +178,7 @@ def job_apply(request, pk):
 @login_required
 def application_update(request, pk):
     """Expert edits the cover letter of their own pending application."""
-    application = get_object_or_404(
-        JobApplication.objects.select_related("job"), pk=pk
-    )
+    application = get_object_or_404(JobApplication.objects.select_related("job"), pk=pk)
     if application.applicant_id != request.user.pk:
         raise PermissionDenied(_("You can only edit your own applications."))
     if application.status != ApplicationStatus.PENDING:

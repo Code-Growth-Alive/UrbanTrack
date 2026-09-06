@@ -6,32 +6,43 @@ builder/preview/pdf routes and the portfolio self-edit screen.
 from django.test import TestCase
 from django.urls import reverse
 
-from accounts.models import Role, User
+from accounts.models import Company, Role, User
 from certification.services import adjust_contribution, declare_contributor
 from projects.models import Project, ProjectVisibility
 from projects.services import publish_project
 
 from .engine import CV_SKINS, cv_context_from_user, demo_cv_context, render_cv_html
 
+_company_seq = 0
+
 
 def make_expert(username="cv.expert", email="cv@expert.com"):
+    global _company_seq
+    _company_seq += 1
+    company = Company.objects.create(name=f"CV Expert Corp {_company_seq}")
     return User.objects.create_user(
         username=username,
         email=email,
         password="S3cret!pass",
-        role=Role.EXPERT,
+        role=Role.USER,
+        company=company,
+        email_confirmed=True,
         first_name="Moussa",
         last_name="Fall",
     )
 
 
 def make_company():
+    global _company_seq
+    _company_seq += 1
+    company = Company.objects.create(name=f"CV Corp {_company_seq}")
     return User.objects.create_user(
         username="cv.corp",
         email="cv@corp.com",
         password="S3cret!pass",
-        role=Role.COMPANY,
-        organisation_name="CV Corp",
+        role=Role.USER,
+        email_confirmed=True,
+        company=company,
     )
 
 
@@ -112,12 +123,9 @@ class CvViewTests(TestCase):
         self.expert = make_expert()
         self.client = self.client_class()
 
-    def test_builder_requires_login_and_expert_role(self):
+    def test_builder_requires_login(self):
         response = self.client.get(reverse("cv_generator:builder"))
         self.assertEqual(response.status_code, 302)
-        company = make_company()
-        self.client.force_login(company)
-        self.assertEqual(self.client.get(reverse("cv_generator:builder")).status_code, 403)
 
     def test_builder_lists_skins_and_examples(self):
         self.client.force_login(self.expert)

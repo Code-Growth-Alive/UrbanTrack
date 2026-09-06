@@ -52,7 +52,7 @@
               <span class="badge-pending mt-2 inline-flex">{{ my_application.get_status_display }}</span>
             {% elif not user.is_authenticated %}
               <a href="{% url 'accounts:login' %}?next={{ job.get_absolute_url|urlencode }}" class="btn-primary w-full">Log in to apply</a>
-            {% elif user.is_expert and job.is_open %}
+            {% elif user.is_authenticated and job.is_open %}
               <a href="{% url 'jobs:apply' job.pk %}" class="btn-accent w-full">Apply now</a>
               {% if certified_count is not None %}
                 <p class="form-help mt-2">Your profile shows {{ certified_count }} certified experience{{ certified_count|pluralize }}.</p>

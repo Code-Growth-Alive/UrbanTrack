@@ -17,10 +17,8 @@
     <div class="flex flex-wrap items-center justify-between gap-3">
       <p class="text-sm text-charcoal-700">
         {{ paginator.count }} open offer{{ paginator.count|pluralize }}
-        {% if user.is_company or user.is_donor or user.is_superuser %}
+        {% if user.is_authenticated %}
           · <a href="{% url 'jobs:create' %}" class="font-semibold text-accent-700 hover:underline">Publish a job</a>
-        {% endif %}
-        {% if user.is_expert %}
           · <a href="{% url 'jobs:my_applications' %}" class="font-semibold text-accent-700 hover:underline">My applications</a>
         {% endif %}
       </p>

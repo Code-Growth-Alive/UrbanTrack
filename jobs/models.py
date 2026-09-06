@@ -23,14 +23,13 @@ class ContractType(models.TextChoices):
 
 
 class Job(models.Model):
-    """A job offer published by a company (or donor agency)."""
+    """A job offer published by any user."""
 
     title = models.CharField(_("title"), max_length=200)
     published_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         related_name="published_jobs",
-        limit_choices_to={"role__in": ["company", "donor"]},
         verbose_name=_("published by"),
     )
     city = models.CharField(_("city"), max_length=120)
@@ -116,7 +115,7 @@ class JobApplication(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="job_applications",
-        limit_choices_to={"role": "expert"},
+        limit_choices_to={"role": "user"},
         verbose_name=_("applicant"),
     )
     cover_letter = models.TextField(

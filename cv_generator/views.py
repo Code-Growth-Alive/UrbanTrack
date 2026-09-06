@@ -5,7 +5,6 @@ PDF export via WeasyPrint. Only certified facts ever reach a CV.
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.utils.translation import gettext as _
@@ -29,9 +28,6 @@ def _context_for(request, lang):
 @login_required
 def cv_builder(request):
     """Selector screen: three skins × two languages, preview + PDF links."""
-    if not request.user.is_expert:
-        raise PermissionDenied(_("Only expert accounts can generate CVs."))
-
     lang = _lang(request)
     skins = [
         {
@@ -59,8 +55,6 @@ def cv_builder(request):
 @login_required
 def cv_preview(request, skin):
     """Standalone HTML preview of one skin."""
-    if not request.user.is_expert:
-        raise PermissionDenied(_("Only expert accounts can generate CVs."))
     if skin not in CV_SKINS:
         messages.error(request, _("Unknown CV template."))
         return redirect("cv_generator:builder")
@@ -71,8 +65,6 @@ def cv_preview(request, skin):
 @login_required
 def cv_pdf(request, skin):
     """PDF export through WeasyPrint (falls back to the print view)."""
-    if not request.user.is_expert:
-        raise PermissionDenied(_("Only expert accounts can generate CVs."))
     if skin not in CV_SKINS:
         messages.error(request, _("Unknown CV template."))
         return redirect("cv_generator:builder")

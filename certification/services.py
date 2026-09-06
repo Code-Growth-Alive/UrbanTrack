@@ -109,11 +109,6 @@ def declare_contributor(project, *, email, role_type, contribution_bullets, adde
 
     existing = User.objects.filter(email__iexact=email).first()
     if existing:
-        if existing.role != "expert":
-            raise ValidationError(
-                _("This email belongs to a %(role)s account, not an individual expert.")
-                % {"role": existing.get_role_display()}
-            )
         if existing.pk == added_by.pk:
             raise ValidationError(_("The publishing company cannot declare itself as contributor."))
 
@@ -161,14 +156,13 @@ def create_and_send_invitation(contribution):
             "heading": "You have been identified as a contributor",
             "preheader": (
                 "An expert on the project "
-                f"'{contribution.project.official_name}' — confirm before "
+                f"'{contribution.project.official_name}': confirm before "
                 f"{invitation.expires_at:%Y-%m-%d}."
             ),
             "contribution": contribution,
             "invitation": invitation,
             "company": (
-                contribution.added_by.organisation_name
-                or contribution.added_by.get_full_name()
+                contribution.added_by.organisation_name or contribution.added_by.get_full_name()
             ),
             "confirm_url": confirm_url,
         },
@@ -201,9 +195,7 @@ def _notify_registered_expert(contribution):
                 f"on '{contribution.project.official_name}'."
             ),
             "contribution": contribution,
-            "company": (
-                contribution.added_by.organisation_name or "A company"
-            ),
+            "company": (contribution.added_by.organisation_name or "A company"),
             "name": name,
             "dashboard_url": absolute_url("/accounts/dashboard/"),
         },
@@ -246,6 +238,10 @@ def notify_contributions_for_project(project):
     dispatched = {"invitations": [], "notified": []}
     buckets = {"invited": "invitations", "notified": "notified"}
     for contribution in project.contributions.select_related("expert"):
+        # The publisher's own contribution is auto-confirmed at publish time:
+        # there is nothing to invite or ask them to confirm.
+        if contribution.expert_id and contribution.expert_id == contribution.added_by_id:
+            continue
         kind, payload = notify_contribution(contribution)
         if kind is not None:
             dispatched[buckets[kind]].append(payload)
@@ -311,8 +307,7 @@ def send_invitation_reminder(invitation):
             "contribution": contribution,
             "invitation": invitation,
             "company": (
-                contribution.added_by.organisation_name
-                or contribution.added_by.get_full_name()
+                contribution.added_by.organisation_name or contribution.added_by.get_full_name()
             ),
             "confirm_url": confirm_url,
         },
@@ -469,8 +464,7 @@ def _notify_company_of_certification(contribution, expert):
         context={
             "heading": "Contribution certified",
             "preheader": (
-                f"{name} confirmed their contribution to "
-                f"'{contribution.project.official_name}'."
+                f"{name} confirmed their contribution to '{contribution.project.official_name}'."
             ),
             "contribution": contribution,
             "name": name,
@@ -497,8 +491,7 @@ def _request_company_revalidation(contribution, expert_actor):
         context={
             "heading": "Action needed: validate adjusted wording",
             "preheader": (
-                f"{name} adjusted their contribution to "
-                f"'{contribution.project.official_name}'."
+                f"{name} adjusted their contribution to '{contribution.project.official_name}'."
             ),
             "contribution": contribution,
             "name": name,

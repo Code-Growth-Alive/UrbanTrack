@@ -171,7 +171,6 @@ def _handle_signup(request, invitation, contribution):
 
     data = request.POST.copy()
     data["email"] = contribution.invited_email
-    data["role"] = "expert"
     form = SignUpForm(data)
     if not form.is_valid():
         return render(
@@ -185,12 +184,19 @@ def _handle_signup(request, invitation, contribution):
             status=400,
         )
     user = form.create_user()
+    from accounts.email_confirmation import issue_confirmation_code
+
+    issue_confirmation_code(user)
     login(request, user)
     messages.success(
         request,
-        _("Welcome to Urban Track! Your account is ready: review your contribution below."),
+        _(
+            "Welcome to Urban Track! Check your email for a 6-digit "
+            "confirmation code to activate your account, then review your "
+            "contribution."
+        ),
     )
-    return redirect("certification:invitation_landing", token=invitation.token)
+    return redirect("accounts:confirm_email")
 
 
 @login_required

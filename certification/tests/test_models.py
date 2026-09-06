@@ -24,6 +24,7 @@ def make_expert(username="ama", email=None):
         email=email or f"{username}@example.com",
         first_name="Aminata",
         last_name="Diallo",
+        email_confirmed=True,
         password="S3cret!pass",
     )
 

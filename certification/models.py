@@ -91,7 +91,7 @@ class ProjectContribution(models.Model):
         null=True,
         blank=True,
         related_name="contributions",
-        limit_choices_to=models.Q(role="expert") | models.Q(is_superuser=True),
+        limit_choices_to=models.Q(email_confirmed=True),
         verbose_name=_("expert"),
     )
     invited_email = models.EmailField(
@@ -117,7 +117,7 @@ class ProjectContribution(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         related_name="declared_contributions",
-        limit_choices_to=models.Q(role="company") | models.Q(is_superuser=True),
+        limit_choices_to=models.Q(email_confirmed=True),
         verbose_name=_("added by"),
     )
     confirmed_at = models.DateTimeField(_("confirmed at"), null=True, blank=True)
@@ -147,10 +147,6 @@ class ProjectContribution(models.Model):
     def __str__(self):
         target = self.expert or self.invited_email
         return f"{target}: {self.get_role_type_display()} on {self.project}"
-
-    def clean(self):
-        if self.added_by_id and self.added_by_id == self.expert_id and self.expert_id:
-            raise ValidationError(_("The declaring company and the expert must differ."))
 
     def save(self, *args, **kwargs):
         """Normalise the invitation email and enforce certification integrity.

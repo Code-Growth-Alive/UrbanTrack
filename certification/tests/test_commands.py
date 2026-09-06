@@ -81,7 +81,6 @@ class ProcessInvitationsCommandTests(TestCase):
             username="slow",
             email="slow@example.com",
             password="S3cret!pass",
-            role="expert",
         )
         # Simulate a late signup + confirmation.
         self.contribution.expert = expert

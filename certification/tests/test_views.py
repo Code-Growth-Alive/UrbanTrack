@@ -39,7 +39,7 @@ class InvitationFlowTests(TestCase):
         self.url = reverse("certification:invitation_landing", args=[self.invitation.token])
 
     def signup(self):
-        return self.client.post(
+        response = self.client.post(
             self.url,
             {
                 "action": "signup",
@@ -49,6 +49,14 @@ class InvitationFlowTests(TestCase):
                 "password2": "S3cret!pass",
             },
         )
+        # New accounts must confirm their email before acting (6-digit code).
+        user = User.objects.get(email="nadia@example.com")
+        self.assertFalse(user.email_confirmed)
+        confirm = self.client.post(
+            reverse("accounts:confirm_email"), {"code": user.confirmation_code}
+        )
+        self.assertRedirects(confirm, reverse("accounts:dashboard"))
+        return response
 
     def test_unknown_token_returns_friendly_404(self):
         response = self.client.get(reverse("certification:invitation_landing", args=[uuid4()]))

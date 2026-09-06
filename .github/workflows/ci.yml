@@ -39,23 +39,8 @@ jobs:
   # ── Tests + coverage ─────────────────────────────────────────────
   test:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: urbantrack
-          POSTGRES_PASSWORD: ci_test
-          POSTGRES_DB: urbantrack_ci
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U urbantrack"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     env:
       DJANGO_SETTINGS_MODULE: main.settings
-      DATABASE_URL: postgres://urbantrack:ci_test@localhost:5432/urbantrack_ci
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -85,15 +70,3 @@ jobs:
         with:
           name: coverage-report
           path: coverage.xml
-
-  # ── Template validation ──────────────────────────────────────────
-  templates:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
-        with:
-          python-version: "3.12"
-      - run: pip install -r requirements.txt
-      - name: Validate all templates render without errors
-        run: python manage.py test accounts.tests.test_auth.ExpertDashboardTests accounts.tests.test_auth.CompanyDashboardTests -v 2

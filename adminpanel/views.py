@@ -26,8 +26,12 @@ def _require_system_admin(view):
 
 
 def is_system_admin(user):
+    """
+    An authenticated account with admin privileges: the ``admin`` role or a
+    Django superuser. Non-superuser admins are granted by a superuser.
+    """
     return bool(getattr(user, "is_authenticated", False)) and (
-        user.is_superuser or user.is_staff
+        user.is_superuser or getattr(user, "is_admin_role", False)
     )
 
 
@@ -37,11 +41,10 @@ def admin_dashboard(request):
     if not is_system_admin(request.user):
         raise PermissionDenied(_("Only system administrators can access this page."))
 
-    by_role = (
-        User.objects.values("role").annotate(count=Count("id")).order_by("role")
-    )
+    by_role = User.objects.values("role").annotate(count=Count("id")).order_by("role")
     role_counts = {row["role"]: row["count"] for row in by_role}
     role_counts["total"] = sum(role_counts.values())
+    role_counts["confirmed"] = User.objects.filter(email_confirmed=True).count()
 
     disputed = ProjectContribution.objects.filter(status=ContributionStatus.DISPUTED).count()
 
@@ -94,7 +97,7 @@ def admin_user_list(request):
             | Q(last_name__icontains=q)
             | Q(email__icontains=q)
             | Q(professional_id__icontains=q)
-            | Q(organisation_name__icontains=q)
+            | Q(company__name__icontains=q)
         )
 
     context = {
@@ -115,19 +118,47 @@ def admin_user_edit(request, pk):
     user = get_object_or_404(User, pk=pk)
 
     if request.method == "POST":
-        form = AdminUserForm(request.POST, instance=user)
+        form = AdminUserForm(request.POST, instance=user, acting_user=request.user)
         if form.is_valid():
             form.save()
             messages.success(request, _("User “%(email)s” updated.") % {"email": user.email})
             return redirect("adminpanel:user_list")
     else:
-        form = AdminUserForm(instance=user)
+        form = AdminUserForm(instance=user, acting_user=request.user)
 
     return render(
         request,
         "adminpanel/user_form.html",
         {"form": form, "target": user},
     )
+
+
+@_require_system_admin
+@require_http_methods(["POST"])
+def admin_nominate_admin(request, pk):
+    """
+    Promote or demote a user's ``admin`` role. Only the single platform
+    superuser can nominate someone to be an admin.
+    """
+    if not request.user.is_superuser:
+        raise PermissionDenied(_("Only the platform superuser can nominate an admin."))
+    user = get_object_or_404(User, pk=pk)
+    if user == request.user:
+        messages.error(request, _("You cannot change your own admin role."))
+        return redirect("adminpanel:user_list")
+    if user.is_superuser:
+        messages.error(request, _("Superuser accounts cannot be nominated here."))
+        return redirect("adminpanel:user_list")
+
+    make_admin = request.POST.get("make_admin") == "1"
+    user.role = Role.ADMIN if make_admin else Role.USER
+    user.save(update_fields=["role"])
+    action = _("nominated as an admin") if make_admin else _("removed from the admin role")
+    messages.success(
+        request,
+        _("User “%(email)s” was %(action)s.") % {"email": user.email, "action": action},
+    )
+    return redirect("adminpanel:user_list")
 
 
 @_require_system_admin
@@ -148,8 +179,7 @@ def admin_user_toggle_active(request, pk):
     state = _("activated") if user.is_active else _("deactivated")
     messages.success(
         request,
-        _("User “%(email)s” was %(state)s.")
-        % {"email": user.email, "state": state},
+        _("User “%(email)s” was %(state)s.") % {"email": user.email, "state": state},
     )
     return redirect("adminpanel:user_list")
 
@@ -205,10 +235,9 @@ def admin_application_list(request):
     """All applications and their decisions."""
     if not is_system_admin(request.user):
         raise PermissionDenied(_("Only system administrators can access this page."))
-    applications = (
-        JobApplication.objects.select_related("job", "job__published_by", "applicant")
-        .order_by("-applied_at")
-    )
+    applications = JobApplication.objects.select_related(
+        "job", "job__published_by", "applicant"
+    ).order_by("-applied_at")
     status = request.GET.get("status", "")
     if status in ApplicationStatus.values:
         applications = applications.filter(status=status)

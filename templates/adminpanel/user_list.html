@@ -5,13 +5,12 @@
 
 {% block admin_content %}
   <form method="get" class="mb-4 flex flex-wrap items-center gap-3">
-    <input type="text" name="q" value="{{ query }}" placeholder="Search name, email, OX-ID, organisation…"
+    <input type="text" name="q" value="{{ query }}" placeholder="Search name, email, OX-ID, company…"
            class="form-input max-w-sm">
     <select name="role" class="form-input max-w-[160px] appearance-none pr-9">
       <option value="">All roles</option>
-      <option value="expert" {% if role == 'expert' %}selected{% endif %}>Expert</option>
-      <option value="company" {% if role == 'company' %}selected{% endif %}>Company</option>
-      <option value="donor" {% if role == 'donor' %}selected{% endif %}>Donor</option>
+      <option value="user" {% if role == 'user' %}selected{% endif %}>User</option>
+      <option value="admin" {% if role == 'admin' %}selected{% endif %}>Admin</option>
     </select>
     <button type="submit" class="btn-outline !px-4 !py-2 !text-sm">Filter</button>
     <span class="text-sm text-charcoal-300">{{ total }} match{{ total|pluralize }}</span>
@@ -23,9 +22,9 @@
         <tr class="text-xs uppercase tracking-wide text-charcoal-300">
           <th class="px-4 pb-1 font-medium">Account</th>
           <th class="px-4 pb-1 font-medium">Role</th>
-          <th class="px-4 pb-1 font-medium">Organisation</th>
+          <th class="px-4 pb-1 font-medium">Company</th>
           <th class="px-4 pb-1 font-medium">Status</th>
-          <th class="px-4 pb-1 font-medium">Staff</th>
+          <th class="px-4 pb-1 font-medium">Privileges</th>
           <th class="px-4 pb-1"></th>
         </tr>
       </thead>
@@ -49,6 +48,7 @@
             <td class="border border-charcoal-900/5 px-4 py-3 text-charcoal-700">{{ user.organisation_name|default:"—" }}</td>
             <td class="border border-charcoal-900/5 px-4 py-3">
               {% if user.is_active %}<span class="badge-certified">Active</span>{% else %}<span class="badge-rejected">Inactive</span>{% endif %}
+              {% if user.email_confirmed %}<span class="badge-pending !bg-military-50 !text-military-700">Email OK</span>{% endif %}
             </td>
             <td class="border border-charcoal-900/5 px-4 py-3 text-charcoal-700">
               {% if user.is_superuser %}Superuser{% elif user.is_staff %}Staff{% else %}—{% endif %}
@@ -56,6 +56,15 @@
             <td class="border border-charcoal-900/5 px-4 py-3 text-right">
               <div class="flex flex-wrap items-center justify-end gap-2">
                 <a href="{% url 'adminpanel:user_edit' user.pk %}" class="btn-outline !px-3 !py-1.5 !text-xs">Edit</a>
+                {% if request.user.is_superuser and not user.is_superuser %}
+                  <form method="post" action="{% url 'adminpanel:user_nominate_admin' user.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="make_admin" value="{% if user.is_admin_role %}0{% else %}1{% endif %}">
+                    <button type="submit" class="btn-outline !px-3 !py-1.5 !text-xs {% if user.is_admin_role %}!border-red-300 !text-red-700 hover:!bg-red-50{% else %}!text-military-700{% endif %}">
+                      {% if user.is_admin_role %}Remove admin{% else %}Make admin{% endif %}
+                    </button>
+                  </form>
+                {% endif %}
                 <form method="post" action="{% url 'adminpanel:user_toggle' user.pk %}">
                   {% csrf_token %}
                   <button type="submit" class="btn-outline !px-3 !py-1.5 !text-xs {% if user.is_active %}!border-red-300 !text-red-700 hover:!bg-red-50{% else %}!text-military-700{% endif %}">

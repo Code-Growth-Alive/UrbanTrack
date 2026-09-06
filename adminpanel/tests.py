@@ -14,7 +14,7 @@ def make_superuser():
         username="root",
         email="root@example.com",
         password="S3cret!pass",
-        role=Role.DONOR,
+        role=Role.ADMIN,
     )
 
 
@@ -34,10 +34,10 @@ class AdminAccessTests(TestCase):
         self.client.force_login(expert)
         self.assertEqual(self._get("adminpanel:dashboard").status_code, 403)
 
-    def test_staff_can_access_dashboard(self):
+    def test_admin_role_can_access_dashboard(self):
         staff = make_expert()
-        staff.is_staff = True
-        staff.save()
+        staff.role = Role.ADMIN
+        staff.save(update_fields=["role"])
         self.client.force_login(staff)
         self.assertEqual(self._get("adminpanel:dashboard").status_code, 200)
 
@@ -50,9 +50,7 @@ class AdminDashboardTests(TestCase):
         self.expert = make_expert()
         self.project = make_project(self.company)
         job = make_job(self.company)
-        JobApplication.objects.create(
-            job=job, applicant=self.expert, cover_letter="Ready."
-        )
+        JobApplication.objects.create(job=job, applicant=self.expert, cover_letter="Ready.")
 
     def test_dashboard_shows_counts(self):
         response = self.client.get(reverse("adminpanel:dashboard"))
@@ -64,9 +62,9 @@ class AdminDashboardTests(TestCase):
     def test_dashboard_breaks_down_roles(self):
         response = self.client.get(reverse("adminpanel:dashboard"))
         content = response.content.decode()
-        self.assertIn("Experts", content)
-        self.assertIn("Companies", content)
-        self.assertIn("Donor agencies", content)
+        self.assertIn("Users", content)
+        self.assertIn("Admins", content)
+        self.assertIn("Confirmed emails", content)
 
 
 class AdminUserManagementTests(TestCase):
@@ -81,7 +79,9 @@ class AdminUserManagementTests(TestCase):
         self.assertContains(response, self.expert.professional_id)
         self.assertContains(response, self.company.professional_id)
 
-        response = self.client.get(reverse("adminpanel:user_list"), {"role": "expert"})
+        self.expert.role = Role.ADMIN
+        self.expert.save(update_fields=["role"])
+        response = self.client.get(reverse("adminpanel:user_list"), {"role": "admin"})
         self.assertContains(response, self.expert.professional_id)
         self.assertNotContains(response, self.company.professional_id)
 
@@ -91,8 +91,7 @@ class AdminUserManagementTests(TestCase):
             {
                 "first_name": self.expert.first_name,
                 "last_name": self.expert.last_name,
-                "organisation_name": "",
-                "role": "company",
+                "role": "user",
                 "is_active": "on",
                 "is_staff": "",
                 "is_superuser": "",
@@ -101,7 +100,7 @@ class AdminUserManagementTests(TestCase):
         )
         self.assertRedirects(response, reverse("adminpanel:user_list"))
         self.expert.refresh_from_db()
-        self.assertEqual(self.expert.role, Role.COMPANY)
+        self.assertEqual(self.expert.role, Role.USER)
 
     def test_creating_expert_profile_via_admin_edit(self):
         profile_gone = make_expert(username="noprofile", email="noprofile@example.com")
@@ -111,8 +110,7 @@ class AdminUserManagementTests(TestCase):
             {
                 "first_name": profile_gone.first_name,
                 "last_name": profile_gone.last_name,
-                "organisation_name": "",
-                "role": "expert",
+                "role": "user",
                 "is_active": "on",
                 "is_staff": "",
                 "is_superuser": "",
@@ -128,8 +126,7 @@ class AdminUserManagementTests(TestCase):
             {
                 "first_name": self.expert.first_name,
                 "last_name": self.expert.last_name,
-                "organisation_name": "",
-                "role": "expert",
+                "role": "user",
                 "is_active": "on",
                 "is_staff": "",
                 "is_superuser": "",

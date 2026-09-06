@@ -13,9 +13,9 @@
     <div class="card"><p class="stat-value">{{ application_total }}</p><p class="stat-label">Applications</p></div>
   </div>
   <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-    <div class="card"><p class="stat-value">{{ role_counts.expert|default:0 }}</p><p class="stat-label">Experts</p></div>
-    <div class="card"><p class="stat-value">{{ role_counts.company|default:0 }}</p><p class="stat-label">Companies</p></div>
-    <div class="card"><p class="stat-value">{{ role_counts.donor|default:0 }}</p><p class="stat-label">Donor agencies</p></div>
+    <div class="card"><p class="stat-value">{{ role_counts.user|default:0 }}</p><p class="stat-label">Users</p></div>
+    <div class="card"><p class="stat-value">{{ role_counts.admin|default:0 }}</p><p class="stat-label">Admins</p></div>
+    <div class="card"><p class="stat-value">{{ role_counts.confirmed|default:0 }}</p><p class="stat-label">Confirmed emails</p></div>
     <div class="card">
       <p class="stat-value {% if disputed %}!text-red-700{% endif %}">{{ disputed }}</p>
       <p class="stat-label">Disputes to arbitrate</p>

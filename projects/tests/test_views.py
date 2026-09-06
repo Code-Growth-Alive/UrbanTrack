@@ -66,7 +66,7 @@ class ProjectCreateTests(TestCase):
             username="exp",
             email="exp@example.com",
             password="S3cret!pass",
-            role="expert",
+            email_confirmed=True,
         )
         self.url = reverse("projects:create")
 
@@ -75,19 +75,13 @@ class ProjectCreateTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn("/login/", response["Location"])
 
-    def test_experts_cannot_publish(self):
+    def test_any_user_can_create_a_draft(self):
         self.client.force_login(self.expert)
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 403)
-
-    def test_company_creates_draft_and_lands_on_manage(self):
-        self.client.force_login(self.company)
         response = self.client.post(self.url, PROJECT_DATA)
         self.assertEqual(response.status_code, 302)
         project = Project.objects.get(official_name=PROJECT_DATA["official_name"])
         self.assertEqual(project.status, ProjectStatus.DRAFT)
-        self.assertEqual(project.published_by, self.company)
-        self.assertRedirects(response, reverse("projects:manage", args=[project.pk]))
+        self.assertEqual(project.published_by, self.expert)
 
 
 class ProjectManageTests(TestCase):
@@ -100,7 +94,7 @@ class ProjectManageTests(TestCase):
             username="bintou",
             email="bintou@example.com",
             password="S3cret!pass",
-            role="expert",
+            email_confirmed=True,
             first_name="Bintou",
             last_name="Traore",
         )
@@ -140,7 +134,10 @@ class ProjectManageTests(TestCase):
         self.project.refresh_from_db()
         self.assertEqual(self.project.status, ProjectStatus.PUBLISHED)
         self.assertEqual(len(mail.outbox), 1)
-        invitation = self.project.contributions.get().invitations.get()
+        # The publisher's own contribution is auto-certified and skipped; the
+        # declared unknown expert receives the single invitation.
+        contribution = self.project.contributions.get(invited_email="unknown@example.com")
+        invitation = contribution.invitations.get()
         self.assertIn(str(invitation.token), mail.outbox[0].body)
 
     def test_invalid_declare_form_preserves_errors(self):
@@ -184,7 +181,7 @@ class CertificationSurfacingTests(TestCase):
             username="awa",
             email="awa@example.com",
             password="S3cret!pass",
-            role="expert",
+            email_confirmed=True,
             first_name="Awa",
             last_name="Diop",
         )
@@ -220,9 +217,7 @@ class ProjectCrudTests(TestCase):
         self.client.force_login(self.company)
         data = dict(PROJECT_DATA)
         data["official_name"] = "Renamed coastal rebuild"
-        response = self.client.post(
-            reverse("projects:edit", args=[self.project.pk]), data
-        )
+        response = self.client.post(reverse("projects:edit", args=[self.project.pk]), data)
         self.assertRedirects(response, reverse("projects:manage", args=[self.project.pk]))
         self.project.refresh_from_db()
         self.assertEqual(self.project.official_name, "Renamed coastal rebuild")

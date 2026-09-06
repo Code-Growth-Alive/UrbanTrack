@@ -42,26 +42,7 @@
           </ul>
         </section>
 
-        <!-- Media gallery: images, videos, documents (all optional) -->
-        {% if videos %}
-          <section>
-            <h2 class="section-title mb-3">Videos</h2>
-            <div class="grid gap-4 sm:grid-cols-2">
-              {% for item in videos %}
-                <figure class="overflow-hidden rounded-xl border border-charcoal-900/10 bg-charcoal-900 shadow-sm">
-                  <div class="aspect-video">
-                    <iframe src="{{ item.embed_url }}" title="{{ item.caption|default:'Project video' }}"
-                            class="h-full w-full" loading="lazy"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture"
-                            allowfullscreen></iframe>
-                  </div>
-                  {% if item.caption %}<figcaption class="px-3 py-2 text-xs text-white">{{ item.caption }}</figcaption>{% endif %}
-                </figure>
-              {% endfor %}
-            </div>
-          </section>
-        {% endif %}
-
+        <!-- Media gallery: images and documents (all optional) -->
         {% if images %}
           <section>
             <h2 class="section-title mb-3">Gallery</h2>

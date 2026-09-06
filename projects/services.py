@@ -8,12 +8,37 @@ declared contribution.
 """
 
 from django.core.exceptions import ValidationError
+from django.utils.translation import gettext as _
 
 from .models import ProjectStatus
 
 
 class PublishingError(Exception):
     """Raised when a status transition is not allowed."""
+
+
+def _ensure_owner_contribution(project):
+    """
+    The publishing user is automatically a contributor, and their
+    contribution is confirmed outright: they lead the project they publish.
+    """
+    from django.utils import timezone
+
+    from certification.models import ContributionStatus, ProjectContribution, RoleType
+
+    project = ProjectContribution.objects.get_or_create(
+        project=project,
+        invited_email=project.published_by.email,
+        role_type=RoleType.DIRECTOR,
+        defaults={
+            "expert": project.published_by,
+            "added_by": project.published_by,
+            "contribution_bullets": _("Led the delivery of the project from start to finish."),
+            "status": ContributionStatus.CONFIRMED,
+            "confirmed_at": timezone.now(),
+        },
+    )[0]
+    return project
 
 
 def publish_project(project):
@@ -32,6 +57,9 @@ def publish_project(project):
     project.full_clean()
     project.status = ProjectStatus.PUBLISHED
     project.save(update_fields=["status", "updated_at"])
+
+    # The publishing user is themselves a contributor, certified at publish time.
+    _ensure_owner_contribution(project)
 
     from certification.services import notify_contributions_for_project
 

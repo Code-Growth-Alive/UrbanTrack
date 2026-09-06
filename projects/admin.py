@@ -15,5 +15,5 @@ class ProjectAdmin(admin.ModelAdmin):
         "duration_end",
     )
     list_filter = ("status", "visibility")
-    search_fields = ("official_name", "client_name", "published_by__organisation_name")
+    search_fields = ("official_name", "client_name", "published_by__company__name")
     date_hierarchy = "duration_start"

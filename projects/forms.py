@@ -65,12 +65,11 @@ class ProjectLinkForm(forms.Form):
 
 
 class ProjectMediaForm(forms.Form):
-    """Attach an image, document or YouTube video to a project (all optional)."""
+    """Attach an image or document to a project (all optional)."""
 
     KIND_CHOICES = (
         ("image", _("Image")),
         ("document", _("Document")),
-        ("video", _("YouTube video")),
     )
 
     kind = forms.ChoiceField(label=_("Type"), choices=KIND_CHOICES, initial="image")
@@ -80,29 +79,17 @@ class ProjectMediaForm(forms.Form):
         required=False,
         widget=forms.HiddenInput,
     )
-    url = forms.URLField(
-        label=_("Video URL"),
-        required=False,
-        help_text=_("For videos only. Accepts youtube.com/watch, youtu.be and shorts URLs."),
-    )
     file = forms.FileField(
         label=_("File"),
         required=False,
-        help_text=_("Images and documents are uploaded here (PDF, PNG, JPG…)."),
+        help_text=_("Upload a PDF, PNG, JPG or similar file."),
     )
 
     def clean(self):
         cleaned = super().clean()
-        kind = cleaned.get("kind")
         file = cleaned.get("file")
-        url = cleaned.get("url")
-        if kind in ("image", "document") and not file:
+        if not file:
             self.add_error("file", _("Please choose a file to upload."))
-        if kind == "video":
-            if file:
-                self.add_error("file", _("Videos are embedded by URL, not uploaded."))
-            elif not url:
-                self.add_error("url", _("A video URL is required."))
         return cleaned
 
 

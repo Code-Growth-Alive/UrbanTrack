@@ -3,6 +3,7 @@
 from datetime import date, timedelta
 
 from django.contrib.auth import get_user_model
+from django.core import mail
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
 from django.test import TestCase
@@ -13,14 +14,15 @@ from ..services import PublishingError, archive_project, publish_project
 User = get_user_model()
 
 
-def make_company(username="btp", email=None):
-    return User.objects.create_user(
+def make_company(username="btp", email=None, **overrides):
+    defaults = dict(
         username=username,
         email=email or f"{username}@example.com",
-        role="company",
-        organisation_name="BTP & Urbanisme SARL",
+        email_confirmed=True,
         password="S3cret!pass",
     )
+    defaults.update(overrides)
+    return User.objects.create_user(**defaults)
 
 
 def make_project(company, **overrides):
@@ -147,3 +149,21 @@ class PublishingFlowTests(TestCase):
             expected_expiry.timestamp(),
             delta=5,
         )
+
+    def test_publisher_becomes_a_confirmed_contributor_on_publish(self):
+        from certification.models import ContributionStatus, ProjectContribution, RoleType
+
+        project = make_project(self.company)
+        publish_project(project)
+        owner = ProjectContribution.objects.get(project=project, invited_email=self.company.email)
+        self.assertEqual(owner.expert, self.company)
+        self.assertEqual(owner.added_by, self.company)
+        self.assertEqual(owner.role_type, RoleType.DIRECTOR)
+        self.assertEqual(owner.status, ContributionStatus.CONFIRMED)
+        self.assertIsNotNone(owner.confirmed_at)
+        self.assertTrue(owner.is_certified)
+
+    def test_publish_does_not_email_publisher_to_confirm_own_contribution(self):
+        project = make_project(self.company)
+        publish_project(project)
+        self.assertEqual(len(mail.outbox), 0)

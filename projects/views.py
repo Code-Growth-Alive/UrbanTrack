@@ -12,7 +12,7 @@ from django.utils.translation import gettext as _
 from django.views.decorators.http import require_http_methods
 from django.views.generic import DetailView, ListView
 
-from accounts.models import Role, User
+from accounts.models import User
 from certification.models import ContributionStatus, ProjectContribution
 from certification.services import (
     CertificationError,
@@ -90,7 +90,6 @@ class ProjectPublicDetailView(DetailView):
         )
         context["images"] = self.object.media_items.filter(kind=ProjectMedia.MediaKind.IMAGE)
         context["documents"] = self.object.media_items.filter(kind=ProjectMedia.MediaKind.DOCUMENT)
-        context["videos"] = self.object.media_items.filter(kind=ProjectMedia.MediaKind.VIDEO)
         return context
 
 
@@ -103,10 +102,7 @@ def _owned_project_or_403(request, pk):
 
 @login_required
 def project_create(request):
-    """Epic 2 entry point: publish a new project (draft first)."""
-    if not (request.user.is_company or request.user.is_donor or request.user.is_superuser):
-        raise PermissionDenied(_("Only company accounts can publish projects."))
-
+    """Publish a new project (draft first) — every user can publish."""
     if request.method == "POST":
         form = ProjectForm(request.POST)
         if form.is_valid():
@@ -243,10 +239,8 @@ def project_manage(request, pk):
                         project=project,
                         kind=media_form.cleaned_data["kind"],
                         caption=media_form.cleaned_data.get("caption", ""),
-                        url=media_form.cleaned_data.get("url", ""),
+                        file=media_form.cleaned_data["file"],
                     )
-                    if media_form.cleaned_data["file"]:
-                        item.file = media_form.cleaned_data["file"]
                     try:
                         item.full_clean()
                     except ValidationError as ve:
@@ -288,7 +282,7 @@ def project_manage(request, pk):
     link_form = ProjectLinkForm()
     media_form = ProjectMediaForm()
 
-    existing_experts = User.objects.filter(role=Role.EXPERT).order_by("-date_joined")[:200]
+    existing_experts = User.objects.filter(email_confirmed=True).order_by("-date_joined")[:200]
     return render(
         request,
         "projects/manage.html",

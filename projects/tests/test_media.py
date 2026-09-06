@@ -10,44 +10,19 @@ from projects.services import publish_project
 
 
 def make_company():
+    from accounts.models import Company as CompanyModel
+
+    company = CompanyModel.objects.create(name="Media Corp")
     return User.objects.create_user(
         username="media.corp",
         email="media@corp.com",
         password="S3cret!pass",
-        role=Role.COMPANY,
-        organisation_name="Media Corp",
+        role=Role.USER,
+        company=company,
+        email_confirmed=True,
         first_name="Fatou",
         last_name="Ndiaye",
     )
-
-
-class EmbedUrlTests(TestCase):
-    def _media(self, url):
-        return ProjectMedia(kind=ProjectMedia.MediaKind.VIDEO, url=url)
-
-    def test_watch_url(self):
-        self.assertEqual(
-            self._media("https://www.youtube.com/watch?v=dQw4w9WgXcQ").embed_url,
-            "https://www.youtube.com/embed/dQw4w9WgXcQ",
-        )
-
-    def test_short_url(self):
-        self.assertEqual(
-            self._media("https://youtu.be/abc123").embed_url,
-            "https://www.youtube.com/embed/abc123",
-        )
-
-    def test_shorts_url(self):
-        self.assertEqual(
-            self._media("https://youtube.com/shorts/xyz789?feature=share").embed_url,
-            "https://www.youtube.com/embed/xyz789",
-        )
-
-    def test_non_youtube_passthrough(self):
-        self.assertEqual(
-            self._media("https://vimeo.com/12345").embed_url,
-            "https://vimeo.com/12345",
-        )
 
 
 class ManageMediaTests(TestCase):
@@ -91,7 +66,6 @@ class ManageMediaTests(TestCase):
                 "kind": "document",
                 "caption": "Final report",
                 "file": upload,
-                "url": "",
             },
         )
         self.assertRedirects(response, self.url)
@@ -106,6 +80,6 @@ class ManageMediaTests(TestCase):
     def test_image_without_file_rejected(self):
         self.client.post(
             self.url,
-            {"action": "add_media", "kind": "image", "caption": "", "url": ""},
+            {"action": "add_media", "kind": "image", "caption": ""},
         )
         self.assertEqual(ProjectMedia.objects.count(), 0)

@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.utils.translation import gettext_lazy as _
 
-from .models import ExpertProfile, Skill, Training, User
+from .models import Company, ExpertProfile, Skill, Training, User
 
 
 class TrainingInline(admin.TabularInline):
@@ -10,19 +10,27 @@ class TrainingInline(admin.TabularInline):
     extra = 0
 
 
+@admin.register(Company)
+class CompanyAdmin(admin.ModelAdmin):
+    list_display = ("name",)
+    search_fields = ("name",)
+
+
 @admin.register(User)
 class UserAdmin(DjangoUserAdmin):
-    """Admin for the custom User: role filters and professional ID column."""
+    """Admin for the custom User: role, company, confirmation and OX-ID."""
 
     list_display = (
         "username",
         "email",
         "role",
+        "company",
         "professional_id",
-        "organisation_name",
+        "email_confirmed",
+        "is_active",
         "is_staff",
     )
-    list_filter = ("role", "is_staff", "is_superuser", "is_active")
+    list_filter = ("role", "email_confirmed", "is_staff", "is_superuser", "is_active")
     fieldsets = (
         (None, {"fields": ("username", "password")}),
         (
@@ -35,7 +43,10 @@ class UserAdmin(DjangoUserAdmin):
                 "fields": (
                     "role",
                     "professional_id",
-                    "organisation_name",
+                    "company",
+                    "email_confirmed",
+                    "confirmation_code",
+                    "confirmation_code_created_at",
                 )
             },
         ),
@@ -50,12 +61,12 @@ class UserAdmin(DjangoUserAdmin):
             None,
             {
                 "classes": ("wide",),
-                "fields": ("username", "email", "role", "password1", "password2"),
+                "fields": ("username", "email", "company", "password1", "password2"),
             },
         ),
     )
-    search_fields = ("username", "email", "professional_id", "organisation_name")
-    readonly_fields = ("professional_id",)
+    search_fields = ("username", "email", "professional_id", "company__name")
+    readonly_fields = ("professional_id", "confirmation_code", "confirmation_code_created_at")
 
 
 @admin.register(ExpertProfile)

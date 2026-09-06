@@ -19,7 +19,7 @@ def make_expert_user(email="seydou@example.com", **overrides):
         username=email,
         email=email,
         password="S3cret!pass",
-        role="expert",
+        email_confirmed=True,
         first_name="Seydou",
         last_name="Ba",
     )
@@ -28,41 +28,34 @@ def make_expert_user(email="seydou@example.com", **overrides):
 
 
 class SignUpTests(TestCase):
-    def test_expert_signup_creates_account_and_portfolio(self):
+    def test_signup_creates_account_confirms_and_lands_on_dashboard(self):
         response = self.client.post(
             reverse("accounts:signup"),
             {
                 "first_name": "Aminata",
                 "last_name": "Sow",
                 "email": "aminata@example.com",
-                "role": "expert",
                 "password1": "S3cret!pass",
                 "password2": "S3cret!pass",
             },
         )
-        self.assertRedirects(response, reverse("accounts:dashboard"))
+        # Fresh signups land on the email-confirmation screen.
+        self.assertRedirects(response, reverse("accounts:confirm_email"))
         user = User.objects.get(email="aminata@example.com")
         self.assertTrue(user.is_expert)
         self.assertTrue(ExpertProfile.objects.filter(user=user).exists())
         self.assertTrue(user.professional_id.startswith("OX-"))
+        self.assertFalse(user.email_confirmed)
         # Signed in right away.
         self.assertIn("_auth_user_id", self.client.session)
 
-    def test_company_requires_organisation(self):
+        # Entering the emailed code activates the account and reaches the dashboard.
         response = self.client.post(
-            reverse("accounts:signup"),
-            {
-                "first_name": "BTP",
-                "last_name": "Manager",
-                "email": "btp@example.com",
-                "role": "company",
-                "organisation_name": "",
-                "password1": "S3cret!pass",
-                "password2": "S3cret!pass",
-            },
+            reverse("accounts:confirm_email"), {"code": user.confirmation_code}
         )
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(User.objects.filter(email="btp@example.com").exists())
+        self.assertRedirects(response, reverse("accounts:dashboard"))
+        user.refresh_from_db()
+        self.assertTrue(user.email_confirmed)
 
     def test_duplicate_email_rejected(self):
         make_expert_user()
@@ -72,7 +65,6 @@ class SignUpTests(TestCase):
                 "first_name": "Copy",
                 "last_name": "Cat",
                 "email": "seydou@example.com",
-                "role": "expert",
                 "password1": "S3cret!pass",
                 "password2": "S3cret!pass",
             },
@@ -115,12 +107,13 @@ class ExpertDirectoryTests(TestCase):
         self.company = make_company()
         self.expert = make_expert_user()
 
-    def test_directory_lists_experts_only(self):
+    def test_directory_lists_confirmed_users(self):
         response = self.client.get(reverse("accounts:expert_list"))
         self.assertEqual(response.status_code, 200)
         content = response.content.decode()
         self.assertIn("Seydou Ba", content)
-        self.assertNotIn(self.company.email, content)
+        # Every confirmed account (including the company publisher) is listed.
+        self.assertIn(self.company.username, content)
 
     def test_profile_shows_initials_not_buggy_slices(self):
         response = self.client.get(
@@ -163,19 +156,18 @@ class DashboardAccessTests(TestCase):
         response = self.client.get(reverse("accounts:dashboard"))
         self.assertRedirects(response, "/login/?next=/dashboard/", fetch_redirect_response=False)
 
-    def test_signup_lands_on_dashboard(self):
+    def test_signup_lands_on_email_confirmation(self):
         response = self.client.post(
             reverse("accounts:signup"),
             {
                 "first_name": "Aminata",
                 "last_name": "Sow",
                 "email": "aminata@example.com",
-                "role": "expert",
                 "password1": "S3cret!pass",
                 "password2": "S3cret!pass",
             },
         )
-        self.assertRedirects(response, reverse("accounts:dashboard"))
+        self.assertRedirects(response, reverse("accounts:confirm_email"))
 
 
 class ExpertDashboardTests(TestCase):
@@ -255,7 +247,7 @@ class CompanyDashboardTests(TestCase):
             username="mari",
             email="mari@example.com",
             password="S3cret!pass",
-            role="expert",
+            email_confirmed=True,
         )
         contribution = declare_contributor(
             self.project,

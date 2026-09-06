@@ -1,0 +1,22 @@
+{% extends "emails/base_email.html" %}
+{% block body %}
+  <p>Hello {{ name }},</p>
+  <p>Your Urban Track account is almost ready. Enter the 6-digit confirmation
+     code below to verify your email address and activate your account.</p>
+  <p style="text-align:center; font-size:34px; font-weight:bold; letter-spacing:8px;
+            color:#5c6b2f; margin:24px 0 24px 0;">{{ code }}</p>
+  <p>The code expires in {{ expires_in }} hours.</p>
+  <p>If you did not create an Urban Track account, you can ignore this email.</p>
+{% endblock %}
+{% block actions %}
+  <tr>
+    <td align="center" style="padding:8px 32px 8px 32px;">
+      <a href="{{ confirm_url }}"
+         style="display:inline-block; background-color:#5c6b2f; color:#ffffff;
+                text-decoration:none; font-size:15px; font-weight:bold;
+                padding:13px 28px; border-radius:8px;">
+        Enter my confirmation code
+      </a>
+    </td>
+  </tr>
+{% endblock %}

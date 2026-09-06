@@ -24,21 +24,9 @@ class ExpertProfileSignalTests(TestCase):
         profile = ExpertProfile.objects.get(user=expert)
         self.assertEqual(profile.cv_template, CvTemplate.ACADEMIC_HARVARD_MIT)
 
-    def test_companies_and_donors_have_no_profile(self):
-        company = User.objects.create_user(
-            username="corp", email="corp@example.com", role=Role.COMPANY
-        )
-        donor = User.objects.create_user(
-            username="donor", email="donor@example.org", role=Role.DONOR
-        )
-        self.assertFalse(ExpertProfile.objects.filter(user=company).exists())
-        self.assertFalse(ExpertProfile.objects.filter(user=donor).exists())
-
-    def test_role_change_creates_profile(self):
-        user = User.objects.create_user(
-            username="late", email="late@example.com", role=Role.COMPANY
-        )
-        user.role = Role.EXPERT
+    def test_profile_created_for_all_users(self):
+        user = User.objects.create_user(username="late", email="late@example.com", role=Role.USER)
+        user.role = Role.ADMIN
         user.save()
         self.assertTrue(ExpertProfile.objects.filter(user=user).exists())
 

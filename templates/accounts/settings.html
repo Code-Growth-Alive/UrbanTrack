@@ -15,8 +15,8 @@
       <section class="card">
         <h2 class="section-title">Profile picture & details</h2>
         <p class="mt-1 text-sm text-charcoal-700">
-          Your picture is shared across all roles and appears on your public
-          profile and dashboards.
+          Your picture appears on your public profile and dashboards; the
+          company is shown next to your projects and job offers.
         </p>
 
         <div class="mt-4 flex items-center gap-4">
@@ -46,6 +46,19 @@
       <section class="card">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
+            <h2 class="section-title">Email address</h2>
+            <p class="mt-1 text-sm text-charcoal-700">
+              <span class="font-mono">{{ user.email }}</span> —{% if user.email_confirmed %}
+              confirmed.{% else %} awaiting confirmation.{% endif %}
+            </p>
+          </div>
+          <a href="{% url 'accounts:change_email' %}" class="btn-outline !px-4 !py-2 !text-sm">Change email</a>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
             <h2 class="section-title">Password</h2>
             <p class="mt-1 text-sm text-charcoal-700">
               Keep your account secure: choose a strong, unique password.
@@ -55,19 +68,17 @@
         </div>
       </section>
 
-      {% if user.is_expert %}
-        <section class="card">
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 class="section-title">Public portfolio</h2>
-              <p class="mt-1 text-sm text-charcoal-700">
-                Headline, bio, skills and training shown on your public profile.
-              </p>
-            </div>
-            <a href="{% url 'accounts:profile_edit' %}" class="btn-outline !px-4 !py-2 !text-sm">Edit portfolio</a>
+      <section class="card">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="section-title">Public portfolio</h2>
+            <p class="mt-1 text-sm text-charcoal-700">
+              Headline, bio, skills and training shown on your public profile.
+            </p>
           </div>
-        </section>
-      {% endif %}
+          <a href="{% url 'accounts:profile_edit' %}" class="btn-outline !px-4 !py-2 !text-sm">Edit portfolio</a>
+        </div>
+      </section>
     </div>
   </div>
 {% endblock %}

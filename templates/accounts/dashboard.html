@@ -4,156 +4,78 @@
 
 {% block content %}
   <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-    <h1 class="text-2xl font-black tracking-tight sm:text-3xl">Dashboard</h1>
-    <p class="mt-1 text-sm text-charcoal-700">
-      {{ user.get_full_name|default:user.username }} ·
-      <span class="font-mono">{{ user.professional_id }}</span> ·
-      {{ user.get_role_display }}
-    </p>
-
-    {% if role == "expert" %}
-      <!-- ============ EXPERT DASHBOARD ============ -->
-      <div class="mt-6 grid gap-4 sm:grid-cols-3">
-        <div class="card"><p class="stat-value">{{ pending_reviews|length }}</p><p class="stat-label">Awaiting your review</p></div>
-        <div class="card"><p class="stat-value">{{ confirmed_contributions|length }}</p><p class="stat-label">Certified contributions</p></div>
-        <div class="card"
-             title="Certified contributions weighted by role: Director 4 · Manager 3 · Specialist 2 · Assistant 1">
-          <p class="stat-value">{{ trust_score }}</p><p class="stat-label">Trust score</p>
-        </div>
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-black tracking-tight sm:text-3xl">Dashboard</h1>
+        <p class="mt-1 text-sm text-charcoal-700">
+          {{ user.get_full_name|default:user.username }} ·
+          <span class="font-mono">{{ user.professional_id }}</span>
+          {% if user.organisation_name %}<span class="text-charcoal-500">· {{ user.organisation_name }}</span>{% endif %}
+        </p>
       </div>
+      <a href="{% url 'projects:create' %}" class="btn-primary !px-4 !py-2 !text-sm">+ Publish a project</a>
+    </div>
 
-      {% if pending_reviews %}
-        <section class="mt-10">
-          <h2 class="section-title mb-4">Declarations to review</h2>
-          {% for contribution in pending_reviews %}
-            <article class="card-project mb-3 flex flex-wrap items-center justify-between gap-3">
-              <div class="min-w-0">
-                <span class="role-chip">{{ contribution.get_role_type_display }}</span>
-                {% if contribution.status == "invited" %}
-                  <span class="badge-pending ml-2">Invited</span>
-                {% else %}
-                  <span class="badge-pending ml-2">Pending confirmation</span>
-                {% endif %}
-                <h3 class="mt-2 font-bold leading-snug">
-                  {{ contribution.project.official_name }}
-                </h3>
-                <p class="text-sm text-charcoal-700">
-                  Declared by
-                  {{ contribution.added_by.organisation_name|default:contribution.added_by.get_full_name }}
-                  · {{ contribution.project.client_name }}
-                </p>
-              </div>
-              <a href="{% url 'certification:contribution_review' contribution.pk %}" class="btn-accent shrink-0 !px-4 !py-2 !text-sm">
-                Review
-              </a>
-            </article>
-          {% endfor %}
-        </section>
-      {% else %}
-        <div class="card mt-10 border-dashed text-center text-charcoal-700">
-          <p>No declaration awaits your review.</p>
-          <p class="mt-1 text-sm">
-            When a company identifies you as a contributor, it appears here —
-            nothing is certified without your confirmation.
-          </p>
-        </div>
-      {% endif %}
+    <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="card"><p class="stat-value">{{ counts.published }}</p><p class="stat-label">Published projects</p></div>
+      <div class="card"><p class="stat-value">{{ counts.drafts }}</p><p class="stat-label">Drafts</p></div>
+      <div class="card"><p class="stat-value">{{ pending_reviews|length }}</p><p class="stat-label">Awaiting your review</p></div>
+      <div class="card"
+           title="Certified contributions weighted by role: Director 4 · Manager 3 · Specialist 2 · Assistant 1">
+        <p class="stat-value">{{ trust_score }}</p><p class="stat-label">Trust score</p>
+      </div>
+    </div>
 
-      {% if confirmed_contributions %}
-        <section class="mt-10">
-          <h2 class="section-title mb-4">Certified track record</h2>
-          {% for contribution in confirmed_contributions %}
-            <article class="card mb-3 flex flex-wrap items-center justify-between gap-3 py-4">
-              <div>
-                <span class="role-chip">{{ contribution.get_role_type_display }}</span>
-                <p class="mt-2 font-semibold leading-snug">
-                  <a href="{{ contribution.project.get_absolute_url }}" class="hover:text-military-700 hover:underline">
-                    {{ contribution.project.official_name }}
-                  </a>
-                </p>
-                <p class="text-xs text-charcoal-300">Confirmed {{ contribution.confirmed_at|date:"d M Y" }}</p>
-              </div>
-              <span class="badge-certified">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-3.5 w-3.5"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
-                Certified
+    {% if awaiting_validation %}
+      <section class="card mt-8 border-accent-500 bg-accent-50">
+        <h2 class="font-bold text-accent-700">Action needed: adjusted wordings awaiting your validation</h2>
+        <ul class="mt-3 space-y-2 text-sm">
+          {% for contribution in awaiting_validation %}
+            <li class="flex flex-wrap items-center justify-between gap-2">
+              <span>
+                {% if contribution.expert_id %}{{ contribution.expert.get_full_name|default:contribution.expert.email }}{% else %}{{ contribution.invited_email }}{% endif %}
+                on <strong>{{ contribution.project.official_name }}</strong>
               </span>
-            </article>
+              <a href="{% url 'projects:manage' contribution.project.pk %}" class="btn-accent !px-3 !py-1.5 !text-xs">Validate now</a>
+            </li>
           {% endfor %}
-          <div class="mt-2 flex flex-wrap gap-3">
-            <a href="{% url 'accounts:public_profile' user.professional_id %}" class="btn-outline inline-flex">View my public profile</a>
-            <a href="{% url 'cv_generator:builder' %}" class="btn-primary inline-flex">Generate my CV</a>
-            <a href="{% url 'accounts:profile_edit' %}" class="btn-outline inline-flex">Edit my portfolio</a>
-          </div>
-        </section>
-      {% else %}
-        <div class="card mt-10 border-dashed text-center text-charcoal-700">
-          <p>No certified experience yet.</p>
-          <p class="mt-1 text-sm">
-            Fill in your portfolio and CV preferences while you wait: your
-            public profile goes live with the first certification.
-          </p>
-          <div class="mt-4 flex flex-wrap justify-center gap-3">
-            <a href="{% url 'accounts:profile_edit' %}" class="btn-primary !px-4 !py-2 !text-sm">Complete my portfolio</a>
-            <a href="{% url 'jobs:list' %}" class="btn-outline !px-4 !py-2 !text-sm">Browse jobs</a>
-          </div>
-        </div>
-      {% endif %}
+        </ul>
+      </section>
+    {% endif %}
 
-      {% if my_applications %}
-        <section class="mt-10">
-          <div class="mb-4 flex items-center justify-between">
-            <h2 class="section-title">My applications</h2>
-            <a href="{% url 'jobs:my_applications' %}" class="text-sm font-semibold text-accent-700 hover:underline">See all</a>
-          </div>
-          {% for application in my_applications %}
-            <article class="card-project mb-3 flex flex-wrap items-center justify-between gap-3 py-4">
-              <div>
-                <p class="font-semibold leading-snug">{{ application.job.title }}</p>
-                <p class="text-xs text-charcoal-300">
-                  {{ application.job.published_by.organisation_name|default:application.job.published_by.get_full_name }}
-                  · applied {{ application.applied_at|date:"d M Y" }}
-                </p>
-              </div>
-              {% if application.status == "accepted" %}
-                <span class="badge-certified">Accepted</span>
-              {% elif application.status == "rejected" %}
-                <span class="badge-rejected">Not retained</span>
+    {% if pending_reviews %}
+      <section class="mt-10">
+        <h2 class="section-title mb-4">Declarations to review</h2>
+        {% for contribution in pending_reviews %}
+          <article class="card-project mb-3 flex flex-wrap items-center justify-between gap-3">
+            <div class="min-w-0">
+              <span class="role-chip">{{ contribution.get_role_type_display }}</span>
+              {% if contribution.status == "invited" %}
+                <span class="badge-pending ml-2">Invited</span>
               {% else %}
-                <span class="badge-pending">Pending review</span>
+                <span class="badge-pending ml-2">Pending confirmation</span>
               {% endif %}
-            </article>
-          {% endfor %}
-        </section>
-      {% endif %}
+              <h3 class="mt-2 font-bold leading-snug">
+                {{ contribution.project.official_name }}
+              </h3>
+              <p class="text-sm text-charcoal-700">
+                Declared by
+                {{ contribution.added_by.organisation_name|default:contribution.added_by.get_full_name }}
+                · {{ contribution.project.client_name }}
+              </p>
+            </div>
+            <a href="{% url 'certification:contribution_review' contribution.pk %}" class="btn-accent shrink-0 !px-4 !py-2 !text-sm">
+              Review
+            </a>
+          </article>
+        {% endfor %}
+      </section>
+    {% endif %}
 
-    {% else %}
-      <!-- ============ COMPANY / DONOR DASHBOARD ============ -->
-      <div class="mt-6 grid gap-4 sm:grid-cols-3">
-        <div class="card"><p class="stat-value">{{ counts.drafts }}</p><p class="stat-label">Drafts</p></div>
-        <div class="card"><p class="stat-value">{{ counts.published }}</p><p class="stat-label">Published</p></div>
-        <div class="card"><p class="stat-value">{{ counts.archived }}</p><p class="stat-label">Archived</p></div>
-      </div>
-
-      {% if awaiting_validation %}
-        <section class="card mt-8 border-accent-500 bg-accent-50">
-          <h2 class="font-bold text-accent-700">Action needed: adjusted wordings awaiting your validation</h2>
-          <ul class="mt-3 space-y-2 text-sm">
-            {% for contribution in awaiting_validation %}
-              <li class="flex flex-wrap items-center justify-between gap-2">
-                <span>
-                  {% if contribution.expert_id %}{{ contribution.expert.get_full_name|default:contribution.expert.email }}{% else %}{{ contribution.invited_email }}{% endif %}
-                  on <strong>{{ contribution.project.official_name }}</strong>
-                </span>
-                <a href="{% url 'projects:manage' contribution.project.pk %}" class="btn-accent !px-3 !py-1.5 !text-xs">Validate now</a>
-              </li>
-            {% endfor %}
-          </ul>
-        </section>
-      {% endif %}
-
-      <div class="mt-8 flex items-center justify-between">
+    <section class="mt-10">
+      <div class="flex items-center justify-between">
         <h2 class="section-title">My projects</h2>
-        <a href="{% url 'projects:create' %}" class="btn-primary !px-4 !py-2 !text-sm">+ Publish a project</a>
+        <a href="{% url 'projects:create' %}" class="btn-outline !px-4 !py-2 !text-sm">+ New project</a>
       </div>
 
       {% if projects %}
@@ -204,33 +126,97 @@
           <a href="{% url 'projects:create' %}" class="btn-primary mt-4 inline-flex">Publish my first project</a>
         </div>
       {% endif %}
+    </section>
 
-      <!-- Jobs published by this organisation -->
+    <section class="mt-10">
+      <div class="flex items-center justify-between">
+        <h2 class="section-title">My job offers</h2>
+        <a href="{% url 'jobs:create' %}" class="btn-outline !px-3 !py-1.5 !text-xs">+ Publish a job</a>
+      </div>
+      {% if open_jobs %}
+        <ul class="mt-4 divide-y divide-charcoal-900/10 rounded-xl border border-charcoal-900/10 bg-white shadow-sm">
+          {% for job in open_jobs %}
+            <li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm">
+              <span>
+                <strong>{{ job.title }}</strong>
+                <span class="text-charcoal-300">· {{ job.city }}, {{ job.country }}</span>
+                <span class="ml-1 badge-pending !px-1.5 !py-0 !text-[10px]">{{ job.applications.count }} application{{ job.applications.count|pluralize }}</span>
+              </span>
+              <a href="{% url 'jobs:manage' job.pk %}" class="btn-outline !px-3 !py-1.5 !text-xs">Review applications</a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="card mt-4 border-dashed text-sm text-charcoal-700">
+          No open offer: recruit on certified track records by
+          <a href="{% url 'jobs:create' %}" class="font-semibold text-accent-700 hover:underline">publishing a job</a>.
+        </p>
+      {% endif %}
+    </section>
+
+    {% if my_applications %}
       <section class="mt-10">
-        <div class="flex items-center justify-between">
-          <h2 class="section-title">My job offers</h2>
-          <a href="{% url 'jobs:create' %}" class="btn-outline !px-3 !py-1.5 !text-xs">+ Publish a job</a>
+        <div class="mb-4 flex items-center justify-between">
+          <h2 class="section-title">My applications</h2>
+          <a href="{% url 'jobs:my_applications' %}" class="text-sm font-semibold text-accent-700 hover:underline">See all</a>
         </div>
-        {% if open_jobs %}
-          <ul class="mt-4 divide-y divide-charcoal-900/10 rounded-xl border border-charcoal-900/10 bg-white shadow-sm">
-            {% for job in open_jobs %}
-              <li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm">
-                <span>
-                  <strong>{{ job.title }}</strong>
-                  <span class="text-charcoal-300">· {{ job.city }}, {{ job.country }}</span>
-                  <span class="ml-1 badge-pending !px-1.5 !py-0 !text-[10px]">{{ job.applications.count }} application{{ job.applications.count|pluralize }}</span>
-                </span>
-                <a href="{% url 'jobs:manage' job.pk %}" class="btn-outline !px-3 !py-1.5 !text-xs">Review applications</a>
-              </li>
-            {% endfor %}
-          </ul>
-        {% else %}
-          <p class="card mt-4 border-dashed text-sm text-charcoal-700">
-            No open offer: recruit on certified track records by
-            <a href="{% url 'jobs:create' %}" class="font-semibold text-accent-700 hover:underline">publishing a job</a>.
-          </p>
-        {% endif %}
+        {% for application in my_applications %}
+          <article class="card-project mb-3 flex flex-wrap items-center justify-between gap-3 py-4">
+            <div>
+              <p class="font-semibold leading-snug">{{ application.job.title }}</p>
+              <p class="text-xs text-charcoal-300">
+                {{ application.job.published_by.organisation_name|default:application.job.published_by.get_full_name }}
+                · applied {{ application.applied_at|date:"d M Y" }}
+              </p>
+            </div>
+            {% if application.status == "accepted" %}
+              <span class="badge-certified">Accepted</span>
+            {% elif application.status == "rejected" %}
+              <span class="badge-rejected">Not retained</span>
+            {% else %}
+              <span class="badge-pending">Pending review</span>
+            {% endif %}
+          </article>
+        {% endfor %}
       </section>
     {% endif %}
+
+    <section class="mt-10">
+      <div class="mb-4 flex items-center justify-between">
+        <h2 class="section-title">Certified track record</h2>
+        <div class="flex flex-wrap gap-2">
+          <a href="{% url 'accounts:profile_edit' %}" class="btn-outline !px-3 !py-1.5 !text-xs">Edit portfolio</a>
+          <a href="{% url 'cv_generator:builder' %}" class="btn-outline !px-3 !py-1.5 !text-xs">Generate my CV</a>
+          <a href="{% url 'accounts:public_profile' user.professional_id %}" class="btn-outline !px-3 !py-1.5 !text-xs">View public profile</a>
+        </div>
+      </div>
+      {% if confirmed_contributions %}
+        {% for contribution in confirmed_contributions %}
+          <article class="card mb-3 flex flex-wrap items-center justify-between gap-3 py-4">
+            <div>
+              <span class="role-chip">{{ contribution.get_role_type_display }}</span>
+              <p class="mt-2 font-semibold leading-snug">
+                <a href="{{ contribution.project.get_absolute_url }}" class="hover:text-military-700 hover:underline">
+                  {{ contribution.project.official_name }}
+                </a>
+              </p>
+              <p class="text-xs text-charcoal-300">Confirmed {{ contribution.confirmed_at|date:"d M Y" }}</p>
+            </div>
+            <span class="badge-certified">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-3.5 w-3.5"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
+              Certified
+            </span>
+          </article>
+        {% endfor %}
+      {% else %}
+        <div class="card mt-4 border-dashed text-center text-charcoal-700">
+          <p>No certified experience yet.</p>
+          <p class="mt-1 text-sm">
+            When a company identifies you as a contributor, it appears here —
+            nothing is certified without your confirmation.
+          </p>
+        </div>
+      {% endif %}
+    </section>
   </div>
 {% endblock %}

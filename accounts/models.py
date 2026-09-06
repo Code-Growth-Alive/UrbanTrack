@@ -1,11 +1,3 @@
-"""Custom User model for Urban Track.
-
-Every account - individual expert, company or donor agency - receives a free,
-permanent, unique professional ID (format ``OX-XXXXXX``, spec 02-stack.md).
-The ID is immutable once assigned: it anchors cross-confirmed contributions
-and public expert profiles, so it must never change nor be recycled.
-"""
-
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import UserManager as BaseAuthManager
 from django.db import models
@@ -15,11 +7,31 @@ from .utils import MAX_ID_GENERATION_ATTEMPTS, generate_professional_id
 
 
 class Role(models.TextChoices):
-    """The three Urban Track account types."""
+    """The two Urban Track account types."""
 
-    EXPERT = "expert", _("Individual expert")
-    COMPANY = "company", _("Company / consulting firm")
-    DONOR = "donor", _("Donor agency")
+    USER = "user", _("User")
+    ADMIN = "admin", _("Admin")
+
+
+class Company(models.Model):
+    """
+    An organisation (company, agency, firm) that a user belongs to.
+
+    Created or looked up case-insensitively on the unique ``name`` when a
+    user signs up: if the company already exists the user simply joins it,
+    otherwise a new one is created. Projects and job offers are displayed
+    under the publisher's company.
+    """
+
+    name = models.CharField(_("name"), max_length=255, unique=True)
+
+    class Meta:
+        verbose_name = _("company")
+        verbose_name_plural = _("companies")
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
 
 
 class UserManager(BaseAuthManager):
@@ -32,10 +44,11 @@ class User(AbstractUser):
     """
     Urban Track user.
 
-    Roles map directly onto the business model (spec section 1):
-      * ``expert``  - free users who confirm contributions and own a public profile;
-      * ``company`` - paying clients who publish projects and declare contributors;
-      * ``donor``   - strategic partners providing project data (World Bank, AFD...).
+    Two account types:
+      * ``user`` - the default account for everyone; may publish projects,
+        confirm contributions and owns a public portfolio profile;
+      * ``admin`` - a privileged account, nominated exclusively by a
+        superuser, that can access the admin panel.
 
     ``professional_id`` is generated at first save and is permanent.
     """
@@ -45,20 +58,22 @@ class User(AbstractUser):
         _("role"),
         max_length=20,
         choices=Role.choices,
-        default=Role.EXPERT,
+        default=Role.USER,
         db_index=True,
     )
-    organisation_name = models.CharField(
-        _("organisation name"),
-        max_length=255,
+    company = models.ForeignKey(
+        Company,
+        on_delete=models.SET_NULL,
+        null=True,
         blank=True,
-        help_text=_("Required for company and donor agency accounts."),
+        related_name="members",
+        verbose_name=_("company"),
     )
     avatar = models.ImageField(
         _("profile picture"),
         upload_to="avatars/",
         blank=True,
-        help_text=_("Shared across all roles; used on dashboards and public profiles."),
+        help_text=_("Used on dashboards and public profiles."),
     )
     professional_id = models.CharField(
         _("professional ID"),
@@ -70,6 +85,20 @@ class User(AbstractUser):
             "Permanent, free, unique professional ID (OX-XXXXXX). "
             "Assigned at creation, never modified."
         ),
+    )
+    # Email confirmation: a 6-digit code sent to the email, valid for 24h.
+    email_confirmed = models.BooleanField(_("email confirmed"), default=False)
+    confirmation_code = models.CharField(
+        _("confirmation code"),
+        max_length=10,
+        blank=True,
+        help_text=_("Six-digit code used to confirm the email address."),
+    )
+    confirmation_code_created_at = models.DateTimeField(
+        _("confirmation code created at"),
+        null=True,
+        blank=True,
+        help_text=_("Used to expire the code 24h after it was issued."),
     )
 
     REQUIRED_FIELDS = ["email"]
@@ -105,16 +134,33 @@ class User(AbstractUser):
         return super().save(*args, **kwargs)
 
     @property
+    def is_admin_role(self):
+        return self.role == Role.ADMIN
+
+    @property
+    def is_system_admin(self):
+        """Can access the system admin panel (a nominated admin or the superuser)."""
+        return self.is_superuser or self.role == Role.ADMIN
+
+    @property
     def is_expert(self):
-        return self.role == Role.EXPERT
+        """Every regular user is an expert and owns a public portfolio."""
+        return self.role == Role.USER
 
     @property
     def is_company(self):
-        return self.role == Role.COMPANY
+        """No longer a distinct role — every user belongs to (zeros) a company."""
+        return False
 
     @property
     def is_donor(self):
-        return self.role == Role.DONOR
+        """No longer a distinct role."""
+        return False
+
+    @property
+    def organisation_name(self):
+        """Backwards-compatible display name: the linked company, or empty."""
+        return self.company.name if self.company else ""
 
     @property
     def initials(self):

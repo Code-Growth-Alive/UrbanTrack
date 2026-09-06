@@ -23,12 +23,12 @@ class ProfessionalIdGenerationTests(TestCase):
 
 
 class UserModelTests(TestCase):
-    def test_default_role_is_expert(self):
+    def test_default_role_is_user(self):
         user = User.objects.create_user(username="ama", email="ama@example.com")
-        self.assertEqual(user.role, Role.EXPERT)
+        self.assertEqual(user.role, Role.USER)
 
-    def test_all_three_roles_available(self):
-        self.assertEqual(set(Role.values), {"expert", "company", "donor"})
+    def test_two_roles_available(self):
+        self.assertEqual(set(Role.values), {"user", "admin"})
 
     def test_professional_id_assigned_on_creation(self):
         user = User.objects.create_user(username="kwame", email="kwame@example.com")
@@ -71,21 +71,21 @@ class UserModelTests(TestCase):
         self.assertEqual(user.email, "someone@example.com")
 
     def test_role_helpers(self):
-        company = User.objects.create_user(
-            username="corp",
-            email="corp@example.com",
-            role=Role.COMPANY,
-            organisation_name="BTP & Co",
+        admin = User.objects.create_user(
+            username="root",
+            email="root@example.com",
+            role=Role.ADMIN,
         )
-        donor = User.objects.create_user(
-            username="wb",
-            email="wb@example.com",
-            role=Role.DONOR,
-            organisation_name="World Bank",
+        user = User.objects.create_user(
+            username="user",
+            email="user@example.com",
         )
-        self.assertTrue(company.is_company)
-        self.assertTrue(donor.is_donor)
-        self.assertFalse(company.is_expert)
+        self.assertTrue(admin.is_admin_role)
+        self.assertTrue(admin.is_system_admin)
+        self.assertFalse(admin.is_expert)
+        self.assertFalse(user.is_admin_role)
+        self.assertTrue(user.is_expert)
+        self.assertFalse(user.is_system_admin)
 
     def test_str_includes_professional_id(self):
         user = User.objects.create_user(username="ida", email="ida@example.com", first_name="Ida")

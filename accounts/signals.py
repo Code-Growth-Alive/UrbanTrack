@@ -1,20 +1,18 @@
-"""Signals: keep expert portfolios in sync with account roles."""
+"""Signals: every user owns a public portfolio profile."""
 
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 
-@receiver(post_save)
-def ensure_expert_profile(sender, instance, **kwargs):
+@receiver(post_save, sender="accounts.User")
+def ensure_expert_profile(sender, instance, created, **kwargs):
     """
-    Create the ExpertProfile whenever a user becomes an individual expert.
+    Create the ExpertProfile for every account (all users are experts).
 
-    Runs on creation and on role change; companies and donor agencies never
-    get a portfolio.
+    Admins and superusers also get a profile so the public portfolio model
+    applies uniformly to everyone.
     """
-    from .models import ExpertProfile, Role
+    from .models import ExpertProfile
 
-    if sender.__name__ != "User" or not hasattr(instance, "role"):
-        return
-    if instance.role == Role.EXPERT:
+    if not hasattr(instance, "expert_profile"):
         ExpertProfile.objects.get_or_create(user=instance)

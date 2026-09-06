@@ -72,6 +72,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "accounts.middleware.RequireEmailConfirmationMiddleware",
 ]
 
 ROOT_URLCONF = "main.urls"
@@ -197,6 +198,10 @@ PROFESSIONAL_ID_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"  # no O/0/I/1 ambi
 INVITATION_EXPIRY_DAYS = 14  # ~14 days before an invitation expires
 INVITATION_MAX_REMINDERS = 2  # up to 2 automatic reminders before expiry
 INVITATION_REMINDER_AFTER_DAYS = 5  # days of silence before each reminder
+
+# Email confirmation of new accounts.
+CONFIRMATION_CODE_TTL_HOURS = 24  # a code (and unconfirmed account) lives 24h
+CONFIRMATION_CODE_LENGTH = 6  # number of digits in the code
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

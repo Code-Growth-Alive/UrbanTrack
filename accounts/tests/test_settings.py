@@ -1,8 +1,10 @@
 """Tests for account settings: profile picture, personal details, password change."""
 
 import io
+import re
 
 from django.contrib.auth import get_user_model
+from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
@@ -15,7 +17,8 @@ def make_expert(email="settings@example.com", **overrides):
         username=email,
         email=email,
         password="S3cret!pass",
-        role="expert",
+        role="user",
+        email_confirmed=True,
         first_name="Settings",
         last_name="User",
     )
@@ -49,7 +52,7 @@ class AccountSettingsTests(TestCase):
     def test_can_update_personal_details(self):
         response = self.client.post(
             reverse("accounts:settings"),
-            {"first_name": "Aminata", "last_name": "Sow", "organisation_name": ""},
+            {"first_name": "Aminata", "last_name": "Sow"},
         )
         self.assertRedirects(response, reverse("accounts:settings"))
         self.user.refresh_from_db()
@@ -63,7 +66,6 @@ class AccountSettingsTests(TestCase):
             {
                 "first_name": self.user.first_name,
                 "last_name": self.user.last_name,
-                "organisation_name": "",
                 "avatar": avatar,
             },
         )
@@ -99,11 +101,68 @@ class AccountSettingsTests(TestCase):
         self.assertTrue(self.user.check_password("S3cret!pass"))
 
     def test_avatar_shown_on_public_profile(self):
-        self.user.avatar = SimpleUploadedFile(
-            "me.png", make_png(), content_type="image/png"
-        )
+        self.user.avatar = SimpleUploadedFile("me.png", make_png(), content_type="image/png")
         self.user.save()
         response = self.client.get(
             reverse("accounts:public_profile", args=[self.user.professional_id])
         )
         self.assertContains(response, self.user.avatar.url)
+
+
+class PasswordResetTests(TestCase):
+    def setUp(self):
+        self.user = make_expert()
+
+    def test_reset_page_renders(self):
+        response = self.client.get(reverse("accounts:password_reset"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Reset your password")
+
+    def test_reset_emails_link_and_works_with_user(self):
+        mail.outbox = []
+        response = self.client.post(
+            reverse("accounts:password_reset"),
+            {"email": "settings@example.com"},
+        )
+        self.assertRedirects(response, reverse("accounts:password_reset_done"))
+        self.assertEqual(len(mail.outbox), 1)
+        body = mail.outbox[0].body
+        match = re.search(r"/reset/([\w-]+)/([\w-]+)/", body)
+        self.assertIsNotNone(match, "Reset link missing from email")
+        uidb64, token = match.groups()
+        # Clicking the link stores the token and redirects to a token-less URL.
+        response = self.client.get(reverse("accounts:password_reset_confirm", args=[uidb64, token]))
+        self.assertEqual(response.status_code, 302)
+        set_url = response["Location"]
+        self.assertTrue(set_url.endswith("/set-password/"))
+        response = self.client.post(
+            set_url,
+            {"new_password1": "R3set!pass", "new_password2": "R3set!pass"},
+        )
+        self.assertRedirects(response, reverse("accounts:password_reset_complete"))
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password("R3set!pass"))
+
+    def test_accepts_username_instead_of_email(self):
+        self.user.username = "legacy-handle"
+        self.user.save()
+        response = self.client.post(
+            reverse("accounts:password_reset"),
+            {"email": "legacy-handle"},
+        )
+        self.assertRedirects(response, reverse("accounts:password_reset_done"))
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_unknown_identity_does_not_leak_accounts(self):
+        response = self.client.post(
+            reverse("accounts:password_reset"),
+            {"email": "nobody@example.com"},
+        )
+        self.assertRedirects(response, reverse("accounts:password_reset_done"))
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_invalid_token_shows_invalid_link_page(self):
+        response = self.client.get(
+            reverse("accounts:password_reset_confirm", args=["bad-uid", "bad-token"])
+        )
+        self.assertEqual(response.status_code, 200)

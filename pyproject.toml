@@ -1,8 +1,29 @@
 [project]
-name = "main"
+name = "Urban Track"
 version = "0.1.0"
 description = "Urban Track - cross-verified certification of professional experience for urban development experts in Africa."
 requires-python = ">=3.12"
+dependencies = [
+    "Django==6.1",
+    "djangorestframework==3.18.0",
+    "pillow==12.3.0",
+    "python-dotenv==1.2.3",
+    "weasyprint==69.0",
+    # Production WSGI server (VPS deployment)
+    "gunicorn==26.2.0",
+    # Static/media file serving on the VPS without nginx
+    "whitenoise==6.12.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff==0.16.4",
+    "coverage==7.16.0",
+]
+
+[tool.uv]
+# Application project: not meant to be installed as a package.
+package = false
 
 [tool.ruff]
 line-length = 100

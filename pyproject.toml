@@ -1,5 +1,5 @@
 [project]
-name = "Urban Track"
+name = "UrbanTrack"
 version = "0.1.0"
 description = "Urban Track - cross-verified certification of professional experience for urban development experts in Africa."
 requires-python = ">=3.12"

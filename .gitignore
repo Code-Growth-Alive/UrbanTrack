@@ -15,6 +15,7 @@ media/
 # Environment / secrets
 .env
 .env.example
+.vps_jerome
 
 # Tooling
 .ruff_cache/

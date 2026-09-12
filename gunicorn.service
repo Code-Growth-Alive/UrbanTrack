@@ -1,0 +1,17 @@
+[Unit]
+Description=Gunicorn instance for Deploy Django
+After=network.target
+
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/var/www/UrbanTrack
+Environment="PATH=/var/www/UrbanTrack/.venv/bin"
+Environment="DJANGO_SETTINGS_MODULE=main.settings"
+ExecStart=/var/www/UrbanTrack/.venv/bin/gunicorn --workers 3 --bind unix:/var/www/UrbanTrack/UrbanTrack.sock main.wsgi:application
+
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -16,6 +16,8 @@ media/
 .env
 .env.example
 vps_jerome
+vps_jerome.pub
+deploy
 
 # Tooling
 .ruff_cache/

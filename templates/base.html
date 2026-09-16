@@ -218,8 +218,7 @@
               Account settings
             </a>
             {% if user.is_system_admin %}
-            <a href="{% url 'adminpanel:dashboard' %}"
-              class="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium hover:bg-military-50">
+            <a href="{% url 'adminpanel:dashboard' %}" class="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium hover:bg-military-50">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
                 class="h-4 w-4 text-military-700">
                 <path
@@ -244,17 +243,13 @@
             </form>
           </div>
         </details>
-        <a href="{% url 'accounts:dashboard' %}"
-          class="text-sm font-medium text-military-100 hover:text-white sm:hidden">{{
-          user.get_full_name|default:user.username }}</a>
-        <button type="button" form="logout-form-mobile"
-          class="text-sm font-medium text-military-100 hover:text-white sm:hidden">Log out</button>
+        <a href="{% url 'accounts:dashboard' %}" class="text-sm font-medium text-military-100 hover:text-white sm:hidden">{{ user.get_full_name|default:user.username }}</a>
+        <button type="button" form="logout-form-mobile" class="text-sm font-medium text-military-100 hover:text-white sm:hidden">Log out</button>
         <form id="logout-form-mobile" method="post" action="{% url 'accounts:logout' %}" class="m-0 hidden">
           {% csrf_token %}
         </form>
         {% else %}
-        <a href="{% url 'accounts:login' %}"
-          class="hidden text-sm font-medium text-military-100 hover:text-white sm:block">Log in</a>
+        <a href="{% url 'accounts:login' %}" class="hidden text-sm font-medium text-military-100 hover:text-white sm:block">Log in</a>
         <a href="{% url 'accounts:signup' %}" class="btn-accent !px-3 !py-1.5">Join</a>
         {% endif %}
         <label for="nav-toggle" class="-m-1 cursor-pointer p-1 md:hidden" role="button" aria-label="Toggle menu"

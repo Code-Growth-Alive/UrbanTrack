@@ -13,8 +13,15 @@ from django.template.loader import render_to_string
 
 
 def absolute_url(path="/"):
-    """Join ``path`` onto the configured site base URL (never doubles slashes)."""
+    """Join ``path`` onto the configured site base URL (never doubles slashes).
+
+    ``SITE_BASE_URL`` is expected to carry a scheme (``https://...``). If it
+    only contains a hostname, ``https`` is assumed so links stay absolute and
+    clickable inside email clients.
+    """
     base = settings.SITE_BASE_URL
+    if base and "://" not in base:
+        base = f"https://{base}"
     if not path:
         return base
     return f"{base}/{path.lstrip('/')}"

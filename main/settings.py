@@ -37,7 +37,7 @@ SECRET_KEY = env(
     "django-insecure-dev-only-key-do-not-use-in-production",
 )
 
-DEBUG = env("DJANGO_DEBUG", "True").lower() in ("1", "true", "yes")
+DEBUG = True
 
 ALLOWED_HOSTS = [
     h.strip() for h in env("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()
@@ -197,6 +197,11 @@ EMAIL_TIMEOUT = int(env("EMAIL_TIMEOUT", "20"))
 # Absolute base URL used to build clickable links in transactional emails
 # (localhost in development, a real domain in production).
 SITE_BASE_URL = env("SITE_BASE_URL", "http://localhost:8000").rstrip("/")
+
+# The app runs behind an nginx reverse proxy that terminates TLS. Django must
+# trust the ``X-Forwarded-Proto`` header to detect HTTPS, otherwise password
+# reset and other emails build ``http://`` links against an https-only site.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 
 # Urban Track business constants

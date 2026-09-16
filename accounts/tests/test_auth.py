@@ -28,6 +28,16 @@ def make_expert_user(email="seydou@example.com", **overrides):
 
 
 class SignUpTests(TestCase):
+    def test_signup_page_renders_last_name_field(self):
+        """The signup form must submit last_name: without it the form never
+        validates and signup silently re-renders (regression: field was
+        missing from the template while the form required it)."""
+        response = self.client.get(reverse("accounts:signup"))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn('name="last_name"', content)
+        self.assertIn('name="first_name"', content)
+
     def test_signup_creates_account_confirms_and_lands_on_dashboard(self):
         response = self.client.post(
             reverse("accounts:signup"),

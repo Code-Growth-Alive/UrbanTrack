@@ -1,0 +1,331 @@
+{# World Bank skin: deep blue, two-tone header band, consulting format.
+   v2 — extended to cover the 18 sections of the reference World Bank / GIZ
+   consultant CV (see cv-world-bank-template.html audit deliverable, ticket T17).
+
+   New context variables expected from the CV generator, all optional
+   (each section is skipped if the corresponding variable is empty/undefined,
+   so this template is safe to deploy before every field is populated):
+
+     cv.identity.birth_date        string, e.g. "12 mars 1968"
+     cv.identity.nationality       string
+     cv.identity.linkedin          string, optional url/handle
+     cv.strengths                  list[str]                                   -> section 3, Points forts
+     cv.indicators                 list[{label, value}]                        -> section 4, calculated + certified automatically (T7)
+     cv.expertise_domains          list[{family, items}]                       -> section 5, Domaines d'expertise
+                                    (falls back to legacy cv.skills if absent)
+     cv.other_trainings            list[{year, label, institution}]            -> section 7, Autres formations
+     cv.associations               list[{role, entity, since}]                 -> section 8, Associations et mandats
+     cv.countries                  list[str]                                   -> section 9, Pays d'intervention
+     cv.languages                  list[{name, read, spoken, writing}]         -> section 10, Langues
+     cv.positions                  list[{period, employer, function, country,  -> section 11, Expériences professionnelles
+                                          description, status}]                    (postes, T4a — distinct from projects)
+     cv.projects                   list[{dates, country, title, role,          -> section 12, Principaux projets
+                                          description, status}]                    (falls back to legacy cv.experiences if absent)
+     cv.publications               list[{authors, year, title, venue}]         -> section 13
+     cv.teaching                   {masters, certificates, thesis_supervision, -> section 14
+                                     moocs, courses}  (each a list[{title, institution, role}]
+                                     except thesis_supervision which is a plain string)
+     cv.media                      list[{title, outlet, date}]                 -> section 15
+     cv.miscellaneous              list[str]                                   -> section 16
+     cv.certification              {place, date}                               -> footer, "Fait et certifié conforme à ..."
+
+   status field on positions/projects: "confirmed" or "declared" (T5).
+   Any element without a status is rendered without a badge (legacy data).
+#}
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+<meta charset="UTF-8">
+<title>{{ cv.identity.name }}: {{ labels.curriculum | default('Curriculum vitae') }}</title>
+<style>
+  @page {
+    size: A4; margin: 16mm;
+    @bottom-center { content: counter(page) " / " counter(pages); font-size: 8pt; color: #7a93ad; }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "DejaVu Sans", Helvetica, Arial, sans-serif; font-size: 10pt; color: #1a1a1a; line-height: 1.5; }
+  header { border-bottom: 4pt solid #0055a4; padding-bottom: 10pt; margin-bottom: 4pt;
+           background: linear-gradient(90deg, #002244 0%, #003a75 100%); margin: -10mm -10mm 0;
+           padding: 18pt 10mm 12pt; color: #fff; }
+  h1 { font-size: 19pt; font-weight: bold; }
+  .headline { margin-top: 2pt; font-size: 10.5pt; color: #9fc3e8; }
+  .meta { margin-top: 8pt; font-size: 9pt; color: #cfe0f2; }
+  .rule { height: 3pt; background: #33a02c; width: 42pt; margin-top: 6pt; }
+  main { margin-top: 12pt; }
+  h2 { font-size: 10.5pt; text-transform: uppercase; letter-spacing: 1.1pt; color: #0055a4;
+       border-bottom: 0.75pt solid #b9cfe4; padding-bottom: 3pt; margin: 14pt 0 6pt; font-weight: bold; }
+  p.bio { text-align: justify; color: #333; }
+
+  ul.skills { list-style: none; }
+  ul.skills li::before { content: "■"; color: #0055a4; font-size: 7pt; vertical-align: 1.5pt; margin-right: 5pt; }
+  ul.skills li { display: inline-block; margin-right: 9pt; margin-bottom: 2.5pt; font-size: 9.5pt; }
+
+  ul.plain { list-style: none; }
+  ul.plain li { margin-bottom: 3pt; font-size: 9.5pt; }
+  ul.bullets { list-style: disc; margin-left: 13pt; color: #333; }
+  ul.bullets li { margin-bottom: 2pt; }
+
+  /* Section 3 — points forts */
+  ul.strengths { list-style: none; }
+  ul.strengths li { position: relative; padding-left: 12pt; margin-bottom: 4pt; font-size: 9.5pt; }
+  ul.strengths li::before { content: "›"; position: absolute; left: 0; color: #33a02c; font-weight: bold; }
+
+  /* Section 4 — indicateurs de synthèse (calculés et certifiés automatiquement) */
+  .indicators { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8pt 12pt; margin-bottom: 4pt; }
+  .indicator { border-left: 2pt solid #0055a4; padding-left: 6pt; }
+  .indicator .num { font-size: 14pt; font-weight: bold; color: #002244; line-height: 1; }
+  .indicator .lbl { font-size: 7.5pt; color: #555; margin-top: 1pt; }
+  p.legend { font-size: 7.5pt; color: #7a93ad; font-style: italic; margin-top: 2pt; }
+
+  /* Section 5 — domaines d'expertise, avec hiérarchie famille > détail */
+  .domain { margin-bottom: 4pt; font-size: 9.5pt; }
+  .domain .family { font-weight: bold; color: #002244; }
+  .domain .items { color: #444; }
+
+  /* Sections tabulaires : formation, autres formations, langues */
+  table.grid { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin-bottom: 4pt; }
+  table.grid th, table.grid td { border: 0.5pt solid #cfe0f2; padding: 4pt 8pt; text-align: left; vertical-align: top; }
+  table.grid th { background: #eef4fb; color: #0055a4; font-size: 8pt; text-transform: uppercase; letter-spacing: .4pt; }
+  table.grid td.center, table.grid th.center { text-align: center; }
+
+  /* Sections 11/12 — postes et projets */
+  .exp { margin-bottom: 9pt; page-break-inside: avoid; }
+  .exp-title { font-weight: bold; color: #002244; }
+  .exp-period { float: right; font-size: 8.5pt; color: #555; }
+  .exp-sub { font-size: 9pt; color: #444; font-style: italic; }
+  .exp ul { list-style: disc; margin: 3pt 0 0 13pt; color: #333; }
+  .exp p.desc { font-size: 9.5pt; color: #333; margin-top: 3pt; }
+
+  .badge { display: inline-block; font-size: 7pt; font-weight: bold; letter-spacing: .3pt;
+           padding: 1pt 5pt; border-radius: 2pt; margin-left: 5pt; vertical-align: 1pt; }
+  .badge.confirmed { background: #e3f3e1; color: #256029; border: 0.5pt solid #9fd39a; }
+  .badge.declared { background: #fbf1da; color: #8a6d1f; border: 0.5pt solid #e3c878; }
+
+  /* Sections 13/14/15 — publications, enseignement, médias */
+  .teach-group { margin-bottom: 6pt; }
+  .teach-group h3 { font-size: 8.5pt; text-transform: uppercase; letter-spacing: .5pt; color: #33a02c; margin-bottom: 2pt; }
+
+  footer { margin-top: 18pt; border-top: 1.5pt solid #0055a4; padding-top: 6pt; font-size: 8pt; color: #0055a4; }
+  footer .cert { display: block; margin-bottom: 3pt; color: #444; font-style: italic; }
+</style>
+</head>
+<body>
+<header>
+  <h1>{{ cv.identity.name }}</h1>
+  {% if cv.identity.headline %}<p class="headline">{{ cv.identity.headline }}</p>{% endif %}
+  <div class="rule"></div>
+  <p class="meta">
+    {% if cv.identity.professional_id %}{{ labels.professional_id | default('Professional ID') }} : <strong>{{ cv.identity.professional_id }}</strong>{% endif %}
+    {% if cv.identity.email %}&nbsp;·&nbsp; {{ cv.identity.email }}{% endif %}
+    {% if cv.identity.city %}&nbsp;·&nbsp; {{ cv.identity.city }}{% if cv.identity.country %}, {{ cv.identity.country }}{% endif %}{% endif %}
+    {% if cv.identity.birth_date %}&nbsp;·&nbsp; {{ labels.born_on | default('born') }} {{ cv.identity.birth_date }}{% endif %}
+    {% if cv.identity.nationality %}&nbsp;·&nbsp; {{ cv.identity.nationality }}{% endif %}
+    {% if cv.trust_score %}&nbsp;·&nbsp; {{ labels.trust_score | default('Trust score') }} : {{ cv.trust_score }}/100{% endif %}
+  </p>
+</header>
+
+<main>
+
+{# 2-3. Profil / Résumé #}
+{% if cv.bio %}
+<h2>{{ labels.profile | default('Profile') }}</h2>
+<p class="bio">{{ cv.bio }}</p>
+{% endif %}
+
+{# 4. Points forts du CV #}
+{% if cv.strengths %}
+<h2>{{ labels.strengths | default('Key strengths') }}</h2>
+<ul class="strengths">
+  {% for item in cv.strengths %}<li>{{ item }}</li>{% endfor %}
+</ul>
+{% endif %}
+
+{# 5. Expertise en un coup d'œil — calculée et certifiée automatiquement (T7) #}
+{% if cv.indicators %}
+<h2>{{ labels.indicators | default('Expertise at a glance') }}</h2>
+<div class="indicators">
+  {% for i in cv.indicators %}
+  <div class="indicator">
+    <div class="num">{{ i.value }}</div>
+    <div class="lbl">{{ i.label }}</div>
+  </div>
+  {% endfor %}
+</div>
+<p class="legend">{{ labels.indicators_legend | default('Indicators calculated from the profile\'s certified projects and positions; updated automatically.') }}</p>
+{% endif %}
+
+{# 6. Domaines d'expertise — nouveau format hiérarchisé, repli sur cv.skills #}
+{% if cv.expertise_domains %}
+<h2>{{ labels.expertise | default('Areas of expertise') }}</h2>
+{% for d in cv.expertise_domains %}
+<div class="domain"><span class="family">{{ d.family }}</span>{% if d.items %} — <span class="items">{{ d.items }}</span>{% endif %}</div>
+{% endfor %}
+{% elif cv.skills %}
+<h2>{{ labels.expertise | default('Areas of expertise') }}</h2>
+<ul class="skills">
+  {% for skill in cv.skills %}<li>{{ skill }}</li>{% endfor %}
+</ul>
+{% endif %}
+
+{# 7. Formation #}
+{% if cv.trainings %}
+<h2>{{ labels.trainings | default('Education and training') }}</h2>
+<table class="grid">
+  <tr><th>{{ labels.date | default('Date') }}</th><th>{{ labels.institution | default('Institution') }}</th><th>{{ labels.degree | default('Degree') }}</th></tr>
+  {% for t in cv.trainings %}
+  <tr><td>{{ t.year }}</td><td>{{ t.institution }}</td><td>{{ t.degree }}</td></tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+{# 8. Autres formations / séminaires #}
+{% if cv.other_trainings %}
+<h2>{{ labels.other_trainings | default('Other trainings') }}</h2>
+<ul class="plain">
+  {% for t in cv.other_trainings %}
+  <li><strong>{{ t.year }}</strong> — {{ t.label }}{% if t.institution %}. {{ t.institution }}.{% endif %}</li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{# 9. Associations et mandats professionnels #}
+{% if cv.associations %}
+<h2>{{ labels.associations | default('Professional associations and mandates') }}</h2>
+<ul class="plain">
+  {% for a in cv.associations %}
+  <li>{{ a.role }}, {{ a.entity }}, {{ labels.since | default('since') }} {{ a.since }}.</li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{# 10. Pays d'intervention — dérivé automatiquement des projets certifiés #}
+{% if cv.countries %}
+<h2>{{ labels.countries | default('Countries of intervention') }}</h2>
+<p>{{ cv.countries | join(" · ") }}</p>
+<p class="legend">{{ labels.countries_legend | default('List automatically derived from the profile\'s certified projects.') }}</p>
+{% endif %}
+
+{# 11. Langues, 3 niveaux distincts #}
+{% if cv.languages %}
+<h2>{{ labels.languages | default('Languages') }}</h2>
+<table class="grid">
+  <tr><th>{{ labels.language | default('Language') }}</th><th class="center">{{ labels.read | default('Read') }}</th><th class="center">{{ labels.spoken | default('Spoken') }}</th><th class="center">{{ labels.writing | default('Written') }}</th></tr>
+  {% for l in cv.languages %}
+  <tr><td>{{ l.name }}</td><td class="center">{{ l.read }}</td><td class="center">{{ l.spoken }}</td><td class="center">{{ l.writing }}</td></tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+{# 12. Expériences professionnelles — postes / employeurs, distincts des projets (T4a) #}
+{% if cv.positions %}
+<h2>{{ labels.positions | default('Professional experience') }}</h2>
+{% for p in cv.positions %}
+<div class="exp">
+  <span class="exp-period">{{ p.period }}</span>
+  <span class="exp-title">{{ p.function }}</span>
+  <p class="exp-sub">
+    {{ p.employer }}{% if p.country %}, {{ p.country }}{% endif %}
+    {% if p.status == "confirmed" %}<span class="badge confirmed">{{ labels.status_confirmed | default('confirmed') }}</span>{% elif p.status == "declared" %}<span class="badge declared">{{ labels.status_declared | default('declared, unconfirmed') }}</span>{% endif %}
+  </p>
+  {% if p.description %}<p class="desc">{{ p.description }}</p>{% endif %}
+</div>
+{% endfor %}
+{% endif %}
+
+{# 13. Principaux projets — repli sur l'ancien cv.experiences pour compatibilité #}
+{% set project_list = cv.projects if cv.projects else cv.experiences %}
+{% if project_list %}
+<h2>{{ labels.projects | default('Key projects') }}</h2>
+{% for exp in project_list %}
+<div class="exp">
+  <span class="exp-period">{{ exp.period if exp.period else exp.dates }}</span>
+  <span class="exp-title">{{ exp.title }}</span>
+  <p class="exp-sub">
+    {{ exp.role }}
+    {% if exp.client %}· {{ labels.client | default('Client') }} : {{ exp.client }}{% endif %}
+    {% if exp.country %}· {{ exp.country }}{% endif %}
+    {% if exp.status == "confirmed" %}<span class="badge confirmed">{{ labels.status_confirmed | default('confirmed') }}</span>{% elif exp.status == "declared" %}<span class="badge declared">{{ labels.status_declared | default('declared, unconfirmed') }}</span>{% endif %}
+  </p>
+  {% if exp.bullets %}
+  <ul>{% for bullet in exp.bullets %}<li>{{ bullet }}</li>{% endfor %}</ul>
+  {% elif exp.description %}
+  <p class="desc">{{ exp.description }}</p>
+  {% endif %}
+</div>
+{% endfor %}
+{% endif %}
+
+{# 14. Publications #}
+{% if cv.publications %}
+<h2>{{ labels.publications | default('Publications') }}</h2>
+<ul class="plain">
+  {% for pub in cv.publications %}
+  <li>{{ pub.authors }} ({{ pub.year }}). {{ pub.title }}. <em>{{ pub.venue }}</em>.</li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{# 15. Enseignement #}
+{% if cv.teaching %}
+<h2>{{ labels.teaching | default('Teaching') }}</h2>
+{% if cv.teaching.masters %}
+<div class="teach-group">
+  <h3>{{ labels.teaching_masters | default('Master / executive programs') }}</h3>
+  <ul class="plain">{% for m in cv.teaching.masters %}<li>{{ m.title }} — {{ m.institution }}{% if m.role %}, {{ m.role }}{% endif %}.</li>{% endfor %}</ul>
+</div>
+{% endif %}
+{% if cv.teaching.certificates %}
+<div class="teach-group">
+  <h3>{{ labels.teaching_certificates | default('Certificates / continuing education') }}</h3>
+  <ul class="plain">{% for c in cv.teaching.certificates %}<li>{{ c.title }} — {{ c.institution }}{% if c.role %}, {{ c.role }}{% endif %}.</li>{% endfor %}</ul>
+</div>
+{% endif %}
+{% if cv.teaching.thesis_supervision %}
+<div class="teach-group">
+  <h3>{{ labels.teaching_supervision | default('Thesis / dissertation supervision') }}</h3>
+  <p>{{ cv.teaching.thesis_supervision }}</p>
+</div>
+{% endif %}
+{% if cv.teaching.moocs %}
+<div class="teach-group">
+  <h3>{{ labels.teaching_moocs | default('MOOCs / online courses') }}</h3>
+  <ul class="plain">{% for c in cv.teaching.moocs %}<li>{{ c.title }} — {{ c.institution }}.</li>{% endfor %}</ul>
+</div>
+{% endif %}
+{% if cv.teaching.courses %}
+<div class="teach-group">
+  <h3>{{ labels.teaching_courses | default('University courses') }}</h3>
+  <ul class="plain">{% for c in cv.teaching.courses %}<li>{{ c.title }} — {{ c.institution }}{% if c.role %}, {{ c.role }}{% endif %}.</li>{% endfor %}</ul>
+</div>
+{% endif %}
+{% endif %}
+
+{# 16. Médias #}
+{% if cv.media %}
+<h2>{{ labels.media | default('Media') }}</h2>
+<ul class="plain">
+  {% for m in cv.media %}
+  <li>{{ m.title }}, {{ m.outlet }}, {{ m.date }}.</li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{# 17. Divers #}
+{% if cv.miscellaneous %}
+<h2>{{ labels.miscellaneous | default('Other') }}</h2>
+<ul class="plain">
+  {% for item in cv.miscellaneous %}<li>{{ item }}</li>{% endfor %}
+</ul>
+{% endif %}
+
+</main>
+
+{# 18. Mention de conformité, lieu, date #}
+<footer>
+  {% if cv.certification %}
+  <span class="cert">{{ labels.certified_conform | default('Certified true and accurate at') }} {{ cv.certification.place }}, {{ labels.on_date | default('on') }} {{ cv.certification.date }}.</span>
+  {% endif %}
+  {{ labels.certified_cv | default('Certified CV') }} · {{ labels.generated_on | default('generated on') }} {{ today }} · {{ labels.references | default('references available on request') }}
+</footer>
+</body>
+</html>

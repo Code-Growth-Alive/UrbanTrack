@@ -1,0 +1,119 @@
+{
+  "$comment": "Dictionnaire de labels partagé par TOUS les templates de CV (format court actuel, Banque mondiale, futurs formats). Une seule source de vérité : un template ne doit jamais coder un libellé en dur. _fallback_lang indique la langue utilisée automatiquement quand une clé est absente dans la langue demandée, pour qu'un template jamais ne rende une clé brute ou un texte cassé (cf. ticket T18). Ajouter une clé ici avant de l'utiliser dans un template ; le test CI décrit dans T18 doit faire échouer le build sinon.",
+  "_fallback_lang": "en",
+  "_supported_langs": ["fr", "en"],
+
+  "fr": {
+    "curriculum": "Curriculum vitae",
+    "professional_id": "Identifiant professionnel",
+    "trust_score": "Score de confiance",
+    "born_on": "né(e) le",
+
+    "profile": "Profil",
+    "strengths": "Points forts du CV",
+    "indicators": "Expertise en un coup d'œil",
+    "indicators_legend": "Indicateurs calculés à partir des projets et postes certifiés du profil ; mis à jour automatiquement.",
+    "expertise": "Domaines d'expertise",
+
+    "trainings": "Formation",
+    "date": "Date",
+    "institution": "Institution",
+    "degree": "Diplôme",
+    "other_trainings": "Autres formations",
+
+    "associations": "Associations et mandats professionnels",
+    "since": "depuis",
+
+    "countries": "Pays d'intervention",
+    "countries_legend": "Liste dérivée automatiquement des projets certifiés du profil.",
+
+    "languages": "Langues",
+    "language": "Langue",
+    "read": "Lu",
+    "spoken": "Parlé",
+    "writing": "Écrit",
+
+    "positions": "Expériences professionnelles",
+    "projects": "Principaux projets",
+    "missions": "Missions",
+    "client": "Client",
+    "role": "Rôle",
+    "status_confirmed": "certifié",
+    "status_declared": "déclaré, non confirmé",
+
+    "publications": "Publications",
+
+    "teaching": "Enseignement",
+    "teaching_masters": "Master / programmes exécutifs",
+    "teaching_certificates": "Certificats / formations continues",
+    "teaching_supervision": "Suivi de mémoires / masters",
+    "teaching_moocs": "MOOC / formations en ligne",
+    "teaching_courses": "Cours universitaires",
+
+    "media": "Médias",
+    "miscellaneous": "Divers",
+
+    "certified_conform": "Fait et certifié conforme à",
+    "on_date": "le",
+    "certified_cv": "CV certifié",
+    "generated_on": "généré le",
+    "references": "références disponibles sur demande"
+  },
+
+  "en": {
+    "curriculum": "Curriculum vitae",
+    "professional_id": "Professional ID",
+    "trust_score": "Trust score",
+    "born_on": "born",
+
+    "profile": "Profile",
+    "strengths": "Key strengths",
+    "indicators": "Expertise at a glance",
+    "indicators_legend": "Indicators calculated from the profile's certified projects and positions; updated automatically.",
+    "expertise": "Areas of expertise",
+
+    "trainings": "Education and training",
+    "date": "Date",
+    "institution": "Institution",
+    "degree": "Degree",
+    "other_trainings": "Other trainings",
+
+    "associations": "Professional associations and mandates",
+    "since": "since",
+
+    "countries": "Countries of intervention",
+    "countries_legend": "List automatically derived from the profile's certified projects.",
+
+    "languages": "Languages",
+    "language": "Language",
+    "read": "Read",
+    "spoken": "Spoken",
+    "writing": "Written",
+
+    "positions": "Professional experience",
+    "projects": "Key projects",
+    "missions": "Missions",
+    "client": "Client",
+    "role": "Role",
+    "status_confirmed": "confirmed",
+    "status_declared": "declared, unconfirmed",
+
+    "publications": "Publications",
+
+    "teaching": "Teaching",
+    "teaching_masters": "Master / executive programs",
+    "teaching_certificates": "Certificates / continuing education",
+    "teaching_supervision": "Thesis / dissertation supervision",
+    "teaching_moocs": "MOOCs / online courses",
+    "teaching_courses": "University courses",
+
+    "media": "Media",
+    "miscellaneous": "Other",
+
+    "certified_conform": "Certified true and accurate at",
+    "on_date": "on",
+    "certified_cv": "Certified CV",
+    "generated_on": "generated on",
+    "references": "references available on request"
+  }
+}

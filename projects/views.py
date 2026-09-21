@@ -326,10 +326,7 @@ def project_manage(request, pk):
                 publish_project(project)
                 messages.success(
                     request,
-                    _(
-                        "Projet publié : les invitations ont été envoyées "
-                        "à chaque expert déclaré."
-                    ),
+                    _("Projet publié : les invitations ont été envoyées à chaque expert déclaré."),
                 )
                 return redirect("projects:manage", pk=project.pk)
             elif action == "archive":

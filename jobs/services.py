@@ -120,7 +120,7 @@ def decide_application(application, actor, accept):
             "Après un examen attentif, votre candidature à « %(title)s » "
             "(%(org)s) n'a pas été retenue cette fois.\n"
             "Votre profil certifié continue d'évoluer : de nouvelles missions sont"
-                " publiées régulièrement.\n\n"
+            " publiées régulièrement.\n\n"
             "— Urban Track"
         )
     first_name = application.applicant.first_name or _("à vous")

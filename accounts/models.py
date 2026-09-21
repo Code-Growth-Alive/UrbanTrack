@@ -393,10 +393,12 @@ class User(AbstractUser):
         Drives the "your company affiliation is awaiting approval" banners.
         """
         return (
-            self.company_memberships.filter(status__in=(
-                MembershipStatus.REQUESTED,
-                MembershipStatus.INVITED,
-            ))
+            self.company_memberships.filter(
+                status__in=(
+                    MembershipStatus.REQUESTED,
+                    MembershipStatus.INVITED,
+                )
+            )
             .select_related("company")
             .first()
         )
@@ -489,7 +491,7 @@ class ExpertProfile(models.Model):
         default=list,
         blank=True,
         help_text=_(
-            'Une entrée par langue avec trois niveaux distincts, ex. '
+            "Une entrée par langue avec trois niveaux distincts, ex. "
             '{"name": "French", "read": "fluent", "write": "fluent", "speak": "native"}'
         ),
     )
@@ -568,8 +570,9 @@ class ExpertProfile(models.Model):
 
         today = timezone.localdate()
         confirmed = list(
-            self.user.contributions.filter(status=ContributionStatus.CONFIRMED)
-            .select_related("project", "project__country", "project__funder")
+            self.user.contributions.filter(status=ContributionStatus.CONFIRMED).select_related(
+                "project", "project__country", "project__funder"
+            )
         )
         projects = {c.project_id: c.project for c in confirmed}
 

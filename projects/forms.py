@@ -63,9 +63,7 @@ class CreatableModelMultipleChoiceField(forms.ModelMultipleChoiceField):
         if not value:
             return super().clean([])
         names = [part.strip() for part in value.split(",") if part.strip()]
-        saved = [
-            _find_or_create(self.queryset.model, self.name_field, name).pk for name in names
-        ]
+        saved = [_find_or_create(self.queryset.model, self.name_field, name).pk for name in names]
         return super().clean(saved)
 
 
@@ -76,9 +74,7 @@ class ProjectForm(forms.ModelForm):
         label=_("Pays"),
         queryset=Country.objects.all(),
         required=False,
-        widget=forms.TextInput(
-            attrs={"class": INPUT_CLASS, "placeholder": _("ex. Sénégal")}
-        ),
+        widget=forms.TextInput(attrs={"class": INPUT_CLASS, "placeholder": _("ex. Sénégal")}),
     )
     funder = CreatableModelChoiceField(
         label=_("Bailleur"),

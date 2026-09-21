@@ -59,6 +59,7 @@ class LabelResolver(dict):
             raise KeyError(key)
         return dict.__getitem__(self, key)
 
+
 CV_SKINS = {
     "world_bank_new": {
         "name": "Banque mondiale",
@@ -72,7 +73,7 @@ CV_SKINS = {
     "afd": {
         "name": "AFD",
         "description": "Format de consultation de l'Agence Française de Développement.",
-    }
+    },
 }
 CV_LANGS = ("fr", "en")
 
@@ -226,6 +227,7 @@ def template_completeness(context, template_key):
         "recommended_missing": recommended_missing,
     }
 
+
 ROLE_LABELS = {
     # Mirrors certification.RoleType but decoupled from DB choices for FR/EN.
     "director": {"fr": "Directeur / Directrice de projet", "en": "Project Director"},
@@ -275,11 +277,7 @@ def _position_period(position, lang):
     if not position.date_start:
         return ""
     start = position.date_start.strftime("%m/%Y")
-    end = (
-        position.date_end.strftime("%m/%Y")
-        if position.date_end
-        else LABELS[lang]["ongoing"]
-    )
+    end = position.date_end.strftime("%m/%Y") if position.date_end else LABELS[lang]["ongoing"]
     return f"{start} – {end}"
 
 
@@ -496,9 +494,7 @@ def _world_bank_context(profile, user, declared, experiences, indicators_items):
         "bio": profile.bio,
         "strengths": declared["strengths"],
         "indicators_list": indicators_items,
-        "expertise_domains": [
-            {"family": "Compétences", "items": ", ".join(skills)}
-        ]
+        "expertise_domains": [{"family": "Compétences", "items": ", ".join(skills)}]
         if skills
         else [],
         "skills": skills,
@@ -740,8 +736,7 @@ def demo_cv_context(lang="en"):
                 {
                     "employer": "Ministère de l'Urbanisme, Sénégal",
                     "function": "Conseillère technique",
-                    "period": "01/2018 – %s"
-                    % (("ongoing" if lang == "en" else "en cours")),
+                    "period": "01/2018 – %s" % ("ongoing" if lang == "en" else "en cours"),
                     "description": (
                         "Advisor on the national programme for resilient secondary cities."
                         if lang == "en"
@@ -763,9 +758,7 @@ def demo_cv_context(lang="en"):
                 {
                     "name": "Ordre des urbanistes du Sénégal",
                     "role": "Membre du bureau national",
-                    "period": "2021 – ongoing"
-                    if lang == "en"
-                    else "2021 – en cours",
+                    "period": "2021 – ongoing" if lang == "en" else "2021 – en cours",
                 },
             ],
             "publications": [
@@ -808,9 +801,8 @@ def demo_cv_context(lang="en"):
             {
                 "family": "Planification urbaine",
                 "items": (
-                "Ingénierie de l'assainissement, Stratégie de résilience, Études"
-                " de faisabilité"
-            ),
+                    "Ingénierie de l'assainissement, Stratégie de résilience, Études de faisabilité"
+                ),
             }
         ],
         "other_trainings": [],

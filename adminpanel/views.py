@@ -128,9 +128,9 @@ def admin_user_edit(request, pk):
         if form.is_valid():
             form.save()
             messages.success(
-            request,
-            _("Utilisateur « %(email)s » mis à jour.") % {"email": user.email},
-        )
+                request,
+                _("Utilisateur « %(email)s » mis à jour.") % {"email": user.email},
+            )
             return redirect("adminpanel:user_list")
     else:
         form = AdminUserForm(instance=user, acting_user=request.user)
@@ -166,10 +166,8 @@ def admin_nominate_admin(request, pk):
     user.role = Role.ADMIN if make_admin else Role.USER
     user.save(update_fields=["role"])
     action = (
-            _("nommé en tant qu'administrateur")
-            if make_admin
-            else _("retiré du rôle d'administrateur")
-        )
+        _("nommé en tant qu'administrateur") if make_admin else _("retiré du rôle d'administrateur")
+    )
     messages.success(
         request,
         _("L'utilisateur « %(email)s » a été %(action)s.")

@@ -636,8 +636,7 @@ def _request_company_revalidation(contribution, expert_actor):
         context={
             "heading": "Action requise : valider la formulation ajustée",
             "preheader": (
-                f"{name} a ajusté sa contribution au projet "
-                f"'{contribution.project.official_name}'."
+                f"{name} a ajusté sa contribution au projet '{contribution.project.official_name}'."
             ),
             "contribution": contribution,
             "name": name,

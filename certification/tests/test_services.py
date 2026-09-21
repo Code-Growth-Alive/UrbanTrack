@@ -291,9 +291,7 @@ class ClientConfirmationTests(TestCase):
     def test_only_publisher_can_request_client_confirmation(self):
         stranger = make_company(username="stranger", email="s@example.com")
         with self.assertRaises(PermissionDeniedError):
-            request_client_confirmation(
-                self.contribution, stranger, client_email="client@mo.org"
-            )
+            request_client_confirmation(self.contribution, stranger, client_email="client@mo.org")
 
     def test_client_confirm_certifies_with_token(self):
         mail.outbox.clear()

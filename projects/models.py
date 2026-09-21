@@ -188,8 +188,7 @@ class Project(models.Model):
         null=True,
         blank=True,
         help_text=_(
-            "Début de VOTRE participation personnelle "
-            "(sous-ensemble de la durée du projet)."
+            "Début de VOTRE participation personnelle (sous-ensemble de la durée du projet)."
         ),
     )
     personal_end = models.DateField(
@@ -204,8 +203,7 @@ class Project(models.Model):
         related_name="projects",
         verbose_name=_("mots-clés thématiques"),
         help_text=_(
-            "Mots-clés thématiques séparés par des virgules ; "
-            "réutilisés sur plusieurs projets."
+            "Mots-clés thématiques séparés par des virgules ; réutilisés sur plusieurs projets."
         ),
     )
     budget = models.DecimalField(
@@ -281,11 +279,7 @@ class Project(models.Model):
             raise ValidationError(
                 {"duration_end": _("La date de fin doit être postérieure à la date de début.")}
             )
-        if (
-            self.personal_start
-            and self.personal_end
-            and self.personal_end < self.personal_start
-        ):
+        if self.personal_start and self.personal_end and self.personal_end < self.personal_start:
             raise ValidationError(
                 {
                     "personal_end": _(

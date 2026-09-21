@@ -239,9 +239,7 @@ def client_confirm(request, token):
         {
             "contribution": contribution,
             "project": contribution.project,
-            "expert_name": (
-                contribution.expert or contribution.invited_email
-            ),
+            "expert_name": (contribution.expert or contribution.invited_email),
             "company_name": (
                 contribution.added_by.organisation_name
                 or contribution.added_by.get_full_name()

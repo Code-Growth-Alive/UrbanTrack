@@ -121,8 +121,8 @@ class JobApplication(models.Model):
     cover_letter = models.TextField(
         _("lettre de motivation"),
         help_text=_(
-        "En quoi vous correspondez à cette mission : l'expérience certifiée parle en premier."
-    ),
+            "En quoi vous correspondez à cette mission : l'expérience certifiée parle en premier."
+        ),
     )
     status = models.CharField(
         _("statut"),

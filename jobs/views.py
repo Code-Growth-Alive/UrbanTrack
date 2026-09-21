@@ -67,9 +67,9 @@ def job_create(request):
             job.published_by = request.user
             job.save()
             messages.success(
-            request,
-            _("Offre de mission publiée : les experts peuvent maintenant candidater."),
-        )
+                request,
+                _("Offre de mission publiée : les experts peuvent maintenant candidater."),
+            )
             return redirect("jobs:detail", pk=job.pk)
     else:
         form = JobForm()

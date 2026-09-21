@@ -181,9 +181,7 @@ def cv_docx(request, skin):
     docx = render_cv_docx(_context_for(request, lang), skin, lang)
     response = HttpResponse(
         docx,
-        content_type=(
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        ),
+        content_type=("application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
     )
     name = request.user.get_full_name() or request.user.username
     filename = f"CV_{name.replace(' ', '_')}_{skin}.docx"

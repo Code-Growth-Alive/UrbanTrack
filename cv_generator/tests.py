@@ -591,9 +591,7 @@ class DeclaredContextEngineTests(TestCase):
         )
         for skin in CV_SKINS:
             for lang in ("fr", "en"):
-                html = render_cv_html(
-                    cv_context_from_user(self.expert, lang), skin, lang
-                )
+                html = render_cv_html(cv_context_from_user(self.expert, lang), skin, lang)
                 self.assertIn("declared-legend", html)
                 self.assertIn(LABELS[lang]["declared"], html)
 
@@ -651,7 +649,9 @@ class CertifiedIndicatorsTests(TestCase):
         self._confirm(p1, "manager", "Led the programme")
         self._confirm(p1, "specialist", "Technical support")
         p2 = self._project(
-            "Mali urban mobility", "2015-06-01", "2024-12-31",
+            "Mali urban mobility",
+            "2015-06-01",
+            "2024-12-31",
             country=projects_models.Country.objects.create(name="Mali"),
         )
         self._confirm(p2, "director", "Directed the study")

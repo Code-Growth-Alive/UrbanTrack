@@ -117,8 +117,7 @@ class PublicCompanyView(DetailView):
             },
             seo_title=f"{company.name} : Urban Track",
             seo_description=(
-                company.description
-                or f"Fiche société publique de {company.name} sur Urban Track."
+                company.description or f"Fiche société publique de {company.name} sur Urban Track."
             ),
             seo_image=self.request.build_absolute_uri(static("img/hero-building.jpg")),
             seo_url=self.request.build_absolute_uri(company.get_absolute_url()),
@@ -412,10 +411,7 @@ def correct_signup_email(request):
         request.session["pending_confirm_email"] = new_email
         messages.success(
             request,
-            _(
-                "Adresse email corrigée : un nouveau code de confirmation "
-                "a été envoyé à %(email)s."
-            )
+            _("Adresse email corrigée : un nouveau code de confirmation a été envoyé à %(email)s.")
             % {"email": new_email},
         )
     else:
@@ -454,9 +450,7 @@ def profile_edit(request):
             return ", ".join(items)
 
         languages = "\n".join(
-            "{name}, {read}, {spoken}, {written}".format(
-                **{k: (v or "") for k, v in entry.items()}
-            )
+            "{name}, {read}, {spoken}, {written}".format(**{k: (v or "") for k, v in entry.items()})
             for entry in profile.languages
             if entry.get("name")
         )
@@ -483,8 +477,10 @@ def profile_edit(request):
             teaching_formset,
             media_formset,
         ]
-        if profile_form.is_valid() and skills_form.is_valid() and all(
-            fs.is_valid() for fs in formsets
+        if (
+            profile_form.is_valid()
+            and skills_form.is_valid()
+            and all(fs.is_valid() for fs in formsets)
         ):
             profile_form.save()
             skills_form.save(profile)
@@ -494,9 +490,7 @@ def profile_edit(request):
             return redirect("accounts:profile_edit")
     else:
         initial_skills = ", ".join(skill.name for skill in profile.skills.all().order_by("name"))
-        profile_form = ProfileForm(
-            instance=profile, initial=_initial_profile_data(profile)
-        )
+        profile_form = ProfileForm(instance=profile, initial=_initial_profile_data(profile))
         skills_form = SkillsForm(initial={"skills": initial_skills})
         training_formset = TrainingFormSet(**formset_kwargs)
         position_formset = PositionFormSet(**formset_kwargs)
@@ -615,8 +609,10 @@ def company_membership_action(request, pk):
         messages.success(
             request,
             _("%(name)s est désormais membre de %(company)s.")
-            % {"name": membership.user.get_full_name() or membership.user.username,
-               "company": membership.company.name},
+            % {
+                "name": membership.user.get_full_name() or membership.user.username,
+                "company": membership.company.name,
+            },
         )
     elif action == "decline":
         membership.company.decline_membership(membership, reviewed_by=request.user)

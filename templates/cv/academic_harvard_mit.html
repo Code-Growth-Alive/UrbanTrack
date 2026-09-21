@@ -9,7 +9,7 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: "DejaVu Serif", Georgia, serif; font-size: 10.5pt; color: #111; line-height: 1.45; }
   header { text-align: center; border-bottom: 2px solid #111; padding-bottom: 10pt; }
-  h1 { font-size: 20pt; letter-spacing: 0.5pt; text-transform: uppercase; }
+  h1 { font-size: 20pt; letter-spacing: 0.5pt; text-transform: uppercase; line-height: 1.05; overflow-wrap: anywhere; word-break: break-word; }
   .headline { font-style: italic; margin-top: 3pt; font-size: 11pt; color: #333; }
   .meta { margin-top: 6pt; font-size: 9pt; color: #444; }
   h2 { font-size: 10.5pt; text-transform: uppercase; letter-spacing: 1.5pt; border-bottom: 0.75pt solid #999;
@@ -27,6 +27,25 @@
   .exp ul li { margin-bottom: 1.5pt; }
   footer { margin-top: 22pt; border-top: 0.75pt solid #999; padding-top: 6pt;
            font-size: 8pt; color: #555; text-align: center; }
+  /* T4/T5 declared (non-certified) sections share the same look across skins */
+  section.declared { margin-top: 18pt; padding-top: 10pt; border-top: 1pt dashed #bbb; }
+  .declared-tag { font-size: 7.5pt; font-weight: normal; letter-spacing: 0.4pt; text-transform: uppercase;
+                  color: #8a3; border: 0.6pt solid #c97; padding: 1pt 5pt; border-radius: 8pt; vertical-align: 2pt; }
+  .declared-note { font-size: 8.5pt; color: #666; font-style: italic; margin-bottom: 6pt; }
+  .dpos { margin-bottom: 8pt; page-break-inside: avoid; }
+  .dpos-period { float: right; font-size: 9pt; color: #555; font-style: italic; }
+  .dpos-title { font-weight: bold; }
+  .dpos-sub { font-size: 9.5pt; color: #333; }
+  .dpos-desc { font-size: 9.5pt; color: #444; margin: 2pt 0 0; }
+  .pub-title { font-weight: bold; }
+  .declared-legend { margin-top: 10pt; font-size: 8pt; color: #777; font-style: italic;
+                     border-top: 0.4pt dotted #aaa; padding-top: 4pt; }
+  /* T7: certified synthesis indicators row */
+  .indicator-block h2 { margin-top: 18pt; }
+  .indicator-block .indicator-row { display: flex; gap: 8pt; }
+  .indicator-cell { flex: 1; border-left: 2pt solid #111; padding-left: 6pt; }
+  .indicator-value { display: block; font-size: 14pt; font-weight: bold; }
+  .indicator-label { font-size: 7.5pt; letter-spacing: 0.4pt; text-transform: uppercase; color: #555; }
 </style>
 </head>
 <body>
@@ -44,6 +63,8 @@
 <h2>{{ labels.profile }}</h2>
 <p class="bio">{{ cv.bio }}</p>
 {% endif %}
+
+{% include "cv/_indicators.html" %}
 
 {% if cv.experiences %}
 <h2>{{ labels.experience }}</h2>
@@ -74,6 +95,8 @@
   {% for skill in cv.skills %}<li>{{ skill }}</li>{% endfor %}
 </ul>
 {% endif %}
+
+{% include "cv/_declared_sections.html" %}
 
 <footer>
   {{ labels.certified_cv }}<br>

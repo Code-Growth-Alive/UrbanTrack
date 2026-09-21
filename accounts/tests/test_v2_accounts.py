@@ -14,7 +14,14 @@ from django.urls import reverse
 from django.utils import timezone
 
 from accounts.email_confirmation import confirm_email, purge_expired_unconfirmed
-from accounts.models import Company, ExpertProfile, Role, User
+from accounts.models import (
+    Company,
+    CompanyRole,
+    ExpertProfile,
+    MembershipStatus,
+    Role,
+    User,
+)
 
 SIGNUP_PAYLOAD = {
     "first_name": "Aminata",
@@ -51,18 +58,45 @@ class SignUpCompanyTests(TestCase):
         # Logged in, but the confirmation page is the landing spot.
         self.assertIn("_auth_user_id", self.client.session)
 
-    def test_signup_joins_existing_company_case_insensitively(self):
-        Company.objects.create(name="Suez Africa")
+    def test_existing_company_is_matched_case_insensitively(self):
+        company = Company.objects.create(name="Suez Africa")
         payload = dict(SIGNUP_PAYLOAD, email="b@example.com", company_name="suez africa")
         self.client.post(reverse("accounts:signup"), payload)
         self.assertEqual(Company.objects.count(), 1)
         user = User.objects.get(email="b@example.com")
-        self.assertEqual(user.company.name, "Suez Africa")
+        self.assertIsNone(user.company)
+        self.assertEqual(
+            user.company_memberships.get().company_id,
+            company.pk,
+        )
 
-    def test_signup_without_company_is_allowed(self):
+    def test_signup_against_existing_company_requests_approval(self):
+        """T2: joining an existing company is never implicit."""
+        company = Company.objects.create(name="Suez Africa")
+        payload = dict(SIGNUP_PAYLOAD, email="b@example.com", company_name="suez africa")
+        self.client.post(reverse("accounts:signup"), payload)
+        user = User.objects.get(email="b@example.com")
+        self.assertIsNone(user.company)  # not a member until approved
+        membership = user.company_memberships.get(company=company)
+        self.assertEqual(membership.status, MembershipStatus.REQUESTED)
+        self.assertEqual(membership.role, CompanyRole.MEMBER)
+
+    def test_signup_creating_company_grants_admin_membership(self):
+        """T2: the founder is the approved administrator of the new company."""
+        payload = dict(SIGNUP_PAYLOAD, company_name="Ministry of Urban Renewal")
+        self.client.post(reverse("accounts:signup"), payload)
+        user = User.objects.get(email="aminata@example.com")
+        self.assertIsNotNone(user.company)
+        membership = user.company_memberships.get(company=user.company)
+        self.assertEqual(membership.status, MembershipStatus.APPROVED)
+        self.assertEqual(membership.role, CompanyRole.ADMIN)
+        self.assertTrue(user.company.is_admin(user))
+
+    def test_without_company_is_allowed(self):
         self.client.post(reverse("accounts:signup"), SIGNUP_PAYLOAD)
         user = User.objects.get(email="aminata@example.com")
         self.assertIsNone(user.company)
+        self.assertFalse(user.company_memberships.exists())
 
     def test_duplicate_email_still_rejected(self):
         make_user(email="aminata@example.com")
@@ -73,6 +107,126 @@ class SignUpCompanyTests(TestCase):
     def test_no_role_picker_on_signup_page(self):
         response = self.client.get(reverse("accounts:signup"))
         self.assertNotContains(response, 'name="role"')
+
+
+class MembershipWorkflowTests(TestCase):
+    """T2: the company affiliation lifecycle is reviewer-led."""
+
+    def setUp(self):
+        self.adm = make_user(email="admin@bati.com")
+        self.json_admin = Company.objects.create(name="Bati & Co")
+        self.json_membership = self.json_admin.request_membership(self.adm)
+        self.json_admin.approve_membership(self.json_membership, reviewed_by=self.adm)
+        self.json_membership.role = CompanyRole.ADMIN
+        self.json_membership.save()
+
+    def test_approve_membership_links_the_user(self):
+        candidate = make_user(email="candidate@bati.com")
+        membership = self.json_admin.request_membership(candidate)
+        self.assertIsNone(candidate.company)
+        self.json_admin.approve_membership(membership, reviewed_by=self.adm)
+        membership.refresh_from_db()
+        self.assertEqual(membership.status, MembershipStatus.APPROVED)
+        self.assertIsNotNone(membership.reviewed_by)
+        candidate.refresh_from_db()
+        self.assertEqual(candidate.company, self.json_admin)
+        self.assertTrue(self.json_admin.is_member(candidate))
+
+    def test_decline_membership_keeps_audit_trail(self):
+        candidate = make_user(email="nope@example.com")
+        membership = self.json_admin.request_membership(candidate)
+        self.json_admin.decline_membership(membership, reviewed_by=self.adm)
+        membership.refresh_from_db()
+        self.assertEqual(membership.status, MembershipStatus.DECLINED)
+        self.assertEqual(membership.reviewed_by, self.adm)
+        candidate.refresh_from_db()
+        self.assertIsNone(candidate.company)
+        self.assertFalse(self.json_admin.is_member(candidate))
+
+    def test_only_admin_can_review_memberships(self):
+        member = make_user(email="member@bati.com")
+        membership = self.json_admin.request_membership(member)
+        self.json_admin.approve_membership(membership, reviewed_by=self.adm)
+
+        stranger = make_user(email="outsider@x.com")
+        self.client.force_login(stranger)
+        response = self.client.post(
+            reverse("accounts:company_membership_action", args=[membership.pk]),
+            {"action": "approve"},
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_admin_approves_pending_request_via_view(self):
+        candidate = make_user(email="candidate@bati.com")
+        membership = self.json_admin.request_membership(candidate)
+        self.client.force_login(self.adm)
+        response = self.client.post(
+            reverse("accounts:company_membership_action", args=[membership.pk]),
+            {"action": "approve"},
+        )
+        self.assertRedirects(response, reverse("accounts:dashboard"))
+        membership.refresh_from_db()
+        self.assertEqual(membership.status, MembershipStatus.APPROVED)
+        candidate.refresh_from_db()
+        self.assertEqual(candidate.company, self.json_admin)
+
+    def test_admin_declines_pending_request_via_view(self):
+        candidate = make_user(email="candidate@bati.com")
+        membership = self.json_admin.request_membership(candidate)
+        self.client.force_login(self.adm)
+        response = self.client.post(
+            reverse("accounts:company_membership_action", args=[membership.pk]),
+            {"action": "decline"},
+        )
+        self.assertRedirects(response, reverse("accounts:dashboard"))
+        membership.refresh_from_db()
+        self.assertEqual(membership.status, MembershipStatus.DECLINED)
+        candidate.refresh_from_db()
+        self.assertIsNone(candidate.company)
+
+    def test_dashboard_shows_pending_membership_banner(self):
+        candidate = make_user(email="candidate@bati.com")
+        self.json_admin.request_membership(candidate)
+        self.client.force_login(candidate)
+        response = self.client.get(reverse("accounts:dashboard"))
+        self.assertContains(response, "Affiliation à une société en attente.")
+        self.assertContains(response, "Bati &amp; Co")
+
+    def test_dashboard_shows_membership_queue_to_admin(self):
+        candidate = make_user(email="candidate@bati.com")
+        self.json_admin.request_membership(candidate)
+        self.client.force_login(self.adm)
+        response = self.client.get(reverse("accounts:dashboard"))
+        self.assertContains(response, "Demandes d'adhésion à valider")
+        self.assertContains(response, candidate.email)
+
+    def test_request_membership_is_idempotent(self):
+        candidate = make_user(email="twice@bati.com")
+        first = self.json_admin.request_membership(candidate)
+        second = self.json_admin.request_membership(candidate)
+        self.assertEqual(first.pk, second.pk)
+        self.assertEqual(
+            candidate.company_memberships.count(),
+            1,
+        )
+
+    def test_account_settings_company_switch_requests_approval(self):
+        candidate = make_user(email="candidate@bati.com")
+        self.client.force_login(candidate)
+        response = self.client.post(
+            reverse("accounts:settings"),
+            {
+                "first_name": candidate.first_name,
+                "last_name": candidate.last_name,
+                "email": candidate.email,
+                "company": self.json_admin.pk,
+            },
+        )
+        self.assertRedirects(response, reverse("accounts:settings"))
+        candidate.refresh_from_db()
+        self.assertIsNone(candidate.company)
+        membership = candidate.company_memberships.get(company=self.json_admin)
+        self.assertEqual(membership.status, MembershipStatus.REQUESTED)
 
 
 class ConfirmEmailTests(TestCase):

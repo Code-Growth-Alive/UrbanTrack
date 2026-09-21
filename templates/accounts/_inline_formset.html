@@ -1,0 +1,73 @@
+<section class="card space-y-4" data-inline-formset="{{ formset.prefix }}">
+  <div class="flex flex-wrap items-baseline justify-between gap-2">
+    <h2 class="section-title">{{ title }}</h2>
+    {% if note %}<p class="form-help !m-0 text-right">{{ note }}</p>{% endif %}
+  </div>
+  {{ formset.management_form }}
+  {% if formset.non_form_errors %}<div class="form-error mt-2">{{ formset.non_form_errors }}</div>{% endif %}
+  <div data-inline-formset-forms class="space-y-3">
+  {% for form in formset %}
+    <div class="grid gap-3 rounded-lg border border-charcoal-900/10 p-3 sm:grid-cols-2 lg:grid-cols-3 sm:items-end">
+      {% for field in form.visible_fields %}
+        {% if field.name != "DELETE" %}
+          <div class="{% if field.name == 'description' %}sm:col-span-2 lg:col-span-3{% endif %}">
+            <label for="{{ field.id_for_label }}" class="form-label !mt-0">
+              {{ field.label|capfirst }}{% if field.field.required %} <span class="text-accent-500">*</span>{% endif %}
+            </label>
+            {{ field }}
+            {% if field.help_text %}<p class="form-help">{{ field.help_text }}</p>{% endif %}
+            {% if field.errors %}<p class="form-error">{{ field.errors.0 }}</p>{% endif %}
+          </div>
+        {% endif %}
+      {% endfor %}
+      {% if form.instance.pk %}
+        <label class="flex items-center gap-1 pb-2 text-xs font-semibold text-red-700 lg:col-start-3">
+          <input type="checkbox" name="{{ form.DELETE.html_name }}" id="{{ form.DELETE.id_for_label }}"
+                 class="h-3.5 w-3.5 accent-red-600"> Supprimer
+        </label>
+      {% endif %}
+      {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+    </div>
+  {% endfor %}
+  </div>
+  <template data-inline-formset-template>
+    <div class="grid gap-3 rounded-lg border border-charcoal-900/10 p-3 sm:grid-cols-2 lg:grid-cols-3 sm:items-end">
+      {% for field in formset.empty_form.visible_fields %}
+        {% if field.name != "DELETE" %}
+          <div class="{% if field.name == 'description' %}sm:col-span-2 lg:col-span-3{% endif %}">
+            <label for="{{ field.id_for_label }}" class="form-label !mt-0">
+              {{ field.label|capfirst }}{% if field.field.required %} <span class="text-accent-500">*</span>{% endif %}
+            </label>
+            {{ field }}
+            {% if field.help_text %}<p class="form-help">{{ field.help_text }}</p>{% endif %}
+          </div>
+        {% endif %}
+      {% endfor %}
+      {% for hidden in formset.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
+    </div>
+  </template>
+  <div class="flex flex-wrap items-center gap-3">
+    <button type="button" class="btn-outline" data-inline-formset-add>Ajouter une ligne</button>
+    <p class="text-xs text-charcoal-300">Ajoutez autant de lignes que nécessaire, puis cochez « Supprimer » pour retirer celles qui ne conviennent plus.</p>
+  </div>
+  <script>
+    (function () {
+      const section = document.currentScript.closest('[data-inline-formset]');
+      if (!section) return;
+      const addButton = section.querySelector('[data-inline-formset-add]');
+      const formsContainer = section.querySelector('[data-inline-formset-forms]');
+      const template = section.querySelector('[data-inline-formset-template]');
+      const totalFormsInput = section.querySelector('input[name$="-TOTAL_FORMS"]');
+      if (!addButton || !formsContainer || !template || !totalFormsInput) return;
+
+      addButton.addEventListener('click', function () {
+        const formIndex = parseInt(totalFormsInput.value, 10);
+        const html = template.innerHTML.replaceAll('__prefix__', String(formIndex));
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = html;
+        formsContainer.appendChild(wrapper.firstElementChild);
+        totalFormsInput.value = String(formIndex + 1);
+      });
+    })();
+  </script>
+</section>

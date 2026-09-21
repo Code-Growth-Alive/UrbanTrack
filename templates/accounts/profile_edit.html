@@ -1,13 +1,16 @@
 {% extends "base.html" %}
 
-{% block title %}Edit my portfolio: Urban Track{% endblock %}
+{% block title %}Modifier mon portfolio : Urban Track{% endblock %}
 
 {% block content %}
-  <div class="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
-    <h1 class="text-2xl font-black tracking-tight">Edit my portfolio</h1>
-    <p class="mt-1 max-w-2xl text-sm text-charcoal-700">
-      This context (bio, skills, trainings) never counts toward certification —
-      only cross-confirmed projects do. It feeds your public profile and CV exports.
+  <div class="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
+    <h1 class="text-2xl font-black tracking-tight">Modifier mon portfolio</h1>
+    <p class="mt-1 max-w-3xl text-sm text-charcoal-700">
+      Les données contextuelles (biographie, compétences, formations, postes,
+      publications…) ne comptent jamais pour la certification — seuls les projets
+      confirmés par double validation en relèvent. Elles alimentent votre profil
+      public et vos exports CV, où les sections auto-déclarées portent un
+      marqueur « déclaré ».
     </p>
 
     {% if profile_form.non_field_errors or skills_form.non_field_errors %}
@@ -16,23 +19,20 @@
 
     <form method="post" class="mt-8 space-y-8">
       {% csrf_token %}
-      {{ formset.management_form }}
 
-      <!-- Identity & context -->
+      <!-- Identité et contexte -->
       <section class="card space-y-4">
-        <h2 class="section-title">Profile</h2>
-        <div>
-          <label for="{{ profile_form.headline.id_for_label }}" class="form-label">{{ profile_form.headline.label }}</label>
-          {{ profile_form.headline }}
-          {% if profile_form.headline.help_text %}<p class="form-help">{{ profile_form.headline.help_text }}</p>{% endif %}
-          {% if profile_form.headline.errors %}<p class="form-error">{{ profile_form.headline.errors.0 }}</p>{% endif %}
-        </div>
-        <div>
-          <label for="{{ profile_form.bio.id_for_label }}" class="form-label">{{ profile_form.bio.label }}</label>
-          {{ profile_form.bio }}
-          {% if profile_form.bio.help_text %}<p class="form-help">{{ profile_form.bio.help_text }}</p>{% endif %}
-          {% if profile_form.bio.errors %}<p class="form-error">{{ profile_form.bio.errors.0 }}</p>{% endif %}
-        </div>
+        <h2 class="section-title">Profil</h2>
+        {% for field in profile_form %}
+          {% if field.name != "strengths" and field.name != "countries_of_intervention" and field.name != "languages" %}
+            <div>
+              <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}<p class="form-help">{{ field.help_text }}</p>{% endif %}
+              {% if field.errors %}<p class="form-error">{{ field.errors.0 }}</p>{% endif %}
+            </div>
+          {% endif %}
+        {% endfor %}
         <div class="grid gap-4 sm:grid-cols-2">
           <div>
             <label for="{{ profile_form.city.id_for_label }}" class="form-label">{{ profile_form.city.label }}</label>
@@ -52,47 +52,75 @@
         </div>
       </section>
 
-      <!-- Skills -->
+      <!-- Points forts -->
       <section class="card space-y-2">
-        <h2 class="section-title">Skills</h2>
+        <h2 class="section-title">Points forts</h2>
+        <label for="{{ profile_form.strengths.id_for_label }}" class="form-label">{{ profile_form.strengths.label }}</label>
+        {{ profile_form.strengths }}
+        {% if profile_form.strengths.help_text %}<p class="form-help">{{ profile_form.strengths.help_text }}</p>{% endif %}
+        {% if profile_form.strengths.errors %}<p class="form-error">{{ profile_form.strengths.errors.0 }}</p>{% endif %}
+      </section>
+
+      <!-- Pays et langues -->
+      <section class="grid gap-6 sm:grid-cols-2">
+        <div class="card space-y-2">
+          <h2 class="section-title">{{ profile_form.countries_of_intervention.label }}</h2>
+          {{ profile_form.countries_of_intervention }}
+          {% if profile_form.countries_of_intervention.help_text %}
+            <p class="form-help">{{ profile_form.countries_of_intervention.help_text }}</p>
+          {% endif %}
+          {% if profile_form.countries_of_intervention.errors %}
+            <p class="form-error">{{ profile_form.countries_of_intervention.errors.0 }}</p>
+          {% endif %}
+        </div>
+        <div class="card space-y-2">
+          <h2 class="section-title">{{ profile_form.languages.label }}</h2>
+          {{ profile_form.languages }}
+          {% if profile_form.languages.help_text %}<p class="form-help">{{ profile_form.languages.help_text }}</p>{% endif %}
+          {% if profile_form.languages.errors %}<p class="form-error">{{ profile_form.languages.errors.0 }}</p>{% endif %}
+        </div>
+      </section>
+
+      <!-- Compétences -->
+      <section class="card space-y-2">
+        <h2 class="section-title">Compétences</h2>
         <label for="{{ skills_form.skills.id_for_label }}" class="form-label">{{ skills_form.skills.label }}</label>
         {{ skills_form.skills }}
         {% if skills_form.skills.help_text %}<p class="form-help">{{ skills_form.skills.help_text }}</p>{% endif %}
         {% if skills_form.skills.errors %}<p class="form-error">{{ skills_form.skills.errors.0 }}</p>{% endif %}
       </section>
 
-      <!-- Trainings -->
-      <section class="card space-y-4">
-        <h2 class="section-title">Education &amp; training</h2>
-        {{ formset.non_form_errors }}
-        {% for form in formset %}
-          <div class="grid gap-3 rounded-lg border border-charcoal-900/10 p-3 sm:grid-cols-[1fr_1fr_5rem_auto] sm:items-end">
-            {% for field in form.visible_fields %}
-              {% if field.name != "DELETE" %}
-              <div class="{% if field.name == 'year' %}w-full{% endif %}">
-                <label for="{{ field.id_for_label }}" class="form-label !mt-0">
-                  {{ field.label|capfirst }}{% if field.field.required %} <span class="text-accent-500">*</span>{% endif %}
-                </label>
-                {{ field }}
-                {% if field.errors %}<p class="form-error">{{ field.errors.0 }}</p>{% endif %}
-              </div>
-              {% endif %}
-            {% endfor %}
-            {% if form.instance.pk %}
-              <label class="flex items-center gap-1 pb-2 text-xs font-semibold text-red-700">
-                <input type="checkbox" name="{{ form.DELETE.html_name }}" id="{{ form.DELETE.id_for_label }}"
-                       class="h-3.5 w-3.5 accent-red-600"> Remove
-              </label>
-            {% endif %}
-            {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
-          </div>
-        {% endfor %}
-        <p class="text-xs text-charcoal-300">Two blank rows are always available; tick “Remove” to delete a saved entry.</p>
+      <!-- Postes -->
+      {% include "accounts/_inline_formset.html" with title="Postes professionnels" note="Non soumis à la certification projet par projet" formset=position_formset %}
+
+      <!-- Formations -->
+      {% include "accounts/_inline_formset.html" with title="Formations & diplômes" formset=training_formset %}
+
+      <!-- Mandats -->
+      {% include "accounts/_inline_formset.html" with title="Associations & mandats" formset=mandate_formset %}
+
+      <!-- Publications -->
+      {% include "accounts/_inline_formset.html" with title="Publications" formset=publication_formset %}
+
+      <!-- Enseignement -->
+      {% include "accounts/_inline_formset.html" with title="Enseignement" formset=teaching_formset %}
+
+      <!-- Médias -->
+      {% include "accounts/_inline_formset.html" with title="Interventions médiatiques" formset=media_formset %}
+
+      <!-- Divers -->
+      {% if profile_form.misc %}
+      <section class="card space-y-2">
+        <h2 class="section-title">{{ profile_form.misc.label }}</h2>
+        {{ profile_form.misc }}
+        {% if profile_form.misc.help_text %}<p class="form-help">{{ profile_form.misc.help_text }}</p>{% endif %}
+        {% if profile_form.misc.errors %}<p class="form-error">{{ profile_form.misc.errors.0 }}</p>{% endif %}
       </section>
+      {% endif %}
 
       <div class="flex gap-3">
-        <button type="submit" class="btn-primary">Save my portfolio</button>
-        <a href="{% url 'accounts:dashboard' %}" class="btn-outline">Cancel</a>
+        <button type="submit" class="btn-primary">Enregistrer mon portfolio</button>
+        <a href="{% url 'accounts:dashboard' %}" class="btn-outline">Annuler</a>
       </div>
     </form>
   </div>

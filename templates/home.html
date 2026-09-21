@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Urban Track: Cross-verified expertise for urban development in Africa{% endblock %}
+{% block title %}Urban Track : expertises urbaines vérifiées en Afrique{% endblock %}
 
 {% block content %}
   <!-- Hero: full-screen, free-license photo backdrop under a military-green wash -->
@@ -12,33 +12,34 @@
     <div class="relative mx-auto w-full max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
       <span class="badge-certified mb-6 !bg-military-500/40 !text-military-50">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-3.5 w-3.5"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
-        Certified via cross-confirmation
+        Certifié par double confirmation
       </span>
       <h1 class="max-w-3xl text-4xl font-black leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-        The trust layer of urban development in&nbsp;Africa.
+        La couche de confiance du développement urbain en&nbsp;Afrique.
       </h1>
       <p class="mt-5 max-w-2xl text-lg text-military-100">
-        Companies publish the projects they carried out and declare their experts.
-        Experts confirm their contribution. Only cross-confirmed experience gets
-        the certified badge: like co-authors on ResearchGate.
+        Les bureaux d'études publient les projets qu'ils ont réellement menés
+        et déclarent les experts qui y ont contribué. Chaque expert confirme sa
+        contribution. Seules les expériences confirmées par les deux parties
+        obtiennent le badge certifié.
       </p>
       <div class="mt-9 flex flex-wrap gap-3">
-        <a href="{% url 'projects:create' %}" class="btn-primary !bg-white !text-military-700 hover:!bg-military-100">Publish a project</a>
-        <a href="{% url 'accounts:signup' %}" class="btn-accent">Join as an expert</a>
-        <a href="{% url 'accounts:expert_list' %}" class="btn-outline !border-military-300 !text-military-100 hover:!bg-military-700">Browse experts</a>
+        <a href="{% url 'projects:create' %}" class="btn-primary !bg-white !text-military-700 hover:!bg-military-100">Publier un projet</a>
+        <a href="{% url 'accounts:signup' %}" class="btn-accent">Créer mon profil expert</a>
+        <a href="{% url 'accounts:expert_list' %}" class="btn-outline !border-military-300 !text-military-100 hover:!bg-military-700">Parcourir les experts</a>
       </div>
       <dl class="mt-14 grid max-w-2xl grid-cols-3 gap-6 border-t border-white/15 pt-8 text-sm">
         <div>
-          <dt class="font-medium text-military-100/70">Certification source</dt>
-          <dd class="mt-1 font-bold">Cross-confirmation, never self-declaration</dd>
+          <dt class="font-medium text-military-100/70">Base de certification</dt>
+          <dd class="mt-1 font-bold">Double confirmation, jamais auto-déclaration seule</dd>
         </div>
         <div>
-          <dt class="font-medium text-military-100/70">Identity</dt>
-          <dd class="mt-1 font-bold">One permanent OX-XXXXXX professional ID</dd>
+          <dt class="font-medium text-military-100/70">Identité</dt>
+          <dd class="mt-1 font-bold">Un identifiant professionnel permanent OX-XXXXXX</dd>
         </div>
         <div>
-          <dt class="font-medium text-military-100/70">CV export</dt>
-          <dd class="mt-1 font-bold">Harvard-MIT · AFD · World Bank formats</dd>
+          <dt class="font-medium text-military-100/70">Export CV</dt>
+          <dd class="mt-1 font-bold">Formats Harvard-MIT · AFD · Banque mondiale</dd>
         </div>
       </dl>
     </div>
@@ -46,34 +47,35 @@
 
   <!-- How certification works: company publishes -> expert confirms -> certified -->
   <section class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-    <h2 class="text-2xl font-bold tracking-tight">How certification works</h2>
+    <h2 class="text-2xl font-bold tracking-tight">Comment fonctionne la certification</h2>
     <p class="mt-2 max-w-2xl text-charcoal-700">
-      No self-declared CVs. No manual admin validation. An independent double
-      confirmation: the only human intervention is dispute arbitration.
+      Pas de CV invérifiable, pas de validation administrative opaque. Une
+      double confirmation indépendante : l'intervention humaine ne sert qu'à
+      arbitrer les désaccords.
     </p>
     <ol class="mt-8 grid gap-6 md:grid-cols-3">
       <li class="card">
-        <p class="text-sm font-semibold text-accent-500">Step 1</p>
-        <h3 class="mt-1 font-bold">The company publishes a project</h3>
+        <p class="text-sm font-semibold text-accent-500">Étape 1</p>
+        <h3 class="mt-1 font-bold">La structure publie un projet</h3>
         <p class="mt-2 text-sm text-charcoal-700">
-          Official name, deliverables, duration, budget, client: then declares
-          each expert who contributed, with role and bullets.
+          Nom officiel, livrables, durée, budget, client : elle déclare ensuite
+          chaque expert contributeur, son rôle et ses réalisations.
         </p>
       </li>
       <li class="card">
-        <p class="text-sm font-semibold text-accent-500">Step 2</p>
-        <h3 class="mt-1 font-bold">Each expert confirms their contribution</h3>
+        <p class="text-sm font-semibold text-accent-500">Étape 2</p>
+        <h3 class="mt-1 font-bold">Chaque expert confirme sa contribution</h3>
         <p class="mt-2 text-sm text-charcoal-700">
-          Invited by magic link or internal notification: confirm as-is,
-          confirm with adjustments, or reject.
+          Par lien sécurisé ou notification interne, l'expert confirme tel quel,
+          propose un ajustement ou refuse la déclaration.
         </p>
       </li>
       <li class="card border-military-500">
-        <p class="text-sm font-semibold text-military-500">Step 3</p>
-        <h3 class="mt-1 font-bold">The experience becomes certified</h3>
+        <p class="text-sm font-semibold text-military-500">Étape 3</p>
+        <h3 class="mt-1 font-bold">L'expérience devient certifiée</h3>
         <p class="mt-2 text-sm text-charcoal-700">
-          It appears on the expert's public profile with a traceable link to
-          the project page: and feeds every generated CV.
+          Elle apparaît sur le profil public de l'expert, avec un lien traçable
+          vers la fiche projet, et alimente les CV générés.
         </p>
       </li>
     </ol>
@@ -82,14 +84,14 @@
   <!-- Badge variants preview (the only two badges in the design system) -->
   <section class="bg-military-50">
     <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-      <h2 class="text-xl font-bold tracking-tight">Certification statuses</h2>
+      <h2 class="text-xl font-bold tracking-tight">Statuts de certification</h2>
       <div class="mt-4 flex flex-wrap items-center gap-3">
         <span class="badge-certified">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-3.5 w-3.5"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
-          Certified via cross-confirmation
+          Certifié par double confirmation
         </span>
         <span class="badge-pending">
-          Pending confirmation
+          En attente de confirmation
         </span>
       </div>
     </div>
@@ -99,24 +101,24 @@
   <section class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
     <div class="grid gap-6 md:grid-cols-3">
       <div class="card">
-        <h3 class="font-bold">Individual experts</h3>
+        <h3 class="font-bold">Experts indépendants</h3>
         <p class="mt-2 text-sm text-charcoal-700">
-          Free account, permanent professional ID, a public profile that only
-          lists cross-confirmed experience.
+          Compte gratuit, identifiant professionnel permanent, profil public
+          centré sur les expériences confirmées.
         </p>
       </div>
       <div class="card">
-        <h3 class="font-bold">Companies &amp; consulting firms</h3>
+        <h3 class="font-bold">Bureaux d'études et entreprises</h3>
         <p class="mt-2 text-sm text-charcoal-700">
-          Publish projects, build certified teams, recruit on verified track
-          records instead of unverifiable CVs.
+          Publiez vos références, constituez des équipes certifiées et recrutez
+          sur des parcours vérifiables plutôt que sur de simples CV déclaratifs.
         </p>
       </div>
       <div class="card">
-        <h3 class="font-bold">Donors &amp; national agencies</h3>
+        <h3 class="font-bold">Bailleurs et institutions publiques</h3>
         <p class="mt-2 text-sm text-charcoal-700">
-          Strategic partners and data providers (World Bank, EU, AfDB, AFD)
-          anchoring the sector's trust layer.
+          Des partenaires et fournisseurs de données pour consolider la
+          confiance dans les références du secteur urbain.
         </p>
       </div>
     </div>

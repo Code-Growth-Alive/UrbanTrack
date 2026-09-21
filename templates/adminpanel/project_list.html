@@ -1,18 +1,18 @@
 {% extends "adminpanel/base.html" %}
 
-{% block admin_title %}Projects{% endblock %}
+{% block admin_title %}Projets{% endblock %}
 
 {% block admin_content %}
   <div class="overflow-x-auto">
     <table class="w-full min-w-[720px] border-separate border-spacing-y-2 text-left text-sm">
       <thead>
         <tr class="text-xs uppercase tracking-wide text-charcoal-300">
-          <th class="px-4 pb-1 font-medium">Project</th>
-          <th class="px-4 pb-1 font-medium">Company</th>
+          <th class="px-4 pb-1 font-medium">Projet</th>
+          <th class="px-4 pb-1 font-medium">Société</th>
           <th class="px-4 pb-1 font-medium">Client</th>
-          <th class="px-4 pb-1 font-medium">Contributors</th>
-          <th class="px-4 pb-1 font-medium">Status</th>
-          <th class="px-4 pb-1 font-medium">Visibility</th>
+          <th class="px-4 pb-1 font-medium">Contributeurs</th>
+          <th class="px-4 pb-1 font-medium">Statut</th>
+          <th class="px-4 pb-1 font-medium">Visibilité</th>
         </tr>
       </thead>
       <tbody>
@@ -26,17 +26,17 @@
             <td class="border border-charcoal-900/5 px-4 py-3">{{ project.contributions.count }}</td>
             <td class="border border-charcoal-900/5 px-4 py-3">
               {% if project.status == "published" %}
-                <span class="badge-certified">Published</span>
+                <span class="badge-certified">Publié</span>
               {% elif project.status == "draft" %}
-                <span class="badge-pending">Draft</span>
+                <span class="badge-pending">Brouillon</span>
               {% else %}
-                <span class="badge-rejected">Archived</span>
+                <span class="badge-rejected">Archivé</span>
               {% endif %}
             </td>
             <td class="border border-charcoal-900/5 px-4 py-3 text-charcoal-700">{{ project.get_visibility_display }}</td>
           </tr>
         {% empty %}
-          <tr><td colspan="6" class="card border-dashed text-center text-charcoal-700">No projects yet.</td></tr>
+          <tr><td colspan="6" class="card border-dashed text-center text-charcoal-700">Aucun projet pour le moment.</td></tr>
         {% endfor %}
       </tbody>
     </table>

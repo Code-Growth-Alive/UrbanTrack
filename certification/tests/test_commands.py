@@ -47,7 +47,7 @@ class ProcessInvitationsCommandTests(TestCase):
         self.age(days=6)
         call_command("process_invitations", verbosity=0)
         self.assertEqual(len(mail.outbox), 1)
-        self.assertIn("[Urban Track] Reminder", mail.outbox[0].subject)
+        self.assertIn("[Urban Track] Rappel", mail.outbox[0].subject)
         self.invitation.refresh_from_db()
         self.assertEqual(self.invitation.reminder_count, 1)
 

@@ -20,37 +20,62 @@
       </h1>
       <p class="mt-3 text-military-100">
         {{ project.duration_start|date:"M Y" }}
-        {% if project.duration_end %}– {{ project.duration_end|date:"M Y" }}{% else %}– ongoing{% endif %}
+        {% if project.duration_end %}– {{ project.duration_end|date:"M Y" }}{% else %}– en cours{% endif %}
       </p>
     </div>
   </section>
 
   <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+    {% if is_minimal %}
+      <div class="card mb-8 border-accent-500 bg-accent-50">
+        <p class="text-sm text-accent-800">
+          <strong>Page de preuve de certification.</strong>
+          Ce projet reste privé mais ses contributeurs certifiés sont publics,
+          afin que l'expérience vérifiée puisse être tracée ici par des tiers.
+        </p>
+      </div>
+    {% endif %}
+
     <div class="grid gap-8 lg:grid-cols-3">
       <div class="space-y-8 lg:col-span-2">
+        {% if not is_minimal %}
         <section>
           <h2 class="section-title mb-2">Description</h2>
           <p class="whitespace-pre-line leading-relaxed text-charcoal-700">{{ project.description }}</p>
         </section>
 
+        {% if project.tags.all %}
+          <section>
+            <div class="flex flex-wrap gap-2">
+              {% for tag in project.tags.all %}
+                <a href="{% url 'projects:list' %}?tag={{ tag.name }}"
+                   class="rounded-full bg-military-50 px-3 py-1 text-xs font-semibold text-military-800 ring-1 ring-military-500/30 hover:bg-military-100">
+                  #{{ tag.name }}
+                </a>
+              {% endfor %}
+            </div>
+          </section>
+        {% endif %}
+
         <section>
-          <h2 class="section-title mb-3">Deliverables</h2>
+          <h2 class="section-title mb-3">Livrables</h2>
           <ul class="list-disc space-y-1 pl-5 text-charcoal-700">
             {% for deliverable in project.deliverables_lines %}
               <li>{{ deliverable }}</li>
             {% endfor %}
           </ul>
         </section>
+        {% endif %}
 
-        <!-- Media gallery: images and documents (all optional) -->
-        {% if images %}
+        <!-- Media gallery: images and documents (all optional; never on the minimal page) -->
+        {% if images and not is_minimal %}
           <section>
-            <h2 class="section-title mb-3">Gallery</h2>
+            <h2 class="section-title mb-3">Galerie</h2>
             <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {% for item in images %}
                 <figure class="group overflow-hidden rounded-xl border border-charcoal-900/10 bg-white shadow-sm">
                   <label for="lightbox-{{ item.pk }}" class="relative block cursor-zoom-in overflow-hidden">
-                    <img src="{{ item.file.url }}" alt="{{ item.caption|default:'Project image' }}" loading="lazy"
+                    <img src="{{ item.file.url }}" alt="{{ item.caption|default:'Image du projet' }}" loading="lazy"
                          class="aspect-[4/3] w-full object-cover transition duration-300 group-hover:scale-105">
                     <span class="absolute inset-0 grid place-items-center bg-black/0 text-white opacity-0 transition group-hover:bg-black/30 group-hover:opacity-100">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-8 w-8 drop-shadow"><path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/><path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>
@@ -65,7 +90,7 @@
           </section>
         {% endif %}
 
-        {% if documents %}
+        {% if documents and not is_minimal %}
           <section>
             <h2 class="section-title mb-3">Documents</h2>
             <ul class="divide-y divide-charcoal-900/10 rounded-xl border border-charcoal-900/10 bg-white shadow-sm">
@@ -85,7 +110,7 @@
 
         <!-- Certified contributors: the cross-confirmation proof -->
         <section>
-          <h2 class="section-title mb-4">Certified contributors</h2>
+          <h2 class="section-title mb-4">Contributeurs certifiés</h2>
           {% for contribution in confirmed_contributions %}
             <article class="card-expert mb-3 flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -99,12 +124,13 @@
               </div>
               <span class="badge-certified">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-3.5 w-3.5"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
-                Certified via cross-confirmation
+                Certifié par double confirmation
               </span>
             </article>
           {% empty %}
             <p class="card border-dashed text-sm text-charcoal-700">
-              No certified contributor yet: contributions appear once the named experts confirm them.
+              Aucun contributeur certifié pour le moment : les contributions
+              apparaissent dès que les experts nommés les confirment.
             </p>
           {% endfor %}
         </section>
@@ -112,17 +138,22 @@
 
       <aside class="space-y-6">
         <div class="card">
-          <h2 class="section-title mb-3">Key facts</h2>
+          <h2 class="section-title mb-3">Informations clés</h2>
           <dl class="space-y-2 text-sm">
             <div class="flex justify-between gap-4"><dt class="text-charcoal-300">Client</dt><dd class="text-right font-semibold">{{ project.client_name }}</dd></div>
-            <div class="flex justify-between gap-4"><dt class="text-charcoal-300">Published by</dt><dd class="text-right font-semibold">{{ project.published_by.organisation_name|default:project.published_by.get_full_name }}</dd></div>
-            <div class="flex justify-between gap-4"><dt class="text-charcoal-300">Start</dt><dd class="font-semibold">{{ project.duration_start|date:"d M Y" }}</dd></div>
-            <div class="flex justify-between gap-4"><dt class="text-charcoal-300">End</dt><dd class="font-semibold">{% if project.duration_end %}{{ project.duration_end|date:"d M Y" }}{% else %}Ongoing{% endif %}</dd></div>
+            {% if project.country %}<div class="flex justify-between gap-4"><dt class="text-charcoal-300">Pays</dt><dd class="text-right font-semibold">{{ project.country.name }}</dd></div>{% endif %}
+            {% if project.funder %}<div class="flex justify-between gap-4"><dt class="text-charcoal-300">Bailleur</dt><dd class="text-right font-semibold">{{ project.funder.name }}</dd></div>{% endif %}
+            <div class="flex justify-between gap-4"><dt class="text-charcoal-300">Phase</dt><dd class="text-right font-semibold">{{ project.get_phase_display }}</dd></div>
+            <div class="flex justify-between gap-4"><dt class="text-charcoal-300">Publié par</dt><dd class="text-right font-semibold">{{ project.published_by.organisation_name|default:project.published_by.get_full_name }}</dd></div>
+            <div class="flex justify-between gap-4"><dt class="text-charcoal-300">Début</dt><dd class="font-semibold">{{ project.duration_start|date:"d M Y" }}</dd></div>
+            <div class="flex justify-between gap-4"><dt class="text-charcoal-300">Fin</dt><dd class="font-semibold">{% if project.duration_end %}{{ project.duration_end|date:"d M Y" }}{% else %}En cours{% endif %}</dd></div>
+            {% if project.volume_label %}<div class="flex justify-between gap-4"><dt class="text-charcoal-300">Volume d'intervention</dt><dd class="text-right font-semibold">{{ project.volume_label }}</dd></div>{% endif %}
+            {% if project.personal_period_label %}<div class="flex justify-between gap-4"><dt class="text-charcoal-300">Participation personnelle</dt><dd class="text-right font-semibold">{{ project.personal_period_label }}</dd></div>{% endif %}
           </dl>
         </div>
-        {% if project.links.all %}
+        {% if project.links.all and not is_minimal %}
           <div class="card">
-            <h2 class="section-title mb-3">References</h2>
+            <h2 class="section-title mb-3">Références</h2>
             <ul class="space-y-2 text-sm">
               {% for link in project.links.all %}
                 <li class="flex items-start gap-2">
@@ -137,21 +168,22 @@
         <div class="card bg-military-50 border-military-500/30">
           <p class="flex items-start gap-2 text-sm text-military-900">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="mt-0.5 h-4 w-4 shrink-0"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
-            Every contribution on this page was declared by the publishing company and personally confirmed by the named expert.
+            Chaque contribution sur cette page a été déclarée par la structure
+            qui publie, puis personnellement confirmée par l'expert nommé.
           </p>
         </div>
       </aside>
     </div>
   </div>
 
-  {% if images %}
+  {% if images and not is_minimal %}
     {# CSS-only lightbox: clicking a gallery image opens it full size. #}
     {% for item in images %}
       <input type="checkbox" id="lightbox-{{ item.pk }}" class="lb-input hidden" aria-hidden="true">
       <div class="lb-overlay invisible fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 opacity-0 transition">
-        <label for="lightbox-{{ item.pk }}" class="absolute inset-0 cursor-zoom-out" aria-label="Close"></label>
+        <label for="lightbox-{{ item.pk }}" class="absolute inset-0 cursor-zoom-out" aria-label="Fermer"></label>
         <figure class="relative max-h-full max-w-5xl">
-          <img src="{{ item.file.url }}" alt="{{ item.caption|default:'Project image' }}"
+          <img src="{{ item.file.url }}" alt="{{ item.caption|default:'Image du projet' }}"
                class="max-h-[85vh] w-auto rounded-lg shadow-2xl">
           {% if item.caption %}
             <figcaption class="mt-2 text-center text-sm text-white/90">{{ item.caption }}</figcaption>

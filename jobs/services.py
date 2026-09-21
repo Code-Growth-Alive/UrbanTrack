@@ -32,22 +32,22 @@ def apply_to_job(job, applicant, cover_letter):
     """Expert applies to an open job; both parties get notified."""
 
     if job.published_by_id == applicant.pk:
-        raise JobsError(_("You cannot apply to your own job offer."))
+        raise JobsError(_("Vous ne pouvez pas candidater à votre propre offre de mission."))
     if not job.is_open:
-        raise JobsError(_("This job offer is closed to new applications."))
+        raise JobsError(_("Cette offre de mission est clôturée aux nouvelles candidatures."))
     if JobApplication.objects.filter(job=job, applicant=applicant).exists():
-        raise JobsError(_("You already applied to this job."))
+        raise JobsError(_("Vous avez déjà candidaté à cette mission."))
 
     application = JobApplication.objects.create(
         job=job, applicant=applicant, cover_letter=cover_letter
     )
-    first_name = applicant.first_name or _("there")
+    first_name = applicant.first_name or _("à vous")
     _send(
-        _("Urban Track: application received"),
+        _("Urban Track : candidature reçue"),
         _(
-            "Hi %(first)s,\n\n"
-            "Your application to “%(title)s” (%(org)s) has been sent.\n"
-            "Track its status from your Urban Track dashboard.\n\n"
+            "Bonjour %(first)s,\n\n"
+            "Votre candidature à « %(title)s » (%(org)s) a été envoyée.\n"
+            "Suivez son statut depuis votre tableau de bord Urban Track.\n\n"
             "— Urban Track"
         )
         % {
@@ -58,8 +58,8 @@ def apply_to_job(job, applicant, cover_letter):
         [applicant.email],
         template="emails/job_application_received.html",
         context={
-            "heading": "Application received",
-            "preheader": f"Your application to '{job.title}' has been sent.",
+            "heading": "Candidature reçue",
+            "preheader": f"Votre candidature à « {job.title} » a été envoyée.",
             "first": first_name,
             "title": job.title,
             "org": job.published_by.organisation_name,
@@ -68,10 +68,10 @@ def apply_to_job(job, applicant, cover_letter):
     )
     applicant_name = applicant.get_full_name() or applicant.username
     _send(
-        _("Urban Track: new application for “%(title)s”") % {"title": job.title},
+        _("Urban Track : nouvelle candidature pour « %(title)s »") % {"title": job.title},
         _(
-            "%(name)s (%(pid)s) just applied to “%(title)s”.\n"
-            "Review it from your company dashboard:\n%(url)s\n\n— Urban Track"
+            "%(name)s (%(pid)s) vient de candidater à « %(title)s ».\n"
+            "Examinez-la depuis votre tableau de bord de structure :\n%(url)s\n\n— Urban Track"
         )
         % {
             "name": applicant_name,
@@ -82,8 +82,8 @@ def apply_to_job(job, applicant, cover_letter):
         [job.published_by.email],
         template="emails/job_new_application.html",
         context={
-            "heading": "New application received",
-            "preheader": f"{applicant_name} just applied to '{job.title}'.",
+            "heading": "Nouvelle candidature reçue",
+            "preheader": f"{applicant_name} vient de candidater à « {job.title} ».",
             "name": applicant_name,
             "pid": getattr(applicant.expert_profile, "professional_id", "") or "",
             "title": job.title,
@@ -97,9 +97,11 @@ def apply_to_job(job, applicant, cover_letter):
 def decide_application(application, actor, accept):
     """Company accepts or declines an application; expert is notified."""
     if application.job.published_by_id != actor.pk and not actor.is_superuser:
-        raise JobsError(_("Only the publishing company can review applications."))
+        raise JobsError(
+            _("Seule la structure qui a publié la mission peut examiner les candidatures.")
+        )
     if application.status != ApplicationStatus.PENDING:
-        raise JobsError(_("This application was already reviewed."))
+        raise JobsError(_("Cette candidature a déjà été examinée."))
 
     application.status = ApplicationStatus.ACCEPTED if accept else ApplicationStatus.REJECTED
     application.decided_at = timezone.now()
@@ -107,22 +109,23 @@ def decide_application(application, actor, accept):
 
     if accept:
         body = _(
-            "Congratulations %(first)s!\n\n"
-            "Your application to “%(title)s” (%(org)s) has been ACCEPTED.\n"
-            "The company will contact you at %(email)s to define the next steps.\n\n"
+            "Félicitations %(first)s !\n\n"
+            "Votre candidature à « %(title)s » (%(org)s) a été ACCEPTÉE.\n"
+            "La structure vous contactera à %(email)s pour définir les prochaines étapes.\n\n"
             "— Urban Track"
         )
     else:
         body = _(
-            "Hi %(first)s,\n\n"
-            "After careful review, your application to “%(title)s” "
-            "(%(org)s) was not retained this time.\n"
-            "Your certified profile keeps growing: new missions are posted regularly.\n\n"
+            "Bonjour %(first)s,\n\n"
+            "Après un examen attentif, votre candidature à « %(title)s » "
+            "(%(org)s) n'a pas été retenue cette fois.\n"
+            "Votre profil certifié continue d'évoluer : de nouvelles missions sont"
+                " publiées régulièrement.\n\n"
             "— Urban Track"
         )
-    first_name = application.applicant.first_name or _("there")
+    first_name = application.applicant.first_name or _("à vous")
     _send(
-        _("Urban Track: decision on your application"),
+        _("Urban Track : décision sur votre candidature"),
         body
         % {
             "first": first_name,
@@ -133,8 +136,8 @@ def decide_application(application, actor, accept):
         [application.applicant.email],
         template="emails/job_decision.html",
         context={
-            "heading": "Decision on your application",
-            "preheader": f"Your application to '{application.job.title}' was reviewed.",
+            "heading": "Décision sur votre candidature",
+            "preheader": f"Votre candidature à « {application.job.title} » a été examinée.",
             "first": first_name,
             "accepted": accept,
             "title": application.job.title,
@@ -152,9 +155,9 @@ def close_job(job, actor):
     from .models import JobStatus
 
     if job.published_by_id != actor.pk and not actor.is_superuser:
-        raise JobsError(_("Only the publishing company can close this job."))
+        raise JobsError(_("Seule la structure qui a publié la mission peut la clôturer."))
     if job.status == JobStatus.CLOSED:
-        raise JobsError(_("This job is already closed."))
+        raise JobsError(_("Cette mission est déjà clôturée."))
     job.status = JobStatus.CLOSED
     job.save(update_fields=["status", "updated_at"])
     return job
@@ -182,16 +185,17 @@ def send_deadline_reminders(days_ahead=3):
         )
         for application in pending:
             _send(
-                _("Urban Track: reminder: “%(title)s” closes soon") % {"title": job.title},
+                _("Urban Track : rappel : « %(title)s » clôture bientôt") % {"title": job.title},
                 _(
-                    "Hi %(first)s,\n\n"
-                    "Your application to “%(title)s” is still under review and "
-                    "the offer closes on %(deadline)s (%(days)s day(s)).\n"
-                    "No action needed: we will email you the decision either way.\n\n"
+                    "Bonjour %(first)s,\n\n"
+                    "Votre candidature à « %(title)s » est toujours en cours d'examen et "
+                    "l'offre clôture le %(deadline)s (%(days)s jour(s)).\n"
+                    "Aucune action requise : nous vous enverrons par email"
+                    " la décision dans tous les cas.\n\n"
                     "— Urban Track"
                 )
                 % {
-                    "first": application.applicant.first_name or _("there"),
+                    "first": application.applicant.first_name or _("à vous"),
                     "title": job.title,
                     "deadline": job.deadline.strftime("%d %b %Y"),
                     "days": job.days_until_deadline,
@@ -199,9 +203,9 @@ def send_deadline_reminders(days_ahead=3):
                 [application.applicant.email],
                 template="emails/job_deadline_expert.html",
                 context={
-                    "heading": "An offer closes soon",
-                    "preheader": f"'{job.title}' closes on {job.deadline:%Y-%m-%d}.",
-                    "first": application.applicant.first_name or _("there"),
+                    "heading": "Une offre clôture bientôt",
+                    "preheader": f"« {job.title} » clôture le {job.deadline:%Y-%m-%d}.",
+                    "first": application.applicant.first_name or _("à vous"),
                     "title": job.title,
                     "deadline": job.deadline.strftime("%d %b %Y"),
                     "days": job.days_until_deadline,
@@ -211,12 +215,12 @@ def send_deadline_reminders(days_ahead=3):
             experts_reminded += 1
         if pending:
             _send(
-                _("Urban Track: %(count)s application(s) awaiting review")
+                _("Urban Track : %(count)s candidature(s) en attente d'examen")
                 % {"count": pending.count()},
                 _(
-                    "The offer “%(title)s” closes on %(deadline)s and still has "
-                    "%(count)s unreviewed application(s).\n"
-                    "Review them from your dashboard.\n\n— Urban Track"
+                    "L'offre « %(title)s » clôture le %(deadline)s et compte encore "
+                    "%(count)s candidature(s) non examinée(s).\n"
+                    "Examinez-les depuis votre tableau de bord.\n\n— Urban Track"
                 )
                 % {
                     "title": job.title,
@@ -226,8 +230,8 @@ def send_deadline_reminders(days_ahead=3):
                 [job.published_by.email],
                 template="emails/job_deadline_company.html",
                 context={
-                    "heading": "Applications awaiting review",
-                    "preheader": f"'{job.title}' closes on {job.deadline:%Y-%m-%d}.",
+                    "heading": "Candidatures en attente d'examen",
+                    "preheader": f"« {job.title} » clôture le {job.deadline:%Y-%m-%d}.",
                     "title": job.title,
                     "deadline": job.deadline.strftime("%d %b %Y"),
                     "count": pending.count(),

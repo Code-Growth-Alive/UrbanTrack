@@ -1,8 +1,8 @@
 {% extends "emails/base_email.html" %}
 {% block body %}
-  <p><strong>{{ name }}</strong> ({{ pid }}) just applied to
-     <strong>“{{ title }}”</strong>.</p>
-  <p>Review the application from your company dashboard.</p>
+  <p><strong>{{ name }}</strong> ({{ pid }}) vient de postuler à
+     <strong>« {{ title }} »</strong>.</p>
+  <p>Examinez la candidature depuis le tableau de bord de votre structure.</p>
 {% endblock %}
 {% block actions %}
   <tr>
@@ -11,7 +11,7 @@
          style="display:inline-block; background-color:#5c6b2f; color:#ffffff;
                 text-decoration:none; font-size:15px; font-weight:bold;
                 padding:13px 28px; border-radius:8px;">
-        Review applications
+        Examiner les candidatures
       </a>
     </td>
   </tr>

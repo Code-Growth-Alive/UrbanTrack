@@ -33,18 +33,18 @@ class JobForm(forms.ModelForm):
             "title": forms.TextInput(
                 attrs={
                     "class": INPUT_CLASS,
-                    "placeholder": _("e.g. Senior urban planner: secondary cities programme"),
+                    "placeholder": _("ex. Urbaniste principal : programme villes secondaires"),
                 }
             ),
             "city": forms.TextInput(attrs={"class": INPUT_CLASS, "placeholder": _("Dakar")}),
-            "country": forms.TextInput(attrs={"class": INPUT_CLASS, "placeholder": _("Senegal")}),
+            "country": forms.TextInput(attrs={"class": INPUT_CLASS, "placeholder": _("Sénégal")}),
             "contract_type": forms.Select(attrs={"class": INPUT_CLASS + " appearance-none pr-9"}),
             "description": forms.Textarea(attrs={"rows": 6, "class": INPUT_CLASS}),
             "requirements": forms.Textarea(
                 attrs={
                     "rows": 4,
                     "class": INPUT_CLASS,
-                    "placeholder": _("One requirement per line."),
+                    "placeholder": _("Un prérequis par ligne."),
                 }
             ),
             "compensation": forms.TextInput(attrs={"class": INPUT_CLASS}),
@@ -56,7 +56,7 @@ class ApplicationForm(forms.Form):
     """Expert application form."""
 
     cover_letter = forms.CharField(
-        label=_("Cover letter"),
+        label=_("Lettre de motivation"),
         widget=forms.Textarea(attrs={"rows": 6, "class": INPUT_CLASS.replace("mt-1 ", "")}),
-        help_text=_("Reference your certified projects: recruiters see them first."),
+        help_text=_("Référencez vos projets certifiés : les recruteurs les voient en premier."),
     )

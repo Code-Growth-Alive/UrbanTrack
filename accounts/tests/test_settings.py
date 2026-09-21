@@ -47,7 +47,7 @@ class AccountSettingsTests(TestCase):
     def test_settings_renders_for_authenticated_user(self):
         response = self.client.get(reverse("accounts:settings"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Account settings")
+        self.assertContains(response, "Paramètres du compte")
 
     def test_can_update_personal_details(self):
         response = self.client.post(
@@ -116,7 +116,7 @@ class PasswordResetTests(TestCase):
     def test_reset_page_renders(self):
         response = self.client.get(reverse("accounts:password_reset"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Reset your password")
+        self.assertContains(response, "Réinitialiser votre mot de passe")
 
     def test_reset_emails_link_and_works_with_user(self):
         mail.outbox = []

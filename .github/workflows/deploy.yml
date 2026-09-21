@@ -1,0 +1,76 @@
+```yaml
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy application
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure SSH
+        shell: bash
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          printf '%s\n' "${{ secrets.VPS_SSH_PRIVATE_KEY }}" > ~/.ssh/github_deploy
+          chmod 600 ~/.ssh/github_deploy
+
+          printf '%s\n' "${{ secrets.VPS_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Test SSH connection
+        run: |
+          ssh \
+            -i ~/.ssh/github_deploy \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
+            "echo 'SSH connection successful'"
+
+      - name: Deploy application
+        run: |
+          ssh \
+            -i ~/.ssh/github_deploy \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" << 'EOF'
+
+          set -e
+
+          cd ~/UrbanTrack
+
+          echo "==> Pulling latest code"
+          git fetch origin main
+          git reset --hard origin/main
+
+          echo "==> Activating virtual environment"
+          source .venv/bin/activate
+
+          echo "==> Installing dependencies"
+          pip install -r requirements.txt
+
+          echo "==> Running migrations"
+          python manage.py migrate --noinput
+
+          echo "==> Collecting static files"
+          python manage.py collectstatic --noinput
+
+          echo "==> Restarting application"
+          sudo systemctl restart gunicorn
+
+          echo "==> Restarting Celery"
+          sudo systemctl restart celery
+
+          echo "==> Deployment completed"
+
+          EOF
+```

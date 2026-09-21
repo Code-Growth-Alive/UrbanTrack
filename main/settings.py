@@ -149,7 +149,9 @@ REST_FRAMEWORK = {
 
 # Internationalization
 
-LANGUAGE_CODE = "en-us"
+LAUNCH_COUNTER_THRESHOLD = int(env("LAUNCH_COUNTER_THRESHOLD", "1"))
+
+LANGUAGE_CODE = "fr-fr"
 
 TIME_ZONE = "UTC"
 

@@ -1,18 +1,18 @@
 {% extends "base.html" %}
 
-{% block title %}Projects: Urban Track{% endblock %}
+{% block title %}Projets : Urban Track{% endblock %}
 
 {% block content %}
 <section class="bg-military-700 text-white">
   <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-    <h1 class="text-3xl font-black tracking-tight">Projects</h1>
+    <h1 class="text-3xl font-black tracking-tight">Projets</h1>
     <p class="mt-2 max-w-2xl text-military-100">
-      Documented urban development projects. Every certified contribution on
-      an expert profile traces back to one of these pages.
+      Références de projets urbains documentées. Chaque contribution certifiée
+      sur un profil expert renvoie à l'une de ces fiches.
     </p>
     <form method="get" action="{% url 'projects:list' %}" class="mt-6 max-w-lg">
       <div class="flex gap-2">
-        <input type="text" name="q" value="{{ query }}" placeholder="Search by project name, client…"
+        <input type="text" name="q" value="{{ query }}" placeholder="Rechercher par projet, client…"
           class="form-input flex-1 !bg-white !text-charcoal-900">
         <button type="submit" class="btn-accent !px-5">
           <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -21,12 +21,61 @@
           </svg>
         </button>
       </div>
-      {% if query %}
-      <p class="mt-2 text-sm text-military-100">Showing results for "<strong>{{ query }}</strong>"
-        : <a href="{% url 'projects:list' %}" class="underline hover:text-white">clear</a>
-      </p>
-      {% endif %}
     </form>
+    <form method="get" action="{% url 'projects:list' %}" class="mt-4 grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-6">
+      <input type="hidden" name="q" value="{{ query }}">
+      <label class="contents">
+        <span class="sr-only">Pays</span>
+        <select name="country" class="form-input !bg-white !text-charcoal-900">
+          <option value="">Tous les pays</option>
+          {% for country in countries %}
+            <option value="{{ country }}" {% if country == filter_country %}selected{% endif %}>{{ country }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="contents">
+        <span class="sr-only">Client</span>
+        <select name="client" class="form-input !bg-white !text-charcoal-900">
+          <option value="">Tous les clients</option>
+          {% for client in clients %}
+            <option value="{{ client }}" {% if client == filter_client %}selected{% endif %}>{{ client }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="contents">
+        <span class="sr-only">Bailleur</span>
+        <select name="funder" class="form-input !bg-white !text-charcoal-900">
+          <option value="">Tous les bailleurs</option>
+          {% for funder in funders %}
+            <option value="{{ funder }}" {% if funder == filter_funder %}selected{% endif %}>{{ funder }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="contents">
+        <span class="sr-only">Phase</span>
+        <select name="phase" class="form-input !bg-white !text-charcoal-900">
+          <option value="">Toutes les phases</option>
+          {% for value, label in phases %}
+            <option value="{{ value }}" {% if value == filter_phase %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <input type="text" name="tag" value="{{ filter_tag }}" placeholder="Mot-clé #tag"
+        class="form-input !bg-white !text-charcoal-900">
+      <button type="submit" class="btn-outline !border-white/40 !px-3 !py-2 !text-white hover:!bg-white/10">Filtrer</button>
+    </form>
+    {% if query or filter_country or filter_client or filter_funder or filter_phase or filter_tag %}
+    <p class="mt-2 text-sm text-military-100">
+      Résultats affichés
+      {% if query %}pour "<strong>{{ query }}</strong>"{% endif %}
+      {% if filter_country %}· pays <strong>{{ filter_country }}</strong>{% endif %}
+      {% if filter_client %}· client <strong>{{ filter_client }}</strong>{% endif %}
+      {% if filter_funder %}· bailleur <strong>{{ filter_funder }}</strong>{% endif %}
+      {% if filter_phase %}· phase <strong>{{ filter_phase }}</strong>{% endif %}
+      {% if filter_tag %}· tag <strong>{{ filter_tag }}</strong>{% endif %}
+      : <a href="{% url 'projects:list' %}" class="underline hover:text-white">réinitialiser</a>
+    </p>
+    {% endif %}
   </div>
 </section>
 
@@ -41,11 +90,17 @@
       <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-charcoal-300">
         <span>
           {{ project.duration_start|date:"M Y" }}
-          {% if project.duration_end %}– {{ project.duration_end|date:"M Y" }}{% else %}– ongoing{% endif %}
+          {% if project.duration_end %}– {{ project.duration_end|date:"M Y" }}{% else %}– en cours{% endif %}
         </span>
-        <span>{{ project.confirmed_contributions.count }} certified contributor{{
-          project.confirmed_contributions.count|pluralize }}</span>
+        <span>{{ project.confirmed_contributions.count }} contributeur{{ project.confirmed_contributions.count|pluralize }} certifié{{ project.confirmed_contributions.count|pluralize }}</span>
       </div>
+      {% if project.tags.all %}
+      <div class="mt-2 flex flex-wrap gap-1.5">
+        {% for tag in project.tags.all|slice:":4" %}
+          <span class="rounded-full bg-military-50 px-2 py-0.5 text-[11px] font-semibold text-military-800 ring-1 ring-military-500/20">#{{ tag.name }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
     </a>
     {% endfor %}
   </div>
@@ -53,21 +108,18 @@
   {% if is_paginated %}
   <nav class="mt-8 flex justify-center gap-2 text-sm" aria-label="Pagination">
     {% if page_obj.has_previous %}
-    <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}"
-      class="btn-outline !px-3 !py-1.5">Previous</a>
+    <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if filter_country %}&country={{ filter_country|urlencode }}{% endif %}{% if filter_client %}&client={{ filter_client|urlencode }}{% endif %}{% if filter_funder %}&funder={{ filter_funder|urlencode }}{% endif %}{% if filter_phase %}&phase={{ filter_phase }}{% endif %}{% if filter_tag %}&tag={{ filter_tag|urlencode }}{% endif %}" class="btn-outline !px-3 !py-1.5">Précédent</a>
     {% endif %}
-    <span class="px-3 py-1.5 font-semibold text-charcoal-700">Page {{ page_obj.number }} / {{ paginator.num_pages
-      }}</span>
+    <span class="px-3 py-1.5 font-semibold text-charcoal-700">Page {{ page_obj.number }} / {{ paginator.num_pages }}</span>
     {% if page_obj.has_next %}
-    <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}"
-      class="btn-outline !px-3 !py-1.5">Next</a>
+    <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if filter_country %}&country={{ filter_country|urlencode }}{% endif %}{% if filter_client %}&client={{ filter_client|urlencode }}{% endif %}{% if filter_funder %}&funder={{ filter_funder|urlencode }}{% endif %}{% if filter_phase %}&phase={{ filter_phase }}{% endif %}{% if filter_tag %}&tag={{ filter_tag|urlencode }}{% endif %}" class="btn-outline !px-3 !py-1.5">Suivant</a>
     {% endif %}
   </nav>
   {% endif %}
   {% else %}
   <div class="card border-dashed text-center text-charcoal-700">
-    <p>No published project yet.</p>
-    <p class="mt-1 text-sm">Companies publish the first projects; experts then confirm their contributions.</p>
+    <p>Aucun projet publié pour le moment.</p>
+    <p class="mt-1 text-sm">Les structures publient les premiers projets ; les experts confirment ensuite leurs contributions.</p>
   </div>
   {% endif %}
 </div>

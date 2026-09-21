@@ -1,40 +1,40 @@
 {% extends "adminpanel/base.html" %}
 
-{% block admin_title %}Operations overview{% endblock %}
+{% block admin_title %}Vue d'ensemble des opérations{% endblock %}
 {% block admin_actions %}
-  <a href="{% url 'admin:index' %}" target="_blank" rel="noopener" class="btn-outline !px-4 !py-2 !text-sm">Open Django admin</a>
+  <a href="{% url 'admin:index' %}" target="_blank" rel="noopener" class="btn-outline !px-4 !py-2 !text-sm">Ouvrir l'admin Django</a>
 {% endblock %}
 
 {% block admin_content %}
   <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-    <div class="card"><p class="stat-value">{{ role_counts.total }}</p><p class="stat-label">Total accounts</p></div>
-    <div class="card"><p class="stat-value">{{ project_published }}<span class="text-base text-charcoal-300"> / {{ project_total }}</span></p><p class="stat-label">Projects published</p></div>
-    <div class="card"><p class="stat-value">{{ job_open }}<span class="text-base text-charcoal-300"> / {{ job_total }}</span></p><p class="stat-label">Jobs open</p></div>
-    <div class="card"><p class="stat-value">{{ application_total }}</p><p class="stat-label">Applications</p></div>
+    <div class="card"><p class="stat-value">{{ role_counts.total }}</p><p class="stat-label">Total des comptes</p></div>
+    <div class="card"><p class="stat-value">{{ project_published }}<span class="text-base text-charcoal-300"> / {{ project_total }}</span></p><p class="stat-label">Projets publiés</p></div>
+    <div class="card"><p class="stat-value">{{ job_open }}<span class="text-base text-charcoal-300"> / {{ job_total }}</span></p><p class="stat-label">Emplois ouverts</p></div>
+    <div class="card"><p class="stat-value">{{ application_total }}</p><p class="stat-label">Candidatures</p></div>
   </div>
   <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-    <div class="card"><p class="stat-value">{{ role_counts.user|default:0 }}</p><p class="stat-label">Users</p></div>
-    <div class="card"><p class="stat-value">{{ role_counts.admin|default:0 }}</p><p class="stat-label">Admins</p></div>
-    <div class="card"><p class="stat-value">{{ role_counts.confirmed|default:0 }}</p><p class="stat-label">Confirmed emails</p></div>
+    <div class="card"><p class="stat-value">{{ role_counts.user|default:0 }}</p><p class="stat-label">Utilisateurs</p></div>
+    <div class="card"><p class="stat-value">{{ role_counts.admin|default:0 }}</p><p class="stat-label">Administrateurs</p></div>
+    <div class="card"><p class="stat-value">{{ role_counts.confirmed|default:0 }}</p><p class="stat-label">Emails confirmés</p></div>
     <div class="card">
       <p class="stat-value {% if disputed %}!text-red-700{% endif %}">{{ disputed }}</p>
-      <p class="stat-label">Disputes to arbitrate</p>
+      <p class="stat-label">Contestations à arbitrer</p>
     </div>
   </div>
 
   <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-    <div class="card"><p class="stat-value">{{ application_pending }}</p><p class="stat-label">Applications awaiting decision</p></div>
-    <div class="card"><p class="stat-value">{{ contribution_confirmed }}<span class="text-base text-charcoal-300"> / {{ contribution_total }}</span></p><p class="stat-label">Contributions certified</p></div>
-    <div class="card"><p class="stat-value">{{ contribution_total }}</p><p class="stat-label">Total contributions declared</p></div>
+    <div class="card"><p class="stat-value">{{ application_pending }}</p><p class="stat-label">Candidatures en attente de décision</p></div>
+    <div class="card"><p class="stat-value">{{ contribution_confirmed }}<span class="text-base text-charcoal-300"> / {{ contribution_total }}</span></p><p class="stat-label">Contributions certifiées</p></div>
+    <div class="card"><p class="stat-value">{{ contribution_total }}</p><p class="stat-label">Contributions déclarées au total</p></div>
   </div>
 
   {% if disputed %}
     <section class="card mt-8 border-red-200 bg-red-50">
-      <h2 class="font-bold text-red-700">Disputes awaiting arbitration</h2>
+      <h2 class="font-bold text-red-700">Contestations en attente d'arbitrage</h2>
       <p class="mt-1 text-sm text-red-800">
-        Resolve these in the
-        <a href="{% url 'admin:index' %}" class="font-semibold underline">Django admin panel</a>
-        (certification → contributions → arbitrate).
+        Résolvez-les dans le
+        <a href="{% url 'admin:index' %}" class="font-semibold underline">panneau d'administration Django</a>
+        (certification → contributions → arbitrer).
       </p>
     </section>
   {% endif %}
@@ -42,8 +42,8 @@
   <div class="mt-10 grid gap-8 lg:grid-cols-3">
     <section class="card">
       <div class="flex items-center justify-between">
-        <h2 class="section-title">Newest users</h2>
-        <a href="{% url 'adminpanel:user_list' %}" class="text-sm font-semibold text-accent-700 hover:underline">Manage</a>
+        <h2 class="section-title">Derniers utilisateurs</h2>
+        <a href="{% url 'adminpanel:user_list' %}" class="text-sm font-semibold text-accent-700 hover:underline">Gérer</a>
       </div>
       <ul class="mt-4 divide-y divide-charcoal-900/10 text-sm">
         {% for user in recent_users %}
@@ -60,8 +60,8 @@
 
     <section class="card">
       <div class="flex items-center justify-between">
-        <h2 class="section-title">Newest jobs</h2>
-        <a href="{% url 'adminpanel:job_list' %}" class="text-sm font-semibold text-accent-700 hover:underline">Manage</a>
+        <h2 class="section-title">Derniers emplois</h2>
+        <a href="{% url 'adminpanel:job_list' %}" class="text-sm font-semibold text-accent-700 hover:underline">Gérer</a>
       </div>
       <ul class="mt-4 divide-y divide-charcoal-900/10 text-sm">
         {% for job in recent_jobs %}
@@ -69,8 +69,8 @@
             <p class="font-semibold">{{ job.title }}</p>
             <p class="text-xs text-charcoal-300">
               {{ job.published_by.organisation_name|default:job.published_by.get_full_name }}
-              · {{ job.applications.count }} application{{ job.applications.count|pluralize }}
-              · {% if job.is_open %}Open{% else %}Closed{% endif %}
+              · {{ job.applications.count }} candidature{{ job.applications.count|pluralize }}
+              · {% if job.is_open %}Ouverte{% else %}Clôturée{% endif %}
             </p>
           </li>
         {% endfor %}
@@ -79,8 +79,8 @@
 
     <section class="card">
       <div class="flex items-center justify-between">
-        <h2 class="section-title">Recent projects</h2>
-        <a href="{% url 'adminpanel:project_list' %}" class="text-sm font-semibold text-accent-700 hover:underline">Manage</a>
+        <h2 class="section-title">Projets récents</h2>
+        <a href="{% url 'adminpanel:project_list' %}" class="text-sm font-semibold text-accent-700 hover:underline">Gérer</a>
       </div>
       <ul class="mt-4 divide-y divide-charcoal-900/10 text-sm">
         {% for project in recent_projects %}
@@ -88,7 +88,7 @@
             <p class="font-semibold">{{ project.official_name }}</p>
             <p class="text-xs text-charcoal-300">
               {{ project.published_by.organisation_name|default:project.published_by.get_full_name }}
-              · {{ project.contributions.count }} contributor{{ project.contributions.count|pluralize }}
+              · {{ project.contributions.count }} contributeur{{ project.contributions.count|pluralize }}
               · {{ project.get_status_display }}
             </p>
           </li>

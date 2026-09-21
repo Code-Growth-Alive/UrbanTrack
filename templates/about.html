@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 
-{% block title %}About: Urban Track{% endblock %}
+{% block title %}À propos : Urban Track{% endblock %}
 
 {% block content %}
   <section class="bg-military-900 py-14 text-white">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-      <h1 class="text-3xl font-black tracking-tight">About Urban Track</h1>
+      <h1 class="text-3xl font-black tracking-tight">À propos d'Urban Track</h1>
       <p class="mt-2 max-w-2xl text-military-100">
-        The trust layer of urban development in Africa: certified expertise,
-        verified impact, trusted by institutions.
+        La couche de confiance du développement urbain en Afrique : expertises
+        certifiées, impact vérifiable, références lisibles par les institutions.
       </p>
     </div>
   </section>
@@ -16,40 +16,43 @@
   <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6">
     <div class="space-y-6 leading-relaxed text-charcoal-700">
       <p>
-        In urban development, hiring and partnership decisions rest on CVs
-        nobody can verify. Urban Track replaces self-declared claims with a
-        simple mechanism borrowed from science: <strong>cross-confirmation</strong>.
-        A company publishes the project it carried out; each named expert
-        personally confirms their contribution. Only double-confirmed
-        experience earns the certified badge: like co-authors on ResearchGate.
+        Dans le développement urbain, les décisions de recrutement et de
+        partenariat reposent trop souvent sur des CV impossibles à vérifier.
+        Urban Track remplace les déclarations isolées par un mécanisme simple,
+        inspiré du monde scientifique : <strong>la double confirmation</strong>.
+        Une structure publie le projet qu'elle a réalisé ; chaque expert cité
+        confirme personnellement sa contribution. Seules les expériences
+        confirmées par les deux parties obtiennent le badge certifié.
       </p>
       <p>
-        Experts keep a permanent professional ID (OX-XXXXXX), a public profile
-        listing nothing but certified experience, and export-ready CVs in the
-        formats donors expect: <strong>Harvard-MIT academic, AFD, World Bank</strong>.
-        Companies build teams on verified track records. Donors and national
-        agencies anchor the trust layer.
+        Les experts disposent d'un identifiant professionnel permanent
+        (OX-XXXXXX), d'un profil public vérifiable et de CV prêts à exporter
+        dans les formats attendus par les bailleurs :
+        <strong>Harvard-MIT académique, AFD, Banque mondiale</strong>. Les
+        structures montent leurs équipes à partir de références solides ; les
+        bailleurs et agences nationales disposent d'une base de confiance plus
+        claire.
       </p>
     </div>
 
     <div class="mt-10 grid gap-4 sm:grid-cols-3">
       <div class="card">
-        <h2 class="font-bold">No manual validation</h2>
-        <p class="mt-1 text-sm">Certification is automatic once both parties confirm. Humans only arbitrate disputes.</p>
+        <h2 class="font-bold">Pas de validation opaque</h2>
+        <p class="mt-1 text-sm">La certification naît de la confirmation des parties. L'humain intervient seulement en cas de litige.</p>
       </div>
       <div class="card">
-        <h2 class="font-bold">Privacy first</h2>
-        <p class="mt-1 text-sm">Projects can be published privately while still certifying contributions.</p>
+        <h2 class="font-bold">Confidentialité préservée</h2>
+        <p class="mt-1 text-sm">Un projet peut rester privé tout en certifiant les contributions essentielles.</p>
       </div>
       <div class="card">
-        <h2 class="font-bold">Free for experts</h2>
-        <p class="mt-1 text-sm">Individual experts never pay. Companies fund the platform through job postings.</p>
+        <h2 class="font-bold">Gratuit pour les experts</h2>
+        <p class="mt-1 text-sm">Les experts individuels ne paient pas. La plateforme est financée par les services destinés aux organisations.</p>
       </div>
     </div>
 
     <div class="mt-10 flex gap-3">
-      <a href="{% url 'accounts:signup' %}" class="btn-primary">Join Urban Track</a>
-      <a href="{% url 'home' %}" class="btn-outline">How certification works</a>
+      <a href="{% url 'accounts:signup' %}" class="btn-primary">Rejoindre Urban Track</a>
+      <a href="{% url 'home' %}" class="btn-outline">Comprendre la certification</a>
     </div>
   </div>
 {% endblock %}

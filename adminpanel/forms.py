@@ -26,13 +26,13 @@ class AdminUserForm(forms.ModelForm):
     """
 
     password = forms.CharField(
-        label=_("New password"),
+        label=_("Nouveau mot de passe"),
         required=False,
         widget=forms.PasswordInput(
             attrs={
                 "class": INPUT_CLASS,
                 "autocomplete": "new-password",
-                "placeholder": _("Leave empty to keep the current password."),
+                "placeholder": _("Laissez vide pour conserver le mot de passe actuel."),
             }
         ),
     )
@@ -58,8 +58,10 @@ class AdminUserForm(forms.ModelForm):
             "is_superuser": forms.CheckboxInput(attrs={"class": CHECKBOX_CLASS}),
         }
         help_texts = {
-            "is_staff": _("Django admin panel access."),
-            "is_superuser": _("Full administrative rights (only for the platform owner)."),
+            "is_staff": _("Accès au panneau d'administration Django."),
+            "is_superuser": _(
+                "Droits d'administration complets (réservés au propriétaire de la plateforme)."
+            ),
         }
 
     def __init__(self, *args, acting_user=None, **kwargs):
@@ -71,14 +73,16 @@ class AdminUserForm(forms.ModelForm):
             role_choices = [(value, label) for value, label in role_choices if value != Role.ADMIN]
             self.fields["role"].disabled = True
             self.fields["role"].help_text = _(
-                "Only the platform superuser can change a user's role."
+                "Seul le superutilisateur de la plateforme peut modifier le rôle d'un utilisateur."
             )
         self.fields["role"].choices = role_choices
 
     def clean_role(self):
         role = self.cleaned_data.get("role")
         if role == Role.ADMIN and not getattr(self.acting_user, "is_superuser", False):
-            raise forms.ValidationError(_("Only the platform superuser can nominate an admin."))
+            raise forms.ValidationError(
+                _("Seul le superutilisateur de la plateforme peut nommer un administrateur.")
+            )
         return role
 
     def save(self, commit=True):

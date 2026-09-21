@@ -15,6 +15,7 @@ from projects.services import publish_project
 from projects.tests.test_models import make_company, make_project
 
 from ..models import (
+    ConfirmationSource,
     ContributionStatus,
     ExpertInvitation,
     InvitationStatus,
@@ -26,7 +27,9 @@ from ..services import (
     PermissionDeniedError,
     adjust_contribution,
     approve_adjustment,
+    claim_client_contribution_token,
     confirm_as_is,
+    confirm_by_client,
     declare_contributor,
     dispute_contribution,
     expire_stale_invitations,
@@ -34,6 +37,7 @@ from ..services import (
     mark_invitation_opened,
     notify_contributions_for_project,
     reject_contribution,
+    request_client_confirmation,
     resolve_dispute,
     send_invitation_reminder,
 )
@@ -49,11 +53,17 @@ def linked_contribution(company, expert, **kwargs):
         role_type=kwargs.pop("role_type", RoleType.SPECIALIST),
         contribution_bullets=kwargs.pop("contribution_bullets", "- Did the thing"),
         added_by=company,
+        confirmation_source=kwargs.pop("confirmation_source", ConfirmationSource.EXPERT),
     )
 
 
 class DeclareContributorTests(TestCase):
-    """Rules 1 + 5: company declares; emails matching accounts auto-link."""
+    """Rules 1 + 5: company declares; emails matching accounts auto-link.
+
+    T1: a physical person cannot be both the declarant and the confirmer of
+    their own contribution. The project publisher is the legitimate exception
+    (sole trader / director case); a non-publisher cannot self-declare.
+    """
 
     def setUp(self):
         self.company = make_company()
@@ -81,15 +91,58 @@ class DeclareContributorTests(TestCase):
         self.assertEqual(contribution.expert_id, expert.id)
         self.assertEqual(contribution.invited_email, "known@example.com")
 
-    def test_company_cannot_declare_itself(self):
+    def test_publisher_can_declare_themselves_sole_trader(self):
+        """T1: the individual consultant (publisher = expert) is allowed."""
+        project = make_project(self.company)  # published_by == self.company
+        contribution = declare_contributor(
+            project,
+            email=self.company.email,
+            role_type=RoleType.DIRECTOR,
+            contribution_bullets="x",
+            added_by=self.company,
+        )
+        self.assertEqual(contribution.expert_id, self.company.id)
+        self.assertFalse(contribution.is_certified)
+
+    def test_non_publisher_cannot_declare_themselves(self):
+        """T1: declarant and confirmer must be distinct physical persons."""
+        other = make_company(username="other", email="other@example.com")
+        project = make_project(self.company)
         with self.assertRaises(ValidationError):
             declare_contributor(
-                make_project(self.company),
-                email=self.company.email,
+                project,
+                email=other.email,
                 role_type=RoleType.DIRECTOR,
                 contribution_bullets="x",
-                added_by=self.company,
+                added_by=other,
             )
+
+    def test_refused_declaration_is_never_persisted(self):
+        """T1: a refused declaration cannot produce a 'certified' badge."""
+        other = make_company(username="other", email="other@example.com")
+        project = make_project(self.company)
+        before = ProjectContribution.objects.count()
+        with self.assertRaises(ValidationError):
+            declare_contributor(
+                project,
+                email=other.email,
+                role_type=RoleType.DIRECTOR,
+                contribution_bullets="x",
+                added_by=other,
+            )
+        self.assertEqual(ProjectContribution.objects.count(), before)
+
+    def test_confirmation_source_is_stored(self):
+        contribution = declare_contributor(
+            make_project(self.company),
+            email="stranger@example.com",
+            role_type=RoleType.SPECIALIST,
+            contribution_bullets="x",
+            added_by=self.company,
+            confirmation_source=ConfirmationSource.CLIENT,
+        )
+        contribution.refresh_from_db()
+        self.assertEqual(contribution.confirmation_source, ConfirmationSource.CLIENT)
 
 
 class DispatchTests(TestCase):
@@ -121,7 +174,7 @@ class DispatchTests(TestCase):
         self.assertEqual(len(dispatched["invitations"]), 1)
         self.assertEqual(len(mail.outbox), 1)
         body = mail.outbox[0].body
-        self.assertIn("You have been identified as a contributor", body)
+        self.assertIn("Vous avez été identifié comme contributeur", body)
         self.assertIn(dispatched["invitations"][0].magic_link_path, body)
 
     def test_dispatch_is_idempotent_per_contribution(self):
@@ -212,6 +265,60 @@ class ConfirmRejectDisputeTests(TestCase):
             dispute_contribution(contribution, self.expert, reason="")
         dispute_contribution(contribution, self.expert, reason="Wrong dates")
         self.assertEqual(contribution.status, ContributionStatus.DISPUTED)
+
+
+class ClientConfirmationTests(TestCase):
+    """T1 path 1: the client / maître d'ouvrage counter-signs a contribution."""
+
+    def setUp(self):
+        self.company = make_company()
+        self.project = make_project(self.company)
+        self.contribution = declare_contributor(
+            self.project,
+            email=self.company.email,
+            role_type=RoleType.DIRECTOR,
+            contribution_bullets="- Led the study",
+            added_by=self.company,
+            confirmation_source=ConfirmationSource.CLIENT,
+        )
+
+    def test_client_path_requires_client_source(self):
+        expert = make_expert()
+        other = linked_contribution(self.company, expert, project=self.project)
+        with self.assertRaises(InvalidTransitionError):
+            request_client_confirmation(other, self.company, client_email="client@mo.org")
+
+    def test_only_publisher_can_request_client_confirmation(self):
+        stranger = make_company(username="stranger", email="s@example.com")
+        with self.assertRaises(PermissionDeniedError):
+            request_client_confirmation(
+                self.contribution, stranger, client_email="client@mo.org"
+            )
+
+    def test_client_confirm_certifies_with_token(self):
+        mail.outbox.clear()
+        token = request_client_confirmation(
+            self.contribution, self.company, client_email="client@mo.org"
+        )
+        self.assertIsNotNone(token)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("Confirmez en tant que client / maître d'ouvrage", mail.outbox[0].body)
+        self.assertEqual(claim_client_contribution_token(token), self.contribution)
+
+        confirm_by_client(self.contribution, token)
+        self.contribution.refresh_from_db()
+        self.assertTrue(self.contribution.is_certified)
+        self.assertEqual(self.contribution.confirmed_by, ConfirmationSource.CLIENT)
+        self.assertIsNone(self.contribution.client_confirm_token)
+
+    def test_token_is_single_use(self):
+        token = request_client_confirmation(
+            self.contribution, self.company, client_email="client@mo.org"
+        )
+        confirm_by_client(self.contribution, token)
+        with self.assertRaises(PermissionDeniedError):
+            confirm_by_client(self.contribution, token)
+        self.assertIsNone(claim_client_contribution_token(token))
 
 
 class AdjustmentCycleTests(TestCase):

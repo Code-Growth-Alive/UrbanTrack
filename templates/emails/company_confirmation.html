@@ -1,9 +1,9 @@
 {% extends "emails/base_email.html" %}
 {% block body %}
-  <p><strong>{{ name }}</strong> ({{ expert_email }}) has confirmed their contribution to
-     the project <strong>“{{ contribution.project.official_name }}”</strong>.</p>
-  <p>The experience is now <strong>certified</strong> via cross-confirmation and
-     appears on the expert's public profile.</p>
+  <p><strong>{{ name }}</strong> ({{ expert_email }}) a confirmé sa contribution au
+     projet <strong>« {{ contribution.project.official_name }} »</strong>.</p>
+  <p>L'expérience est désormais <strong>certifiée</strong> par double confirmation et
+     apparaît sur le profil public de l'expert.</p>
 {% endblock %}
 {% block actions %}
   <tr>
@@ -12,7 +12,7 @@
          style="display:inline-block; background-color:#5c6b2f; color:#ffffff;
                 text-decoration:none; font-size:15px; font-weight:bold;
                 padding:13px 28px; border-radius:8px;">
-        View in my dashboard
+        Voir dans mon tableau de bord
       </a>
     </td>
   </tr>

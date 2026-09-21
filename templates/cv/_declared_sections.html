@@ -1,0 +1,106 @@
+{# T4/T5: self-declared CV sections rendered by every skin.
+   Every section is marked "declared — not third-party verified" (labels.declared),
+   so certified experience is never conflated with self-declared context. #}
+{% if cv.has_declared %}
+<section class="declared">
+  {% if cv.declared.positions %}
+    <h2>{{ labels.positions }} <span class="declared-tag">{{ labels.declared }}</span></h2>
+    {% if labels.positions_note %}<p class="declared-note">{{ labels.positions_note }}</p>{% endif %}
+    {% for pos in cv.declared.positions %}
+      <div class="dpos">
+        {% if pos.period %}<span class="dpos-period">{{ pos.period }}</span>{% endif %}
+        <p class="dpos-title">{{ pos.function }}</p>
+        <p class="dpos-sub">{{ pos.employer }}</p>
+        {% if pos.description %}<p class="dpos-desc">{{ pos.description }}</p>{% endif %}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  {% if cv.declared.mandates %}
+    <h2>{{ labels.mandates }} <span class="declared-tag">{{ labels.declared }}</span></h2>
+    <ul>
+      {% for m in cv.declared.mandates %}
+        <li>
+          <strong>{{ m.name }}</strong>
+          {% if m.role %} — {{ m.role }}{% endif %}
+          {% if m.period %} ({{ m.period }}){% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if cv.declared.publications %}
+    <h2>{{ labels.publications }} <span class="declared-tag">{{ labels.declared }}</span></h2>
+    <ul>
+      {% for p in cv.declared.publications %}
+        <li>
+          <span class="pub-title">{{ p.title }}</span>
+          {% if p.venue %}, {{ p.venue }}{% endif %}
+          {% if p.year %} ({{ p.year }}){% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if cv.declared.teaching %}
+    <h2>{{ labels.teaching }} <span class="declared-tag">{{ labels.declared }}</span></h2>
+    <ul>
+      {% for t in cv.declared.teaching %}
+        <li>
+          <span class="pub-title">{{ t.title }}</span>
+          {% if t.institution %}, {{ t.institution }}{% endif %}
+          {% if t.year %} ({{ t.year }}){% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if cv.declared.media %}
+    <h2>{{ labels.media }} <span class="declared-tag">{{ labels.declared }}</span></h2>
+    <ul>
+      {% for m in cv.declared.media %}
+        <li>
+          <span class="pub-title">{{ m.title }}</span>
+          {% if m.outlet %}, {{ m.outlet }}{% endif %}
+          {% if m.year %} ({{ m.year }}){% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if cv.strengths %}
+    <h2>{{ labels.strengths }} <span class="declared-tag">{{ labels.declared }}</span></h2>
+    <ul class="skills">
+      {% for s in cv.strengths %}<li>{{ s }}</li>{% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if cv.countries %}
+    <h2>{{ labels.countries }} <span class="declared-tag">{{ labels.declared }}</span></h2>
+    <ul class="skills">
+      {% for c in cv.countries %}<li>{{ c }}</li>{% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if cv.languages %}
+    <h2>{{ labels.languages }} <span class="declared-tag">{{ labels.declared }}</span></h2>
+    <ul class="skills">
+      {% for l in cv.languages %}
+        <li>
+          <strong>{{ l.name }}</strong> —
+          {% if l.read %}{{ labels.read }}: {{ l.read }}{% endif %}
+          {% if l.spoken %}{% if l.read %} · {% endif %}{{ labels.spoken }}: {{ l.spoken }}{% endif %}
+          {% if l.written %}{% if l.read or l.spoken %} · {% endif %}{{ labels.written }}: {{ l.written }}{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if cv.misc %}
+    <h2>{{ labels.misc }} <span class="declared-tag">{{ labels.declared }}</span></h2>
+    <p class="dpos-desc">{{ cv.misc }}</p>
+  {% endif %}
+
+  <p class="declared-legend">{{ labels.declared_legend }}</p>
+</section>
+{% endif %}

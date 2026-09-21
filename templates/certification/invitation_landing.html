@@ -1,25 +1,25 @@
 {% extends "base.html" %}
 
-{% block title %}Confirm your contribution to {{ project.official_name }}: Urban Track{% endblock %}
+{% block title %}Confirmez votre contribution à {{ project.official_name }} : Urban Track{% endblock %}
 
 {% block content %}
   <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6">
-    <!-- Declaration summary: pre-filled by the publishing company -->
-    <p class="text-sm font-medium uppercase tracking-wide text-charcoal-300">Contribution invitation</p>
+    <!-- Récapitulatif de la déclaration : pré-remplie par la structure qui publie -->
+    <p class="text-sm font-medium uppercase tracking-wide text-charcoal-300">Invitation à confirmer une contribution</p>
     <h1 class="mt-1 text-2xl font-black tracking-tight sm:text-3xl">
-      {{ company_name }} identified you as
+      {{ company_name }} vous a identifié comme
       <span class="role-chip align-middle">{{ contribution.get_role_type_display }}</span>
-      on
+      sur
     </h1>
     <h2 class="mt-2 text-xl font-bold text-military-700">{{ project.official_name }}</h2>
     <p class="mt-1 text-sm text-charcoal-700">
       {{ project.client_name }}
       · {{ project.duration_start|date:"M Y" }}
-      {% if project.duration_end %}– {{ project.duration_end|date:"M Y" }}{% else %}– ongoing{% endif %}
+      {% if project.duration_end %}– {{ project.duration_end|date:"M Y" }}{% else %}– en cours{% endif %}
     </p>
 
     <div class="card mt-6">
-      <h3 class="section-title mb-3">Proposed contribution</h3>
+      <h3 class="section-title mb-3">Contribution proposée</h3>
       <ul class="list-disc space-y-1 pl-5 text-sm text-charcoal-700">
         {% for bullet in contribution.contribution_bullets_lines %}
           <li>{{ bullet }}</li>
@@ -27,73 +27,77 @@
       </ul>
       <p class="mt-4 text-xs text-charcoal-300">
         {% if invitation %}
-          Invitation sent {{ invitation.sent_at|date:"d M Y" }} · expires {{ invitation.expires_at|date:"d M Y" }}
+          Invitation envoyée le {{ invitation.sent_at|date:"d M Y" }} · expire le {{ invitation.expires_at|date:"d M Y" }}
         {% else %}
-          Declared by {{ company_name }} · review requested via your dashboard
+          Déclarée par {{ company_name }} · examen demandé via votre tableau de bord
         {% endif %}
       </p>
     </div>
 
-    <!-- Status-specific panels -->
+    <!-- Panneaux selon le statut -->
     {% if contribution.status == "confirmed" %}
       <div class="card mt-6 border-military-500 bg-military-50">
         <p class="flex items-start gap-2 font-semibold text-military-900">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="mt-0.5 h-5 w-5 shrink-0"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
-          Certified: this experience now appears on the expert's public profile with a traceable link to the project.
+          Certifiée : cette expérience apparaît désormais sur le profil public de
+          l'expert avec un lien traçable vers le projet.
         </p>
         {% if contribution.expert_id %}
-          <a href="{% url 'accounts:public_profile' contribution.expert.professional_id %}" class="btn-outline mt-4">View the public profile</a>
+          <a href="{% url 'accounts:public_profile' contribution.expert.professional_id %}" class="btn-outline mt-4">Voir le profil public</a>
         {% endif %}
       </div>
     {% elif contribution.status == "rejected" %}
       <div class="card mt-6 border-dashed text-center text-charcoal-700">
-        You rejected this contribution on {{ contribution.updated_at|date:"d M Y" }}. Nothing was certified.
+        Vous avez refusé cette contribution le {{ contribution.updated_at|date:"d M Y" }}. Rien n'a été certifié.
       </div>
     {% elif contribution.status == "disputed" %}
       <div class="card mt-6 border-dashed text-center text-charcoal-700">
-        This declaration is disputed: an administrator will arbitrate and you will be notified of the outcome.
+        Cette déclaration est contestée : un administrateur va arbitrer et vous
+        serez notifié de l'issue.
       </div>
     {% elif contribution.pending_company_validation %}
       <div class="card mt-6 border-accent-300 bg-accent-50">
-        <p class="text-sm font-semibold text-accent-700">Awaiting {{ company_name }}</p>
+        <p class="text-sm font-semibold text-accent-700">En attente de {{ company_name }}</p>
         <p class="mt-1 text-sm text-charcoal-700">
-          Your adjusted wording was sent back for validation. Once approved, the experience becomes certified.
+          Votre formulation ajustée a été renvoyée pour validation. Une fois
+          approuvée, l'expérience devient certifiée.
         </p>
       </div>
     {% elif is_actionable and mismatched_user %}
       <div class="card mt-6 border-red-300 bg-red-50">
         <p class="text-sm text-red-800">
-          You are logged in as {{ user.email }}, but this invitation is addressed to
-          <strong>{{ invitation.email }}</strong>. Log in with that account to act.
+          Vous êtes connecté en tant que {{ user.email }}, mais cette invitation
+          est adressée à <strong>{{ invitation.email }}</strong>. Connectez-vous
+          avec ce compte pour agir.
         </p>
       </div>
     {% elif is_actionable %}
 
-      <!-- Integrated account creation: no friction, email locked to the invitation (spec 02 §4.4) -->
+      <!-- Création de compte intégrée : sans friction, email verrouillé sur l'invitation (spec 02 §4.4) -->
       {% if not user.is_authenticated and not contribution.expert_id %}
         <div class="card mt-6 border-military-500" id="create-account">
-          <h3 class="section-title">This is you? Create your free account</h3>
+          <h3 class="section-title">C'est bien vous ? Créez votre compte gratuit</h3>
           <p class="mt-1 text-sm text-charcoal-700">
-            Your professional ID (OX-XXXXXX) is generated instantly, then confirm below.
-            Already registered?
-            <a href="{% url 'accounts:login' %}?next=/certification/invitations/{{ invitation.token }}/" class="font-semibold text-accent-700 hover:underline">Log in</a>.
+            Votre identifiant professionnel (OX-XXXXXX) est généré instantanément,
+            puis confirmez ci-dessous. Déjà inscrit ?
+            <a href="{% url 'accounts:login' %}?next=/certification/invitations/{{ invitation.token }}/" class="font-semibold text-accent-700 hover:underline">Se connecter</a>.
           </p>
           <form method="post" class="mt-4 space-y-4">
             {% csrf_token %}
             <input type="hidden" name="action" value="signup">
             {% if signup_form and signup_form.errors and not signup_form.non_field_errors %}
-              <p class="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-800">{{ signup_form.non_field_errors.0|default:"Please correct the errors below." }}</p>
+              <p class="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-800">{{ signup_form.non_field_errors.0|default:"Veuillez corriger les erreurs ci-dessous." }}</p>
             {% endif %}
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label for="su_first_name" class="block text-sm font-semibold">First name</label>
+                <label for="su_first_name" class="block text-sm font-semibold">Prénom</label>
                 <input type="text" name="first_name" id="su_first_name" required maxlength="150"
                        value="{{ signup_form.first_name.value|default:'' }}"
                        class="form-input">
                 {% if signup_form.first_name.errors %}<p class="mt-1 text-xs text-red-700">{{ signup_form.first_name.errors.0 }}</p>{% endif %}
               </div>
               <div>
-                <label for="su_last_name" class="block text-sm font-semibold">Last name</label>
+                <label for="su_last_name" class="block text-sm font-semibold">Nom</label>
                 <input type="text" name="last_name" id="su_last_name" required maxlength="150"
                        value="{{ signup_form.last_name.value|default:'' }}"
                        class="form-input">
@@ -101,53 +105,53 @@
               </div>
             </div>
             <div>
-              <label for="su_email" class="block text-sm font-semibold">Email address</label>
+              <label for="su_email" class="block text-sm font-semibold">Adresse email</label>
               <input type="email" id="su_email" value="{{ invitation.email }}" readonly
                      class="form-input disabled:bg-charcoal-50 disabled:text-charcoal-700" disabled
                      aria-describedby="su_email_help">
-              <p id="su_email_help" class="mt-1 text-xs text-charcoal-300">Pre-filled from the invitation.</p>
+              <p id="su_email_help" class="mt-1 text-xs text-charcoal-300">Pré-rempli depuis l'invitation.</p>
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label for="su_password1" class="block text-sm font-semibold">Password</label>
+                <label for="su_password1" class="block text-sm font-semibold">Mot de passe</label>
                 <input type="password" name="password1" id="su_password1" required autocomplete="new-password"
                        class="form-input">
                 {% if signup_form.password1.errors %}<p class="mt-1 text-xs text-red-700">{{ signup_form.password1.errors.0 }}</p>{% endif %}
               </div>
               <div>
-                <label for="su_password2" class="block text-sm font-semibold">Confirm password</label>
+                <label for="su_password2" class="block text-sm font-semibold">Confirmer le mot de passe</label>
                 <input type="password" name="password2" id="su_password2" required autocomplete="new-password"
                        class="form-input">
                 {% if signup_form.password2.errors %}<p class="mt-1 text-xs text-red-700">{{ signup_form.password2.errors.0 }}</p>{% endif %}
               </div>
             </div>
-            <button type="submit" class="btn-accent w-full">Create account &amp; review</button>
+            <button type="submit" class="btn-accent w-full">Créer le compte &amp; examiner</button>
           </form>
         </div>
       {% endif %}
 
-      <!-- The three expert actions (spec Epic 3) + dispute escalation (Epic 5) -->
+      <!-- Les trois actions de l'expert (spec Epic 3) + contestation (Epic 5) -->
       <div class="mt-6 space-y-4">
         <form method="post" class="card flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           {% csrf_token %}
           <input type="hidden" name="action" value="confirm">
           <p class="text-sm text-charcoal-700">
-            Confirm that this declaration reflects what you actually delivered.
-            It becomes certified immediately.
+            Confirmez que cette déclaration reflète ce que vous avez réellement
+            livré. Elle devient certifiée immédiatement.
           </p>
           <button type="submit" class="btn-primary shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
-            Confirm as-is
+            Confirmer telle quelle
           </button>
         </form>
 
         <details class="card">
-          <summary class="cursor-pointer text-sm font-semibold text-accent-700">Adjust the wording before confirming</summary>
+          <summary class="cursor-pointer text-sm font-semibold text-accent-700">Ajuster la formulation avant de confirmer</summary>
           <form method="post" class="mt-4 space-y-3">
             {% csrf_token %}
             <input type="hidden" name="action" value="adjust">
             <div>
-              <label for="adj_role" class="block text-sm font-semibold">Role</label>
+              <label for="adj_role" class="block text-sm font-semibold">Rôle</label>
               <select name="role_type" id="adj_role"
                       class="form-input sm:w-auto">
                 {% for value, label in role_options %}
@@ -156,44 +160,45 @@
               </select>
             </div>
             <div>
-              <label for="adj_bullets" class="block text-sm font-semibold">Your actual contribution</label>
+              <label for="adj_bullets" class="block text-sm font-semibold">Votre contribution réelle</label>
               <textarea name="contribution_bullets" id="adj_bullets" rows="4" required
-                        placeholder="One bullet per line"
+                        placeholder="Une réalisation par ligne"
                         class="form-input">{{ contribution.contribution_bullets }}</textarea>
               <p class="mt-1 text-xs text-charcoal-300">
-                Adjustments go back to {{ company_name }} for validation before certification.
+                Les ajustements sont renvoyés à {{ company_name }} pour validation
+                avant certification.
               </p>
             </div>
-            <button type="submit" class="btn-accent">Send adjusted wording</button>
+            <button type="submit" class="btn-accent">Envoyer la formulation ajustée</button>
           </form>
         </details>
 
         <details class="card">
-          <summary class="cursor-pointer text-sm font-semibold text-charcoal-700">I did not contribute to this project</summary>
+          <summary class="cursor-pointer text-sm font-semibold text-charcoal-700">Je n'ai pas contribué à ce projet</summary>
           <form method="post" class="mt-4 space-y-3">
             {% csrf_token %}
             <input type="hidden" name="action" value="reject">
             <div>
-              <label for="rej_reason" class="block text-sm font-semibold">Reason (optional)</label>
+              <label for="rej_reason" class="block text-sm font-semibold">Raison (facultatif)</label>
               <textarea name="reason" id="rej_reason" rows="2"
                         class="form-input"></textarea>
             </div>
-            <button type="submit" class="btn-outline !border-charcoal-900/30 !text-charcoal-700 hover:!bg-charcoal-50">Reject the declaration</button>
+            <button type="submit" class="btn-outline !border-charcoal-900/30 !text-charcoal-700 hover:!bg-charcoal-50">Refuser la déclaration</button>
           </form>
         </details>
 
         <details class="card">
-          <summary class="cursor-pointer text-sm font-semibold text-charcoal-700">I contributed differently / I contest this declaration</summary>
+          <summary class="cursor-pointer text-sm font-semibold text-charcoal-700">J'ai contribué différemment / je conteste cette déclaration</summary>
           <form method="post" class="mt-4 space-y-3">
             {% csrf_token %}
             <input type="hidden" name="action" value="dispute">
             <div>
-              <label for="dis_reason" class="block text-sm font-semibold">Why do you contest it? (required)</label>
+              <label for="dis_reason" class="block text-sm font-semibold">Pourquoi la contestez-vous ? (obligatoire)</label>
               <textarea name="reason" id="dis_reason" rows="2" required
                         class="form-input"></textarea>
-              <p class="mt-1 text-xs text-charcoal-300">An administrator will arbitrate between you and {{ company_name }}.</p>
+              <p class="mt-1 text-xs text-charcoal-300">Un administrateur arbitrera entre vous et {{ company_name }}.</p>
             </div>
-            <button type="submit" class="btn-outline !border-red-300 !text-red-700 hover:!bg-red-50">Open a dispute</button>
+            <button type="submit" class="btn-outline !border-red-300 !text-red-700 hover:!bg-red-50">Ouvrir une contestation</button>
           </form>
         </details>
       </div>

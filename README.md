@@ -9,8 +9,8 @@ ResearchGate's co-author logic applied to the sector.
 
 ## Status
 
-Epics -1 through 5 complete, plus 7 (CV export) and 8 (job board): 144 tests,
-ruff clean. Full roadmap at the bottom.
+Epics -1 through 5 complete, plus 7 (CV export) and 8 (job board): 265 tests,
+ruff clean. Audit backlog tickets T1–T7 and T18 done. Full roadmap below.
 
 ## Core workflow implemented (certification)
 
@@ -30,8 +30,11 @@ no response: ≤2 reminders (cron command) ───────► EXPIRED
 All transitions live in `certification/services.py`; rule 8 (certified data
 immutability) is enforced in `ProjectContribution.save()` plus a DB check
 constraint. Public pages: `/experts/<OX-ID>/` ↔ `/projects/<id>/` are
-mutually traceable; only published+public projects and confirmed
-contributions are served.
+mutually traceable. Only published+public projects and confirmed
+contributions are served in full; private/draft/archived projects that have
+a certified contribution keep a minimal public proof page (name, client,
+dates, certified contributors) so the traceability guarantee stays alive
+(T3).
 
 ## Flagged deviations (spec section 4 field list)
 
@@ -90,15 +93,21 @@ CI runs both on every push/PR (`.github/workflows/ci.yml`).
 main/               Django project (single settings module)
 accounts/           custom User: expert | company | donor + permanent OX-XXXXXX professional ID
                     auth (login/signup/logout), role-aware dashboard, portfolio self-edit
-                    (headline, bio, skills, trainings), expert directory, public profiles
+                    (headline, bio, skills, trainings, positions, mandates, publications,
+                    teaching, media, strengths, countries, languages — T4/T4a),
+                    expert directory, public profiles
 projects/           Project model + publishing flow + company workspace; optional
                     media: reference links, image gallery, documents (uploads) and
                     YouTube embeds: all optional                          [Epic 1-2]
+                    T6: structured Country/Funder/ProjectTag referentials, phase,
+                    intervention volume + personal window, thematic tags, filterable dir
 certification/      ProjectContribution + ExpertInvitation flows,
                     magic-link landing AND logged-in review route          [Epic 3-5]
 cv_generator/       Multi-skin CV engine (academic Harvard/MIT · AFD · World Bank,
-                    FR/EN), preview + WeasyPrint PDF export, on-site examples
-                    via `seed_demo_expert`                                 [Epic 7]
+                    FR/EN), certified experiences vs. self-declared sections with
+                    explicit marker/legend (T4/T5), certified synthesis indicators
+                    computed from confirmed contributions (T7), preview + WeasyPrint
+                    PDF export, on-site examples via `seed_demo_expert`   [Epic 7]
 jobs/               Job board: publish offers, applications with cover letters,
                     accept/decline decisions (both notified), deadline reminders [Epic 8]
 templates/          base.html (Tailwind tokens + components), split-screen auth shell,
@@ -171,3 +180,10 @@ python manage.py process_jobs          # job-deadline reminders for pending appl
   original prompt.
 - **No health/versioned endpoints**: explicit client decision.
 - **SendGrid** retained as the transactional email provider unless told otherwise.
+- **CV mixes certified and declared content with explicit visual distinction
+  (T5, documented in `docs/urban-track-backlog.md`)**: self-declared sections
+  (positions, mandates, publications, teaching, media, strengths, countries,
+  languages, misc) are rendered under a shared "declared — not third-party
+  verified" badge + legend (`templates/cv/_declared_sections.html`), below the
+  certified experience. Chosen over the "short standalone proof document"
+  option so the CV remains a complete CV whose added value stays certification.

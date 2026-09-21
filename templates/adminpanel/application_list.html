@@ -1,13 +1,13 @@
 {% extends "adminpanel/base.html" %}
 
-{% block admin_title %}Applications{% endblock %}
+{% block admin_title %}Candidatures{% endblock %}
 {% block admin_actions %}
   <select name="status" onchange="if(this.value) window.location.href = '?status=' + this.value;"
           class="form-input max-w-[200px] appearance-none pr-9">
-    <option value="" {% if not status %}selected{% endif %}>All statuses</option>
-    <option value="{{ status_pending }}" {% if status == status_pending %}selected{% endif %}>Pending review</option>
-    <option value="{{ status_accepted }}" {% if status == status_accepted %}selected{% endif %}>Accepted</option>
-    <option value="{{ status_rejected }}" {% if status == status_rejected %}selected{% endif %}>Not retained</option>
+    <option value="" {% if not status %}selected{% endif %}>Tous les statuts</option>
+    <option value="{{ status_pending }}" {% if status == status_pending %}selected{% endif %}>En cours d'examen</option>
+    <option value="{{ status_accepted }}" {% if status == status_accepted %}selected{% endif %}>Acceptées</option>
+    <option value="{{ status_rejected }}" {% if status == status_rejected %}selected{% endif %}>Non retenues</option>
   </select>
 {% endblock %}
 
@@ -16,11 +16,11 @@
     <table class="w-full min-w-[720px] border-separate border-spacing-y-2 text-left text-sm">
       <thead>
         <tr class="text-xs uppercase tracking-wide text-charcoal-300">
-          <th class="px-4 pb-1 font-medium">Applicant</th>
-          <th class="px-4 pb-1 font-medium">Job</th>
-          <th class="px-4 pb-1 font-medium">Company</th>
-          <th class="px-4 pb-1 font-medium">Status</th>
-          <th class="px-4 pb-1 font-medium">Applied</th>
+          <th class="px-4 pb-1 font-medium">Candidat</th>
+          <th class="px-4 pb-1 font-medium">Emploi</th>
+          <th class="px-4 pb-1 font-medium">Société</th>
+          <th class="px-4 pb-1 font-medium">Statut</th>
+          <th class="px-4 pb-1 font-medium">Candidature</th>
         </tr>
       </thead>
       <tbody>
@@ -39,17 +39,17 @@
             <td class="border border-charcoal-900/5 px-4 py-3 text-charcoal-700">{{ application.job.published_by.organisation_name|default:application.job.published_by.get_full_name }}</td>
             <td class="border border-charcoal-900/5 px-4 py-3">
               {% if application.status == status_accepted %}
-                <span class="badge-certified">Accepted</span>
+                <span class="badge-certified">Acceptée</span>
               {% elif application.status == status_rejected %}
-                <span class="badge-rejected">Not retained</span>
+                <span class="badge-rejected">Non retenue</span>
               {% else %}
-                <span class="badge-pending">Pending review</span>
+                <span class="badge-pending">En cours d'examen</span>
               {% endif %}
             </td>
             <td class="border border-charcoal-900/5 px-4 py-3 text-charcoal-300">{{ application.applied_at|date:"d M Y" }}</td>
           </tr>
         {% empty %}
-          <tr><td colspan="5" class="card border-dashed text-center text-charcoal-700">No applications found.</td></tr>
+          <tr><td colspan="5" class="card border-dashed text-center text-charcoal-700">Aucune candidature trouvée.</td></tr>
         {% endfor %}
       </tbody>
     </table>

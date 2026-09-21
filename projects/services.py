@@ -24,7 +24,12 @@ def _ensure_owner_contribution(project):
     """
     from django.utils import timezone
 
-    from certification.models import ContributionStatus, ProjectContribution, RoleType
+    from certification.models import (
+        ConfirmationSource,
+        ContributionStatus,
+        ProjectContribution,
+        RoleType,
+    )
 
     project = ProjectContribution.objects.get_or_create(
         project=project,
@@ -33,9 +38,11 @@ def _ensure_owner_contribution(project):
         defaults={
             "expert": project.published_by,
             "added_by": project.published_by,
-            "contribution_bullets": _("Led the delivery of the project from start to finish."),
+            "contribution_bullets": _("A conduit la réalisation du projet du début à la fin."),
             "status": ContributionStatus.CONFIRMED,
             "confirmed_at": timezone.now(),
+            "confirmed_by": ConfirmationSource.EXPERT,
+            "confirmation_source": ConfirmationSource.EXPERT,
         },
     )[0]
     return project
@@ -53,7 +60,10 @@ def publish_project(project):
         get the internal notification path instead (deduplication rule 5).
     """
     if project.status != ProjectStatus.DRAFT:
-        raise PublishingError(f"Only a draft project can be published (current: {project.status}).")
+        raise PublishingError(
+            _("Seul un projet à l'état brouillon peut être publié (état actuel : %s).")
+            % project.status
+        )
     project.full_clean()
     project.status = ProjectStatus.PUBLISHED
     project.save(update_fields=["status", "updated_at"])
@@ -68,10 +78,15 @@ def publish_project(project):
 
 
 def archive_project(project):
-    """Archive a project; archived projects leave the public site."""
+    """Archive a project; archived projects leave the public site.
+
+    Note (T3): the certified history is never lost — an archived project that
+    has a confirmed contribution keeps its minimal public proof page, so past
+    certificates remain traceable by a third party.
+    """
     if project.status != ProjectStatus.PUBLISHED:
         raise PublishingError(
-            f"Only a published project can be archived (current: {project.status})."
+            _("Seul un projet publié peut être archivé (état actuel : %s).") % project.status
         )
     project.status = ProjectStatus.ARCHIVED
     try:

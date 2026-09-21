@@ -66,7 +66,10 @@ def job_create(request):
             job = form.save(commit=False)
             job.published_by = request.user
             job.save()
-            messages.success(request, _("Job offer published: experts can now apply."))
+            messages.success(
+            request,
+            _("Offre de mission publiée : les experts peuvent maintenant candidater."),
+        )
             return redirect("jobs:detail", pk=job.pk)
     else:
         form = JobForm()
@@ -78,13 +81,13 @@ def job_update(request, pk):
     """Owner edits a published job offer."""
     job = get_object_or_404(Job, pk=pk)
     if job.published_by_id != request.user.pk and not request.user.is_superuser:
-        raise PermissionDenied(_("Only the publishing company can edit this job."))
+        raise PermissionDenied(_("Seule la structure qui a publié cette mission peut la modifier."))
 
     if request.method == "POST":
         form = JobForm(request.POST, instance=job)
         if form.is_valid():
             form.save()
-            messages.success(request, _("Job offer updated."))
+            messages.success(request, _("Offre de mission mise à jour."))
             return redirect("jobs:manage", pk=job.pk)
     else:
         form = JobForm(instance=job)
@@ -97,15 +100,20 @@ def job_delete(request, pk):
     """Owner deletes a job offer (and, cascading, its applications)."""
     job = get_object_or_404(Job, pk=pk)
     if job.published_by_id != request.user.pk and not request.user.is_superuser:
-        raise PermissionDenied(_("Only the publishing company can delete this job."))
+        raise PermissionDenied(
+            _("Seule la structure qui a publié cette mission peut la supprimer.")
+        )
     if job.status == JobStatus.OPEN:
         messages.error(
             request,
-            _("Close the offer before deleting it, to give applicants a final answer."),
+            _(
+                "Clôturez l'offre avant de la supprimer, afin de donner une réponse finale"
+                " aux candidats."
+            ),
         )
         return redirect("jobs:manage", pk=job.pk)
     job.delete()
-    messages.success(request, _("Job offer deleted."))
+    messages.success(request, _("Offre de mission supprimée."))
     return redirect("jobs:list")
 
 
@@ -160,7 +168,7 @@ def job_apply(request, pk):
                 apply_to_job(job, request.user, form.cleaned_data["cover_letter"])
                 messages.success(
                     request,
-                    _("Application sent: the company has been notified."),
+                    _("Candidature envoyée : la structure a été notifiée."),
                 )
                 return redirect("jobs:my_applications")
         except (JobsError, ValidationError) as error:
@@ -180,11 +188,11 @@ def application_update(request, pk):
     """Expert edits the cover letter of their own pending application."""
     application = get_object_or_404(JobApplication.objects.select_related("job"), pk=pk)
     if application.applicant_id != request.user.pk:
-        raise PermissionDenied(_("You can only edit your own applications."))
+        raise PermissionDenied(_("Vous ne pouvez modifier que vos propres candidatures."))
     if application.status != ApplicationStatus.PENDING:
         messages.error(
             request,
-            _("This application has already been decided and can no longer be edited."),
+            _("Cette candidature a déjà été décidée et ne peut plus être modifiée."),
         )
         return redirect("jobs:my_applications")
 
@@ -193,7 +201,7 @@ def application_update(request, pk):
         if form.is_valid():
             application.cover_letter = form.cleaned_data["cover_letter"]
             application.save(update_fields=["cover_letter"])
-            messages.success(request, _("Application updated."))
+            messages.success(request, _("Candidature mise à jour."))
             return redirect("jobs:my_applications")
     else:
         form = ApplicationForm(initial={"cover_letter": application.cover_letter})
@@ -210,12 +218,12 @@ def application_withdraw(request, pk):
     """Expert withdraws (deletes) their own application."""
     application = get_object_or_404(JobApplication, pk=pk)
     if application.applicant_id != request.user.pk:
-        raise PermissionDenied(_("You can only withdraw your own applications."))
+        raise PermissionDenied(_("Vous ne pouvez retirer que vos propres candidatures."))
     title = application.job.title
     application.delete()
     messages.success(
         request,
-        _("Your application to “%(title)s” was withdrawn.") % {"title": title},
+        _("Votre candidature à « %(title)s » a été retirée.") % {"title": title},
     )
     return redirect("jobs:my_applications")
 
@@ -228,7 +236,7 @@ def job_manage(request, pk):
     """
     job = get_object_or_404(Job.objects.select_related("published_by"), pk=pk)
     if job.published_by_id != request.user.pk and not request.user.is_superuser:
-        raise PermissionDenied(_("Only the publishing company can manage this job."))
+        raise PermissionDenied(_("Seule la structure qui a publié cette mission peut la gérer."))
 
     if request.method == "POST":
         action = request.POST.get("action")
@@ -242,11 +250,14 @@ def job_manage(request, pk):
                 decide_application(application, request.user, accept=(action == "accept"))
                 messages.success(
                     request,
-                    _("Decision recorded: the applicant has been notified."),
+                    _("Décision enregistrée : le candidat a été notifié."),
                 )
             elif action == "close":
                 close_job(job, request.user)
-                messages.success(request, _("Job closed: it no longer accepts applications."))
+                messages.success(
+                    request,
+                    _("Mission clôturée : elle n'accepte plus de candidatures."),
+                )
         except JobsError as error:
             messages.error(request, str(error))
         return redirect("jobs:manage", pk=job.pk)

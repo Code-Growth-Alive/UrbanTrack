@@ -1,9 +1,10 @@
 {% extends "emails/base_email.html" %}
 {% block body %}
-  <p>Hello {{ name }},</p>
-  <p>{{ company }} identified you as <strong>{{ contribution.get_role_type_display }}</strong>
-     on the project <strong>“{{ contribution.project.official_name }}”</strong>.</p>
-  <p>Open your Urban Track dashboard to confirm, adjust or reject this contribution.</p>
+  <p>Bonjour {{ name }},</p>
+  <p>{{ company }} vous a identifié comme <strong>{{ contribution.get_role_type_display }}</strong>
+     sur le projet <strong>« {{ contribution.project.official_name }} »</strong>.</p>
+  <p>Ouvrez votre tableau de bord Urban Track pour confirmer, ajuster ou refuser
+     cette contribution.</p>
 {% endblock %}
 {% block actions %}
   <tr>
@@ -12,7 +13,7 @@
          style="display:inline-block; background-color:#5c6b2f; color:#ffffff;
                 text-decoration:none; font-size:15px; font-weight:bold;
                 padding:13px 28px; border-radius:8px;">
-        Open my dashboard
+        Ouvrir mon tableau de bord
       </a>
     </td>
   </tr>

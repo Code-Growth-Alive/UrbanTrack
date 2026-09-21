@@ -122,7 +122,7 @@ class DeadlineReminderTests(TestCase):
         self.assertEqual(stats["experts_reminded"], 1)
         self.assertEqual(stats["companies_reminded"], 1)
         subjects = " ".join(m.subject for m in mail.outbox)
-        self.assertIn("closes soon", subjects)
+        self.assertIn("clôture bientôt", subjects)
 
 
 class JobViewTests(TestCase):
@@ -137,7 +137,7 @@ class JobViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.job.title)
         detail = self.client.get(reverse("jobs:detail", args=[self.job.pk]))
-        self.assertContains(detail, "Log in to apply")
+        self.assertContains(detail, "Se connecter pour candidater")
 
     def test_create_requires_login_and_any_user_can_publish(self):
         self.client.force_login(self.expert)

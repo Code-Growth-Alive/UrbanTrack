@@ -17,11 +17,13 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_http_methods
 
-from .models import ContributionStatus, ProjectContribution, RoleType
+from .models import ConfirmationSource, ContributionStatus, ProjectContribution, RoleType
 from .services import (
     CertificationError,
     adjust_contribution,
+    claim_client_contribution_token,
     confirm_as_is,
+    confirm_by_client,
     dispute_contribution,
     get_by_token,
     mark_invitation_opened,
@@ -70,7 +72,7 @@ def _handle_action(request, contribution, invitation):
     back = request.path
 
     if request.user.is_authenticated and not named_actor:
-        raise PermissionDenied(_("Only the named expert can act on this contribution."))
+        raise PermissionDenied(_("Seul l'expert nommé peut agir sur cette contribution."))
 
     action = request.POST.get("action")
     try:
@@ -78,13 +80,13 @@ def _handle_action(request, contribution, invitation):
             confirm_as_is(contribution, request.user)
             messages.success(
                 request,
-                _("Your contribution is now certified via cross-confirmation."),
+                _("Votre contribution est désormais certifiée via la double confirmation."),
             )
         elif action == "adjust":
             bullets = (request.POST.get("contribution_bullets") or "").strip()
             role = request.POST.get("role_type") or None
             if not bullets:
-                raise ValidationError(_("Please describe your actual contribution."))
+                raise ValidationError(_("Merci de décrire votre contribution réelle."))
             adjust_contribution(
                 contribution,
                 request.user,
@@ -93,17 +95,17 @@ def _handle_action(request, contribution, invitation):
             )
             messages.success(
                 request,
-                _("Adjusted wording saved: it now awaits validation by %(company)s.")
-                % {"company": contribution.added_by.organisation_name or _("the company")},
+                _("Formulation ajustée enregistrée : elle attend la validation de %(company)s.")
+                % {"company": contribution.added_by.organisation_name or _("la structure")},
             )
         elif action == "reject":
             reject_contribution(contribution, request.user, reason=request.POST.get("reason", ""))
-            messages.success(request, _("The contribution was rejected."))
+            messages.success(request, _("La contribution a été refusée."))
         elif action == "dispute":
             dispute_contribution(contribution, request.user, reason=request.POST.get("reason", ""))
             messages.success(
                 request,
-                _("The contribution is now disputed and an administrator will arbitrate."),
+                _("La contribution est désormais contestée et un administrateur va l'arbitrer."),
             )
         else:
             raise InvalidActionError()
@@ -137,14 +139,14 @@ def invitation_landing(request, token):
                 return redirect(request.path)
             return _handle_signup(request, invitation, contribution)
         if not request.user.is_authenticated:
-            messages.error(request, _("Please log in to act on this contribution."))
+            messages.error(request, _("Veuillez vous connecter pour agir sur cette contribution."))
             return redirect(f"{request.path}?next={request.path}")
         try:
             return _handle_action(request, contribution, invitation)
         except PermissionDenied:
             messages.error(
                 request,
-                _("Only the named expert can act on this contribution."),
+                _("Seul l'expert nommé peut agir sur cette contribution."),
             )
             return redirect(request.path)
 
@@ -191,12 +193,69 @@ def _handle_signup(request, invitation, contribution):
     messages.success(
         request,
         _(
-            "Welcome to Urban Track! Check your email for a 6-digit "
-            "confirmation code to activate your account, then review your "
-            "contribution."
+            "Bienvenue sur Urban Track ! Consultez votre email pour y trouver "
+            "un code de confirmation à 6 chiffres afin d'activer votre compte, "
+            "puis examinez votre contribution."
         ),
     )
     return redirect("accounts:confirm_email")
+
+
+@require_http_methods(["GET", "POST"])
+def client_confirm(request, token):
+    """
+    T1 client counter-signature: unauthenticated one-time confirmation link.
+
+    The client / maître d'ouvrage of an individual consultant opens the link
+    and confirms the expert's role. Single-use token, no account required.
+    """
+    contribution = claim_client_contribution_token(token)
+    if contribution is None:
+        return render(
+            request,
+            "certification/invitation_invalid.html",
+            {"invalid_reason": _("Ce lien de confirmation est invalide ou a déjà été utilisé.")},
+            status=404,
+        )
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+        if action == "confirm":
+            confirm_by_client(contribution, token)
+            messages.success(
+                request,
+                _(
+                    "Merci. La contribution a été certifiée : elle est confirmée "
+                    "par le client / maître d'ouvrage."
+                ),
+            )
+        else:
+            messages.error(request, _("Action inconnue."))
+        return redirect("certification:client_confirm_done")
+
+    return render(
+        request,
+        "certification/client_confirm.html",
+        {
+            "contribution": contribution,
+            "project": contribution.project,
+            "expert_name": (
+                contribution.expert or contribution.invited_email
+            ),
+            "company_name": (
+                contribution.added_by.organisation_name
+                or contribution.added_by.get_full_name()
+                or contribution.added_by.email
+            ),
+            "is_client_path": contribution.confirmation_source == ConfirmationSource.CLIENT,
+        },
+    )
+
+
+@require_http_methods(["GET"])
+def client_confirm_done(request):
+    """Confirmation-landed page shown after a successful client sign-off."""
+    return render(request, "certification/client_confirm_done.html")
 
 
 @login_required
@@ -215,7 +274,7 @@ def contribution_review(request, pk):
         pk=pk,
     )
     if not _actor_matches(contribution, request.user):
-        raise PermissionDenied(_("Only the named expert can act on this contribution."))
+        raise PermissionDenied(_("Seul l'expert nommé peut agir sur cette contribution."))
 
     if request.method == "POST":
         _handle_action(request, contribution, invitation=None)

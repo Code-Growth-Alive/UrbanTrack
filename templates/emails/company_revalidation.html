@@ -1,13 +1,13 @@
 {% extends "emails/base_email.html" %}
 {% block body %}
-  <p><strong>{{ name }}</strong> adjusted their contribution to the project
-     <strong>“{{ contribution.project.official_name }}”</strong>.</p>
-  <p>The adjusted wording is now:</p>
+  <p><strong>{{ name }}</strong> a ajusté sa contribution au projet
+     <strong>« {{ contribution.project.official_name }} »</strong>.</p>
+  <p>La formulation ajustée est désormais :</p>
   <blockquote style="margin:0 0 0 12px; padding:8px 16px; border-left:3px solid #5c6b2f; color:#3f3f3e; font-style:italic;">
     {{ contribution.contribution_bullets }}
   </blockquote>
-  <p>Please validate the adjusted wording from your company dashboard so the
-     experience can be certified.</p>
+  <p>Merci de valider la formulation ajustée depuis le tableau de bord de votre
+     structure afin que l'expérience puisse être certifiée.</p>
 {% endblock %}
 {% block actions %}
   <tr>
@@ -16,7 +16,7 @@
          style="display:inline-block; background-color:#ec4899; color:#ffffff;
                 text-decoration:none; font-size:15px; font-weight:bold;
                 padding:13px 28px; border-radius:8px;">
-        Review &amp; validate wording
+        Examiner &amp; valider la formulation
       </a>
     </td>
   </tr>

@@ -1,0 +1,15 @@
+{% if cv.indicators.has_indicators %}
+<div class="indicator-block">
+  <h2>{{ labels.indicators }}
+    <span class="declared-tag">{{ labels.indicators_note }}</span>
+  </h2>
+  <div class="indicator-row">
+    {% for item in cv.indicators.items %}
+      <div class="indicator-cell">
+        <span class="indicator-value">{{ item.value }}</span>
+        <span class="indicator-label">{{ item.label }}</span>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}

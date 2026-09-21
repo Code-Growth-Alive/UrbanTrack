@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
-{% block title %}Account settings: Urban Track{% endblock %}
+{% block title %}Paramètres du compte : Urban Track{% endblock %}
 
 {% block content %}
   <div class="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
-    <h1 class="text-2xl font-black tracking-tight sm:text-3xl">Account settings</h1>
+    <h1 class="text-2xl font-black tracking-tight sm:text-3xl">Paramètres du compte</h1>
     <p class="mt-1 text-sm text-charcoal-700">
       {{ user.get_full_name|default:user.username }} ·
       <span class="font-mono">{{ user.professional_id }}</span> ·
@@ -13,15 +13,15 @@
 
     <div class="mt-8 grid gap-6">
       <section class="card">
-        <h2 class="section-title">Profile picture & details</h2>
+        <h2 class="section-title">Photo de profil et coordonnées</h2>
         <p class="mt-1 text-sm text-charcoal-700">
-          Your picture appears on your public profile and dashboards; the
-          company is shown next to your projects and job offers.
+          Votre photo apparaît sur votre profil public et dans les tableaux de
+          bord ; la société est affichée à côté de vos projets et offres de mission.
         </p>
 
         <div class="mt-4 flex items-center gap-4">
           {% if user.avatar %}
-            <img src="{{ user.avatar.url }}" alt="Profile picture"
+            <img src="{{ user.avatar.url }}" alt="Photo de profil"
                  class="h-20 w-20 rounded-full object-cover ring-2 ring-military-100">
           {% else %}
             <span class="grid h-20 w-20 place-items-center rounded-full bg-military-100 text-2xl font-black text-military-700">
@@ -38,7 +38,7 @@
                 {% for error in field.errors %}<ul class="form-error"><li>{{ error }}</li></ul>{% endfor %}
               </div>
             {% endfor %}
-            <button type="submit" class="btn-primary mt-5">Save changes</button>
+            <button type="submit" class="btn-primary mt-5">Enregistrer les modifications</button>
           </form>
         </div>
       </section>
@@ -46,37 +46,37 @@
       <section class="card">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 class="section-title">Email address</h2>
+            <h2 class="section-title">Adresse email</h2>
             <p class="mt-1 text-sm text-charcoal-700">
               <span class="font-mono">{{ user.email }}</span> —{% if user.email_confirmed %}
-              confirmed.{% else %} awaiting confirmation.{% endif %}
+              confirmée.{% else %} en attente de confirmation.{% endif %}
             </p>
           </div>
-          <a href="{% url 'accounts:change_email' %}" class="btn-outline !px-4 !py-2 !text-sm">Change email</a>
+          <a href="{% url 'accounts:change_email' %}" class="btn-outline !px-4 !py-2 !text-sm">Changer l'email</a>
         </div>
       </section>
 
       <section class="card">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 class="section-title">Password</h2>
+            <h2 class="section-title">Mot de passe</h2>
             <p class="mt-1 text-sm text-charcoal-700">
-              Keep your account secure: choose a strong, unique password.
+              Protégez votre compte : choisissez un mot de passe robuste et unique.
             </p>
           </div>
-          <a href="{% url 'accounts:password_change' %}" class="btn-outline !px-4 !py-2 !text-sm">Change password</a>
+          <a href="{% url 'accounts:password_change' %}" class="btn-outline !px-4 !py-2 !text-sm">Changer le mot de passe</a>
         </div>
       </section>
 
       <section class="card">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 class="section-title">Public portfolio</h2>
+            <h2 class="section-title">Portfolio public</h2>
             <p class="mt-1 text-sm text-charcoal-700">
-              Headline, bio, skills and training shown on your public profile.
+              Titre, biographie, compétences et formations affichés sur votre profil public.
             </p>
           </div>
-          <a href="{% url 'accounts:profile_edit' %}" class="btn-outline !px-4 !py-2 !text-sm">Edit portfolio</a>
+          <a href="{% url 'accounts:profile_edit' %}" class="btn-outline !px-4 !py-2 !text-sm">Modifier le portfolio</a>
         </div>
       </section>
     </div>

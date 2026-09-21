@@ -23,6 +23,7 @@ PROJECT_DATA = {
     "budget": "1800000.00",
     "client_name": "Ministry of Public Works",
     "visibility": "private",
+    "phase": "ongoing",
 }
 
 
@@ -57,6 +58,82 @@ class ProjectDirectoryTests(TestCase):
         self.assertNotContains(self.client.get(reverse("projects:list")), "Public project")
         response = self.client.get(reverse("projects:detail", args=[self.public_project.pk]))
         self.assertEqual(response.status_code, 404)
+
+
+class ProjectProofPageTests(TestCase):
+    """T3: certified contributions stay traceable through a minimal public page."""
+
+    def setUp(self):
+        self.company = make_company()
+
+    def _published_private_project(self, official_name="Private certified project"):
+        return make_project(
+            self.company,
+            official_name=official_name,
+            status=ProjectStatus.DRAFT,
+        )
+
+    def test_private_project_with_certified_history_serves_minimal_page(self):
+        from projects.services import publish_project
+
+        project = self._published_private_project()
+        publish_project(project)  # creates the owner's confirmed contribution
+        project.visibility = ProjectVisibility.PRIVATE
+        project.save(update_fields=["visibility"])
+        response = self.client.get(reverse("projects:detail", args=[project.pk]))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        # Certificate facts are exposed…
+        self.assertIn("Private certified project", content)
+        self.assertIn("Municipality of Cotonou", content)
+        self.assertIn("Page de preuve de certification.", content)
+        # …the rest of the content never leaks on a private project.
+        self.assertNotIn("Detailed engineering designs", content)  # deliverables
+        self.assertNotIn("Urban renewal of a central market district", content)  # description
+        self.assertNotIn("Master plan", content)
+
+    def test_archived_project_keeps_traceable_proof_page(self):
+        from projects.services import archive_project, publish_project
+
+        project = self._published_private_project("Archived but certified")
+        publish_project(project)
+        archive_project(project)
+        response = self.client.get(reverse("projects:detail", args=[project.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Page de preuve de certification.")
+        # It stays out of the public directory though.
+        self.assertNotContains(self.client.get(reverse("projects:list")), "Archived but certified")
+
+    def test_project_without_certified_history_is_not_public(self):
+        project = make_project(self.company, official_name="No proof yet")
+        response = self.client.get(reverse("projects:detail", args=[project.pk]))
+        self.assertEqual(response.status_code, 404)
+
+    def test_public_project_renders_full_page(self):
+        from projects.services import publish_project
+
+        project = self._published_private_project("Fully public")
+        publish_project(project)
+        project.visibility = ProjectVisibility.PUBLIC
+        project.save(update_fields=["visibility"])
+        response = self.client.get(reverse("projects:detail", args=[project.pk]))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertNotIn("Page de preuve de certification.", content)
+        self.assertIn("Detailed engineering designs", content)
+        self.assertIn("Urban renewal of a central market district", content)
+
+    def test_public_project_exposes_seo_tags(self):
+        from projects.services import publish_project
+
+        project = self._published_private_project("SEO project")
+        publish_project(project)
+        project.visibility = ProjectVisibility.PUBLIC
+        project.save(update_fields=["visibility"])
+        response = self.client.get(reverse("projects:detail", args=[project.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'property="og:title"')
+        self.assertContains(response, 'name="twitter:card"')
 
 
 class ProjectCreateTests(TestCase):
@@ -111,6 +188,7 @@ class ProjectManageTests(TestCase):
                 "action": "declare",
                 "email": "bintou@example.com",
                 "role_type": "manager",
+                "confirmation_source": "expert",
                 "contribution_bullets": "Managed site works",
             },
         )
@@ -127,6 +205,7 @@ class ProjectManageTests(TestCase):
                 "action": "declare",
                 "email": "unknown@example.com",
                 "role_type": "specialist",
+                "confirmation_source": "expert",
                 "contribution_bullets": "GIS analysis",
             },
         )
@@ -147,7 +226,7 @@ class ProjectManageTests(TestCase):
             {"action": "declare", "email": "not-an-email", "role_type": "manager"},
         )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Enter a valid email address")
+        self.assertContains(response, "Saisissez une adresse e-mail valide.")
 
     def test_visibility_only_while_draft(self):
         self.client.force_login(self.company)

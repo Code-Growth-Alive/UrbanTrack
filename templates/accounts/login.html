@@ -1,15 +1,15 @@
 {% extends "accounts/_auth_base.html" %}
 
-{% block title %}Log in: Urban Track{% endblock %}
+{% block title %}Connexion : Urban Track{% endblock %}
 
 {% block auth_form %}
 <div class="card p-8">
-  <h1 class="text-2xl font-black tracking-tight text-charcoal-900">Welcome back</h1>
-  <p class="mt-1 text-sm text-charcoal-700">Log in to your Urban Track workspace.</p>
+  <h1 class="text-2xl font-black tracking-tight text-charcoal-900">Bon retour</h1>
+  <p class="mt-1 text-sm text-charcoal-700">Connectez-vous à votre espace Urban Track.</p>
 
   {% if form.errors %}
   <p class="mt-4 rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
-    Your email and password didn't match our records. Please try again.
+    Votre email ou mot de passe ne correspond à aucun compte. Veuillez réessayer.
   </p>
   {% endif %}
 
@@ -17,25 +17,25 @@
     {% csrf_token %}
     <input type="hidden" name="next" value="{{ next }}">
     <div>
-      <label for="id_username" class="form-label">Email or username</label>
+      <label for="id_username" class="form-label">Email ou nom d'utilisateur</label>
       <input type="text" name="username" id="id_username" required autofocus autocomplete="username"
-        placeholder="you@organisation.org" value="{{ form.username.value|default:'' }}" class="form-input">
+        placeholder="vous@organisation.org" value="{{ form.username.value|default:'' }}" class="form-input">
     </div>
     <div>
-      <label for="id_password" class="form-label">Password</label>
+      <label for="id_password" class="form-label">Mot de passe</label>
       <input type="password" name="password" id="id_password" required autocomplete="current-password"
         placeholder="••••••••" class="form-input">
     </div>
     <div class="flex justify-end">
-      <a href="{% url 'accounts:password_reset' %}" class="text-sm font-semibold text-accent-700 hover:underline">Forgot
-        password?</a>
+      <a href="{% url 'accounts:password_reset' %}" class="text-sm font-semibold text-accent-700 hover:underline">Mot de
+        passe oublié ?</a>
     </div>
-    <button type="submit" class="btn-primary w-full py-2.5">Log in</button>
+    <button type="submit" class="btn-primary w-full py-2.5">Se connecter</button>
   </form>
 
   <p class="mt-6 border-t border-charcoal-900/10 pt-4 text-center text-sm text-charcoal-700">
-    No account yet?
-    <a href="{% url 'accounts:signup' %}" class="font-semibold text-accent-700 hover:underline">Join Urban Track</a>
+    Pas encore de compte ?
+    <a href="{% url 'accounts:signup' %}" class="font-semibold text-accent-700 hover:underline">Rejoindre Urban Track</a>
   </p>
 </div>
 {% endblock %}

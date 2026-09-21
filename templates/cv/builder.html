@@ -1,70 +1,155 @@
 {% extends "base.html" %}
 
-{% block title %}My CVs: Urban Track{% endblock %}
+{% block title %}Mes CV : Urban Track{% endblock %}
 
 {% block content %}
   <div class="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
-    <h1 class="text-2xl font-black tracking-tight">Generate my CV</h1>
+    <h1 class="text-2xl font-black tracking-tight">Générer mon CV</h1>
     <p class="mt-1 max-w-2xl text-sm text-charcoal-700">
-      Every export is built exclusively from cross-confirmed experience —
-      donors can verify each line against the public project pages.
+      Chaque export est construit à partir d'expériences certifiées par double confirmation.
     </p>
 
     <div class="mt-6 flex items-center gap-2 text-sm">
-      <span class="font-semibold">Language:</span>
-      {% for code in langs %}
-        <a href="?lang={{ code }}"
-           class="rounded-md px-3 py-1 font-semibold transition
-                  {% if code == lang %}bg-military-500 text-white{% else %}bg-charcoal-50 text-charcoal-700 hover:bg-military-50{% endif %}">
-          {{ code|upper }}
-        </a>
-      {% endfor %}
       <span class="ml-auto">
-        <a href="{% url 'accounts:profile_edit' %}" class="font-semibold text-accent-700 hover:underline">Edit my portfolio</a>
+        <a href="{% url 'accounts:profile_edit' %}" class="font-semibold text-accent-700 hover:underline">Modifier mon portfolio</a>
       </span>
     </div>
 
+    <section class="card mt-6 border-dashed">
+      <h2 class="section-title">Recommandation par défaut</h2>
+      <p class="mt-1 text-sm text-charcoal-700">
+        Le format Banque mondiale détaillé est proposé par défaut pour les CV destinés aux bailleurs.
+      </p>
+      <div class="mt-4 rounded-lg bg-charcoal-50 p-4 text-sm text-charcoal-700">
+        <p class="font-semibold text-charcoal-900">Complétude du format Banque mondiale</p>
+        <p class="mt-1">{{ world_bank_completion.percent }} %</p>
+        {% if world_bank_completion.required_labels or world_bank_completion.recommended_labels %}
+          <p class="mt-2">
+            {% if world_bank_completion.required_labels %}
+              Rubriques manquantes : {{ world_bank_completion.required_labels|join:", " }}
+            {% endif %}
+            {% if world_bank_completion.recommended_labels %}
+              {% if world_bank_completion.required_labels %}<br>{% endif %}
+              Rubriques conseillées : {{ world_bank_completion.recommended_labels|join:", " }}
+            {% endif %}
+          </p>
+        {% endif %}
+        <p class="mt-2 text-xs text-charcoal-500">
+          Complétez ces rubriques dans votre portfolio avant d'exporter pour ce format.
+        </p>
+      </div>
+    </section>
+
     <div class="mt-6 grid gap-4 md:grid-cols-3">
       {% for skin in skins %}
-        <article class="card-project flex flex-col">
+        <article class="card-project flex flex-col {% if skin.key == 'world_bank_new' %}ring-2 ring-military-500{% endif %}">
           <h2 class="font-bold">{{ skin.meta.name }}</h2>
+          {% if skin.key == 'world_bank_new' %}<p class="mt-1 text-xs font-semibold uppercase tracking-wide text-military-700">Format recommandé</p>{% endif %}
           <p class="mt-1 flex-1 text-xs leading-relaxed text-charcoal-700">{{ skin.meta.description }}</p>
           <div class="mt-4 space-y-2">
-            <a href="{{ skin.preview }}" class="btn-outline w-full !py-1.5 !text-xs" target="_blank" rel="noopener">Preview</a>
-            <a href="{{ skin.pdf }}" class="btn-primary w-full !py-1.5 !text-xs">Download PDF</a>
+            <a href="{{ skin.preview }}" class="btn-outline w-full !py-1.5 !text-xs" target="_blank" rel="noopener">Aperçu</a>
+            <a href="{{ skin.pdf }}" class="btn-primary w-full !py-1.5 !text-xs">Télécharger le PDF</a>
+            <a href="{{ skin.docx }}" class="btn-outline w-full !py-1.5 !text-xs">Télécharger Word</a>
           </div>
         </article>
       {% endfor %}
     </div>
 
-    <!-- Examples: the same three skins filled with sample data -->
-    <section class="card mt-10 border-dashed">
-      <h2 class="section-title">Examples</h2>
+    <section class="card mt-8">
+      <h2 class="section-title">CV ciblé</h2>
       <p class="mt-1 text-sm text-charcoal-700">
-        See how each format looks with a complete sample profile (Aminata Sow,
-        urban planner):
+        Cochez les projets, postes ou publications à conserver dans le CV de réponse à un appel d'offres.
+      </p>
+      <form method="get" class="mt-4 space-y-5">
+        <div>
+          <h3 class="text-sm font-semibold text-charcoal-900">Projets certifiés</h3>
+          <div class="mt-2 grid gap-2 md:grid-cols-2">
+            {% for project in available_projects %}
+              <label class="flex items-start gap-2 rounded-lg border border-charcoal-900/10 p-3 text-sm">
+                <input type="checkbox" name="projects" value="{{ project.id }}" {% if project.id in selected_projects %}checked{% endif %} class="mt-1">
+                <span>
+                  <span class="block font-medium text-charcoal-900">{{ project.official_name }}</span>
+                  <span class="block text-xs text-charcoal-700">{{ project.client_name }}</span>
+                </span>
+              </label>
+            {% empty %}
+              <p class="text-sm text-charcoal-700">Aucun projet certifié disponible.</p>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-sm font-semibold text-charcoal-900">Postes</h3>
+          <div class="mt-2 grid gap-2 md:grid-cols-2">
+            {% for position in available_positions %}
+              <label class="flex items-start gap-2 rounded-lg border border-charcoal-900/10 p-3 text-sm">
+                <input type="checkbox" name="positions" value="{{ position.id }}" {% if position.id in selected_positions %}checked{% endif %} class="mt-1">
+                <span>
+                  <span class="block font-medium text-charcoal-900">{{ position.function }}</span>
+                  <span class="block text-xs text-charcoal-700">{{ position.employer }}</span>
+                </span>
+              </label>
+            {% empty %}
+              <p class="text-sm text-charcoal-700">Aucun poste renseigné.</p>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-sm font-semibold text-charcoal-900">Publications</h3>
+          <div class="mt-2 grid gap-2 md:grid-cols-2">
+            {% for publication in available_publications %}
+              <label class="flex items-start gap-2 rounded-lg border border-charcoal-900/10 p-3 text-sm">
+                <input type="checkbox" name="publications" value="{{ publication.id }}" {% if publication.id in selected_publications %}checked{% endif %} class="mt-1">
+                <span>
+                  <span class="block font-medium text-charcoal-900">{{ publication.title }}</span>
+                  <span class="block text-xs text-charcoal-700">{{ publication.venue }}</span>
+                </span>
+              </label>
+            {% empty %}
+              <p class="text-sm text-charcoal-700">Aucune publication renseignée.</p>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-3">
+          <button type="submit" class="btn-primary">Mettre à jour la sélection</button>
+          <a href="{% url 'cv_generator:builder' %}" class="btn-outline">Réinitialiser</a>
+        </div>
+      </form>
+      {% if selected_querystring %}
+        <p class="mt-3 text-xs text-charcoal-700">La sélection actuelle sera reprise dans les liens d'aperçu et de téléchargement.</p>
+      {% endif %}
+    </section>
+
+    <!-- Exemples : les trois modèles remplis avec des données d'exemple -->
+    <section class="card mt-10 border-dashed">
+      <h2 class="section-title">Exemples</h2>
+      <p class="mt-1 text-sm text-charcoal-700">
+        Voir le rendu de chaque format avec un profil d'exemple complet (Aminata Sow,
+        urbaniste) :
       </p>
       <div class="mt-3 flex flex-wrap gap-3 text-sm">
         {% for skin in skins %}
-          <a href="/cv/{{ skin.key }}/?lang={{ lang }}&amp;example=1" target="_blank" rel="noopener"
+          <a href="/cv/{{ skin.key }}/?example=1" target="_blank" rel="noopener"
              class="font-semibold text-military-700 hover:underline underline-offset-2">
-            Example: {{ skin.meta.name }}
+            Exemple : {{ skin.meta.name }}
           </a>
         {% endfor %}
       </div>
     </section>
 
-    <!-- Default template preference -->
+    <!-- Préférence de modèle par défaut -->
     <form method="post" action="{% url 'accounts:set_cv_template' %}" class="card mt-6">
       {% csrf_token %}
-      <label for="cv_template" class="form-label !mt-0 !mb-0 inline">Preferred template</label>
+      <label for="cv_template" class="form-label !mt-0 !mb-0 inline">Modèle préféré</label>
       <select name="cv_template" id="cv_template" class="form-input mt-2 w-auto">
         {% for value, label in template_choices %}
           <option value="{{ value }}" {% if profile.cv_template == value %}selected{% endif %}>{{ label }}</option>
         {% endfor %}
       </select>
-      <button type="submit" class="btn-outline ml-3 align-middle !px-3 !py-1.5 !text-xs">Save</button>
-      <p class="form-help">Used as the default when recruiters open your profile.</p>
+      <button type="submit" class="btn-outline ml-3 align-middle !px-3 !py-1.5 !text-xs">Enregistrer</button>
+      <p class="form-help">Utilisé par défaut lorsque les recruteurs ouvrent votre profil.</p>
     </form>
   </div>
 {% endblock %}

@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}My applications: Urban Track{% endblock %}
+{% block title %}Mes candidatures : Urban Track{% endblock %}
 
 {% block content %}
   <div class="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
-    <h1 class="text-2xl font-black tracking-tight">My applications</h1>
+    <h1 class="text-2xl font-black tracking-tight">Mes candidatures</h1>
     <p class="mt-1 text-sm text-charcoal-700">
-      Every application gets an answer: you will also be emailed the decision.
+      Chaque candidature reçoit une réponse : la décision vous est aussi envoyée par email.
     </p>
 
     <div class="mt-6 space-y-3">
@@ -18,35 +18,35 @@
             </h2>
             <p class="mt-0.5 text-sm text-charcoal-700">
               {{ application.job.published_by.organisation_name|default:application.job.published_by.get_full_name }}
-             : applied {{ application.applied_at|date:"d M Y" }}
+             : candidature envoyée le {{ application.applied_at|date:"d M Y" }}
             </p>
           </div>
           {% if application.status == status_accepted %}
             <span class="badge-certified">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-3.5 w-3.5"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
-              Accepted
+              Acceptée
             </span>
           {% elif application.status == status_rejected %}
-            <span class="badge-rejected">Not retained</span>
+            <span class="badge-rejected">Non retenue</span>
           {% else %}
-            <span class="badge-pending">Pending review</span>
+            <span class="badge-pending">En cours d'examen</span>
           {% endif %}
 
           {% if application.status == status_pending %}
             <div class="flex flex-wrap items-center gap-2">
-              <a href="{% url 'jobs:application_update' application.pk %}" class="btn-outline !px-3 !py-1.5 !text-xs">Edit</a>
+              <a href="{% url 'jobs:application_update' application.pk %}" class="btn-outline !px-3 !py-1.5 !text-xs">Modifier</a>
               <form method="post" action="{% url 'jobs:application_withdraw' application.pk %}"
-                    onsubmit="return confirm('Withdraw this application?');">
+                    onsubmit="return confirm('Retirer cette candidature ?');">
                 {% csrf_token %}
-                <button type="submit" class="btn-outline !px-3 !py-1.5 !text-xs !border-red-300 !text-red-700 hover:!bg-red-50">Withdraw</button>
+                <button type="submit" class="btn-outline !px-3 !py-1.5 !text-xs !border-red-300 !text-red-700 hover:!bg-red-50">Retirer</button>
               </form>
             </div>
           {% endif %}
         </article>
       {% empty %}
         <p class="card border-dashed text-sm text-charcoal-700">
-          No application yet —
-          <a href="{% url 'jobs:list' %}" class="font-semibold text-accent-700 hover:underline">browse open offers</a>.
+          Aucune candidature pour le moment —
+          <a href="{% url 'jobs:list' %}" class="font-semibold text-accent-700 hover:underline">parcourir les offres ouvertes</a>.
         </p>
       {% endfor %}
     </div>

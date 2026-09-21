@@ -7,7 +7,7 @@ from django.contrib.auth.forms import PasswordResetForm as DjangoPasswordResetFo
 from django.contrib.auth.password_validation import validate_password
 from django.utils.translation import gettext_lazy as _
 
-from .models import Company, Role, User
+from .models import Company, CompanyMembership, CompanyRole, MembershipStatus, Role, User
 
 INPUT_CLASS = (
     "mt-1 block w-full rounded-md border border-charcoal-900/25 bg-white px-3 "
@@ -43,7 +43,7 @@ class PasswordResetForm(DjangoPasswordResetForm):
     """
 
     email = forms.CharField(
-        label=_("Email or username"),
+        label=_("Email ou nom d'utilisateur"),
         max_length=254,
         widget=forms.TextInput(attrs={"autocomplete": "username"}),
     )
@@ -68,25 +68,27 @@ class SignUpForm(forms.Form):
     the user joins it.
     """
 
-    first_name = forms.CharField(label=_("First name"), max_length=150)
-    last_name = forms.CharField(label=_("Last name"), max_length=150)
-    email = forms.EmailField(label=_("Email address"), max_length=150)
+    first_name = forms.CharField(label=_("Prénom"), max_length=150)
+    last_name = forms.CharField(label=_("Nom"), max_length=150)
+    email = forms.EmailField(label=_("Adresse email"), max_length=150)
     company_name = forms.CharField(
-        label=_("Company / organisation (optional)"),
+        label=_("Structure / organisation (facultatif)"),
         max_length=255,
         required=False,
         help_text=_(
-            "Type your company name. If it already exists you will join it, "
-            "otherwise a new company is created for you."
+            "Saisissez le nom de votre structure. Si elle existe déjà, votre "
+            "demande d'affiliation est envoyée aux administrateurs de la "
+            "structure pour approbation ; sinon, une nouvelle structure est "
+            "créée pour vous."
         ),
     )
-    password1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
-    password2 = forms.CharField(label=_("Confirm password"), widget=forms.PasswordInput)
+    password1 = forms.CharField(label=_("Mot de passe"), widget=forms.PasswordInput)
+    password2 = forms.CharField(label=_("Confirmer le mot de passe"), widget=forms.PasswordInput)
 
     def clean_email(self):
         email = User.objects.normalize_email(self.cleaned_data["email"])
         if User.objects.filter(email__iexact=email).exists():
-            raise forms.ValidationError(_("An account already exists with this email address."))
+            raise forms.ValidationError(_("Un compte existe déjà avec cette adresse email."))
         return email
 
     def clean_company_name(self):
@@ -98,20 +100,28 @@ class SignUpForm(forms.Form):
         password1 = cleaned.get("password1")
         password2 = cleaned.get("password2")
         if password1 and password2 and password1 != password2:
-            self.add_error("password2", _("The two passwords do not match."))
+            self.add_error("password2", _("Les deux mots de passe ne correspondent pas."))
         if password1:
             validate_password(password1)
         return cleaned
 
     def _resolve_company(self):
-        """Create or reuse a Company by name (case-insensitive)."""
+        """
+        Create or reuse a Company by name (case-insensitive).
+
+        Returns ``(company, approved)``:
+          * a brand-new company is created and the founder is approved
+            immediately (their memberships becomes APPROVED + ADMIN);
+          * an EXISTING company returns ``approved=False``: the candidate
+            never joins implicitly (T2), the membership stays REQUESTED.
+        """
         name = self.cleaned_data.get("company_name") or ""
         if not name:
-            return None
+            return None, False
         company = Company.objects.filter(name__iexact=name).first()
         if company is not None:
-            return company
-        return Company.objects.create(name=name)
+            return company, False
+        return Company.objects.create(name=name), True
 
     def create_user(self):
         """Persist the account as role ``user``, linked to its company."""
@@ -122,10 +132,27 @@ class SignUpForm(forms.Form):
             first_name=data["first_name"],
             last_name=data["last_name"],
             role=Role.USER,
-            company=self._resolve_company(),
         )
         user.set_password(data["password1"])
         user.save()
+
+        company, approved = self._resolve_company()
+        if company is None:
+            return user
+        membership = CompanyMembership(
+            user=user,
+            company=company,
+            role=CompanyRole.ADMIN if approved else CompanyRole.MEMBER,
+            status=MembershipStatus.APPROVED if approved else MembershipStatus.REQUESTED,
+            requested_by=user,
+        )
+        membership.save()
+        if approved:
+            user.company = company
+            user.save(update_fields=["company"])
+            self.cleaned_data["_membership_approved"] = True
+        else:
+            self.cleaned_data["_membership_pending"] = True
         return user
 
 
@@ -133,7 +160,7 @@ class ConfirmEmailForm(forms.Form):
     """Validate the 6-digit confirmation code received by email."""
 
     code = forms.CharField(
-        label=_("Confirmation code"),
+        label=_("Code de confirmation"),
         min_length=6,
         max_length=6,
         widget=forms.TextInput(
@@ -161,7 +188,7 @@ class EmailChangeForm(forms.ModelForm):
         email = get_user_model().objects.normalize_email(self.cleaned_data["email"])
         qs = get_user_model().objects.filter(email__iexact=email)
         if qs.exclude(pk=self.instance.pk).exists():
-            raise forms.ValidationError(_("An account already uses this email address."))
+            raise forms.ValidationError(_("Un compte utilise déjà cette adresse email."))
         return email
 
 
@@ -192,5 +219,5 @@ class AccountSettingsForm(forms.ModelForm):
             ),
         }
         help_texts = {
-            "avatar": _("JPG or PNG portrait. Leave empty to keep your current picture."),
+            "avatar": _("Portrait JPG ou PNG. Laissez vide pour conserver votre photo actuelle."),
         }

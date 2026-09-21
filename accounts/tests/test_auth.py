@@ -102,7 +102,7 @@ class LogInOutTests(TestCase):
         )
         self.assertEqual(response.status_code, 302)
         response = self.client.get(reverse("home"))
-        self.assertContains(response, "Log out")
+        self.assertContains(response, "Se déconnecter")
 
     def test_logout_requires_post(self):
         self.client.force_login(self.user)
@@ -206,8 +206,8 @@ class ExpertDashboardTests(TestCase):
     def test_confirmed_contribution_moves_to_certified_section(self):
         confirm_as_is(self.contribution, self.expert)
         response = self.client.get(reverse("accounts:dashboard"))
-        self.assertContains(response, "Certified track record")
-        self.assertContains(response, "Trust score")
+        self.assertContains(response, "Parcours certifié")
+        self.assertContains(response, "Score de confiance")
         review_url = reverse("certification:contribution_review", args=[self.contribution.pk])
         self.assertNotContains(response, review_url)
 
@@ -250,7 +250,8 @@ class CompanyDashboardTests(TestCase):
         company.published_projects.all().delete()
         self.client.force_login(company)
         response = self.client.get(reverse("accounts:dashboard"))
-        self.assertContains(response, "Publish my first project")
+        self.assertContains(response, "Publier mon premier projet")
+        self.assertContains(response, "Les statistiques du tableau de bord apparaîtront")
 
     def test_awaiting_validation_alert_shown_for_company(self):
         expert = User.objects.create_user(
@@ -270,5 +271,5 @@ class CompanyDashboardTests(TestCase):
 
         adjust_contribution(contribution, expert, contribution_bullets="Corrected wording")
         response = self.client.get(reverse("accounts:dashboard"))
-        self.assertContains(response, "awaiting your validation")
-        self.assertContains(response, "Validate now")
+        self.assertContains(response, "attendent votre validation")
+        self.assertContains(response, "Valider")

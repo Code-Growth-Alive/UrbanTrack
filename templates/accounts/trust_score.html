@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Score de confiance : Urban Track{% endblock %}
+
+{% block content %}
+  <div class="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
+    <h1 class="text-3xl font-black tracking-tight">Score de confiance</h1>
+    <p class="mt-3 text-sm leading-relaxed text-charcoal-700">
+      Le score de confiance correspond à la somme pondérée des contributions certifiées de l'utilisateur. Il ne tient compte que des missions confirmées par double déclaration et ne peut pas être saisi manuellement.
+    </p>
+
+    <section class="card mt-6 space-y-4">
+      <h2 class="section-title">Pondération des rôles</h2>
+      <ul class="space-y-2 text-sm text-charcoal-700">
+        {% for role, weight in role_weights %}
+          <li class="flex items-center justify-between gap-3 rounded-lg bg-charcoal-50 px-4 py-2">
+            <span class="font-medium">{{ role|capfirst }}</span>
+            <span class="font-mono">{{ weight }} point{% if weight > 1 %}s{% endif %}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <section class="card mt-6 space-y-3">
+      <h2 class="section-title">Ce que le score inclut</h2>
+      <ul class="list-disc space-y-2 pl-5 text-sm text-charcoal-700">
+        <li>Uniquement les contributions dont le statut est confirmé.</li>
+        <li>Une mission compte selon son rôle, pas selon la taille du projet.</li>
+        <li>Les postes, formations, publications et autres rubriques déclarées n'entrent pas dans le score.</li>
+      </ul>
+    </section>
+  </div>
+{% endblock %}

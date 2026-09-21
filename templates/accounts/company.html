@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}{{ company.name }} : Urban Track{% endblock %}
+
+{% block content %}
+  <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+    <section class="card">
+      <div class="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 class="text-3xl font-black tracking-tight">{{ company.name }}</h1>
+          {% if company.country %}<p class="mt-1 text-sm text-charcoal-700">{{ company.country }}</p>{% endif %}
+          {% if company.description %}<p class="mt-4 max-w-3xl text-sm leading-relaxed text-charcoal-700">{{ company.description }}</p>{% endif %}
+        </div>
+        <div class="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
+          <div class="rounded-lg bg-charcoal-50 p-3"><p class="text-xs uppercase tracking-wide text-charcoal-500">Membres validés</p><p class="text-2xl font-black text-military-900">{{ company_stats.members }}</p></div>
+          <div class="rounded-lg bg-charcoal-50 p-3"><p class="text-xs uppercase tracking-wide text-charcoal-500">Projets publics</p><p class="text-2xl font-black text-military-900">{{ company_stats.projects }}</p></div>
+          <div class="rounded-lg bg-charcoal-50 p-3"><p class="text-xs uppercase tracking-wide text-charcoal-500">Création</p><p class="text-2xl font-black text-military-900">{{ company.founded_year|default:"—" }}</p></div>
+          <div class="rounded-lg bg-charcoal-50 p-3"><p class="text-xs uppercase tracking-wide text-charcoal-500">Effectifs</p><p class="text-2xl font-black text-military-900">{{ company.size|default:"—" }}</p></div>
+        </div>
+      </div>
+
+      {% if company.website or company.domains or company.accreditations %}
+        <div class="mt-6 grid gap-4 md:grid-cols-3">
+          {% if company.website %}<div class="rounded-lg border border-charcoal-900/10 p-4 text-sm"><p class="text-xs uppercase tracking-wide text-charcoal-500">Site web</p><a href="{{ company.website }}" class="font-semibold text-accent-700 hover:underline" rel="noopener">{{ company.website }}</a></div>{% endif %}
+          {% if company.domains %}<div class="rounded-lg border border-charcoal-900/10 p-4 text-sm"><p class="text-xs uppercase tracking-wide text-charcoal-500">Domaines</p><p class="mt-2 text-charcoal-700">{{ company.domains|join:", " }}</p></div>{% endif %}
+          {% if company.accreditations %}<div class="rounded-lg border border-charcoal-900/10 p-4 text-sm"><p class="text-xs uppercase tracking-wide text-charcoal-500">Agréments</p><p class="mt-2 text-charcoal-700">{{ company.accreditations|join:", " }}</p></div>{% endif %}
+        </div>
+      {% endif %}
+    </section>
+
+    <section class="mt-8 grid gap-6 lg:grid-cols-3">
+      <div class="lg:col-span-2 space-y-6">
+        <div class="card">
+          <h2 class="section-title mb-4">Références projets certifiées</h2>
+          {% if projects %}
+            <div class="space-y-3">
+              {% for project in projects %}
+                <article class="rounded-lg border border-charcoal-900/10 p-4">
+                  <h3 class="font-bold"><a href="{{ project.get_absolute_url }}" class="hover:text-military-700 hover:underline">{{ project.official_name }}</a></h3>
+                  <p class="mt-1 text-sm text-charcoal-700">{{ project.client_name }}{% if project.country %} · {{ project.country }}{% endif %}</p>
+                </article>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="text-sm text-charcoal-700">Aucune référence publique pour le moment.</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <aside class="space-y-6">
+        <div class="card">
+          <h2 class="section-title mb-4">Équipe validée</h2>
+          {% if approved_members %}
+            <ul class="space-y-3 text-sm">
+              {% for member in approved_members %}
+                <li class="rounded-lg bg-charcoal-50 p-3">
+                  <p class="font-semibold">{{ member.get_full_name|default:member.username }}</p>
+                  <p class="text-charcoal-700">{{ member.professional_id }}</p>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-sm text-charcoal-700">Aucun membre validé affichable pour le moment.</p>
+          {% endif %}
+        </div>
+      </aside>
+    </section>
+  </div>
+{% endblock %}

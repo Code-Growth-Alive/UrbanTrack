@@ -18,6 +18,7 @@ class RequireEmailConfirmationMiddleware(MiddlewareMixin):
     allowlist = {
         "accounts:confirm_email",
         "accounts:resend_confirmation_code",
+        "accounts:correct_signup_email",
         "accounts:logout",
     }
 

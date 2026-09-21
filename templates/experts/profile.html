@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 
-{% block title %}{{ expert.get_full_name|default:expert.username }} ({{ expert.professional_id }}): Urban Track{% endblock %}
+{% block title %}{{ expert.get_full_name|default:expert.username }} ({{ expert.professional_id }}) : Urban Track{% endblock %}
 
 {% block content %}
-  <!-- Banner: military green = institutional trust; permanent OX-ID chip -->
+  <!-- Bandeau : vert militaire = confiance institutionnelle ; pastille OX-ID permanente -->
   <section class="bg-military-900 text-white">
     <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <div class="flex flex-col gap-6 sm:flex-row sm:items-center">
         <div class="grid h-24 w-24 shrink-0 place-items-center overflow-hidden rounded-full bg-white text-3xl font-black text-military-900">
           {% if expert.avatar %}
-            <img src="{{ expert.avatar.url }}" alt="Profile picture" class="h-full w-full object-cover">
+            <img src="{{ expert.avatar.url }}" alt="Photo de profil" class="h-full w-full object-cover">
           {% else %}
             {{ expert.initials }}
           {% endif %}
@@ -31,34 +31,36 @@
         <div class="sm:ml-auto sm:text-right">
           <p
             class="stat-value !text-white"
-            title="Certified contributions weighted by role: Director 4 · Manager 3 · Specialist 2 · Assistant 1"
+            title="Contributions certifiées pondérées par rôle : direction 4 · gestion 3 · spécialiste 2 · assistance 1"
           >{{ trust_score }}</p>
-          <p class="text-xs font-medium uppercase tracking-wide text-military-300">Trust score</p>
+          <p class="text-xs font-medium uppercase tracking-wide text-military-300">
+            <a href="{% url 'accounts:trust_score' %}" class="hover:text-white">Score de confiance</a>
+          </p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Stats row -->
+  <!-- Rangée de statistiques -->
   <section class="border-b border-charcoal-900/10 bg-white">
     <div class="mx-auto grid max-w-7xl grid-cols-2 gap-4 px-4 py-6 sm:px-6 md:grid-cols-5 lg:px-8">
-      <div><p class="stat-value">{{ stats.total }}</p><p class="stat-label">Certified</p></div>
-      <div><p class="stat-value">{{ stats.director }}</p><p class="stat-label">Director</p></div>
-      <div><p class="stat-value">{{ stats.manager }}</p><p class="stat-label">Manager</p></div>
-      <div><p class="stat-value">{{ stats.specialist }}</p><p class="stat-label">Specialist</p></div>
-      <div><p class="stat-value">{{ stats.assistant }}</p><p class="stat-label">Assistant</p></div>
+      <div><p class="stat-value">{{ stats.total }}</p><p class="stat-label">Certifiées</p></div>
+      <div><p class="stat-value">{{ stats.director }}</p><p class="stat-label">Direction</p></div>
+      <div><p class="stat-value">{{ stats.manager }}</p><p class="stat-label">Gestion</p></div>
+      <div><p class="stat-value">{{ stats.specialist }}</p><p class="stat-label">Spécialiste</p></div>
+      <div><p class="stat-value">{{ stats.assistant }}</p><p class="stat-label">Assistance</p></div>
     </div>
   </section>
 
   <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
     <div class="grid gap-8 lg:grid-cols-3">
-      <!-- Certified contributions: the public-profile contract -->
+      <!-- Contributions certifiées : le contrat du profil public -->
       <div class="lg:col-span-2">
         <h2 class="section-title mb-4">
-          Certified contributions
+          Contributions certifiées
           <span class="ml-2 align-middle badge-certified">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-3.5 w-3.5"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
-            Cross-confirmed
+            Confirmées en croisé
           </span>
         </h2>
 
@@ -78,13 +80,13 @@
                   {% if contribution.project.duration_end %}
                     – {{ contribution.project.duration_end|date:"M Y" }}
                   {% else %}
-                    – ongoing
+                    – en cours
                   {% endif %}
                 </p>
               </div>
               <span class="badge-certified">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-3.5 w-3.5"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
-                Certified
+                Certifiée
               </span>
             </div>
             <ul class="mt-3 list-disc space-y-1 pl-5 text-sm text-charcoal-700">
@@ -93,31 +95,59 @@
               {% endfor %}
             </ul>
             <p class="mt-3 text-xs text-charcoal-300">
-              Confirmed on {{ contribution.confirmed_at|date:"d M Y" }} ·
-              traceable to the
-              <a href="{{ contribution.project.get_absolute_url }}" class="font-semibold text-accent-700 hover:underline">project page</a>
+              Confirmée le {{ contribution.confirmed_at|date:"d M Y" }} ·
+              traçable vers la
+              <a href="{{ contribution.project.get_absolute_url }}" class="font-semibold text-accent-700 hover:underline">page projet</a>
             </p>
           </article>
         {% empty %}
           <div class="card border-dashed text-center text-charcoal-700">
-            <p>No certified contribution yet.</p>
-            <p class="mt-1 text-sm">Experiences appear here only after cross-confirmation by the publishing company.</p>
+            <p>Aucune contribution certifiée pour le moment.</p>
+            <p class="mt-1 text-sm">Les expériences n'apparaissent ici qu'après confirmation croisée par la structure qui publie.</p>
           </div>
         {% endfor %}
       </div>
 
-      <!-- Sidebar portfolio context -->
+      <!-- Contexte du portfolio (barre latérale) -->
       <aside class="space-y-6">
+        {% if indicators %}
+          <div class="card">
+            <h2 class="section-title mb-3">Indicateurs certifiés</h2>
+            <p class="mb-3 text-xs text-charcoal-500">
+              Calculés automatiquement à partir des contributions certifiées
+              ci-dessous — jamais saisis à la main.
+            </p>
+            <dl class="grid grid-cols-2 gap-3">
+              <div class="rounded-lg bg-military-50 p-3">
+                <dt class="text-xs font-medium uppercase tracking-wide text-charcoal-500">Années d'expérience</dt>
+                <dd class="text-2xl font-black text-military-900">{{ indicators.years_experience }}</dd>
+              </div>
+              <div class="rounded-lg bg-military-50 p-3">
+                <dt class="text-xs font-medium uppercase tracking-wide text-charcoal-500">Projets</dt>
+                <dd class="text-2xl font-black text-military-900">{{ indicators.projects }}</dd>
+              </div>
+              <div class="rounded-lg bg-military-50 p-3">
+                <dt class="text-xs font-medium uppercase tracking-wide text-charcoal-500">Pays</dt>
+                <dd class="text-2xl font-black text-military-900">{{ indicators.countries }}</dd>
+              </div>
+              <div class="rounded-lg bg-military-50 p-3">
+                <dt class="text-xs font-medium uppercase tracking-wide text-charcoal-500">Programmes financés par des bailleurs</dt>
+                <dd class="text-2xl font-black text-military-900">{{ indicators.donor_programmes }}</dd>
+              </div>
+            </dl>
+          </div>
+        {% endif %}
+
         {% if profile and profile.bio %}
           <div class="card">
-            <h2 class="section-title mb-2">About</h2>
+            <h2 class="section-title mb-2">À propos</h2>
             <p class="text-sm leading-relaxed text-charcoal-700">{{ profile.bio }}</p>
           </div>
         {% endif %}
 
         {% if profile and profile.skills.all %}
           <div class="card">
-            <h2 class="section-title mb-3">Skills</h2>
+            <h2 class="section-title mb-3">Compétences</h2>
             <div class="flex flex-wrap gap-2">
               {% for skill in profile.skills.all %}
                 <span class="rounded-md bg-military-100 px-2.5 py-1 text-sm font-medium text-military-700">{{ skill.name }}</span>
@@ -128,7 +158,7 @@
 
         {% if profile and profile.trainings.all %}
           <div class="card">
-            <h2 class="section-title mb-3">Training</h2>
+            <h2 class="section-title mb-3">Formations</h2>
             <ul class="space-y-3 text-sm">
               {% for training in profile.trainings.all %}
                 <li>

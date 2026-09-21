@@ -22,6 +22,8 @@ certification rules stay in one auditable place:
    start a new validation cycle (enforced here and in the model save()).
 """
 
+import uuid
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -31,6 +33,7 @@ from django.utils.translation import gettext_lazy as _
 from main.emails import absolute_url, send_branded_mail
 
 from .models import (
+    ConfirmationSource,
     ContributionStatus,
     ExpertInvitation,
     InvitationStatus,
@@ -64,7 +67,7 @@ def _ensure_linked(contribution, actor):
     duplicate. Anonymous or mismatched actors are refused.
     """
     if getattr(actor, "is_authenticated", False) is False:
-        raise PermissionDeniedError(_("Authentication required."))
+        raise PermissionDeniedError(_("Authentification requise."))
 
     from django.contrib.auth import get_user_model
 
@@ -72,11 +75,11 @@ def _ensure_linked(contribution, actor):
 
     if contribution.expert_id:
         if contribution.expert_id != actor.pk:
-            raise PermissionDeniedError(_("Only the named expert can act on this contribution."))
+            raise PermissionDeniedError(_("Seul l'expert nommé peut agir sur cette contribution."))
         return actor
 
     if _actor_email(actor).lower() != contribution.invited_email.lower():
-        raise PermissionDeniedError(_("Only the named expert can act on this contribution."))
+        raise PermissionDeniedError(_("Seul l'expert nommé peut agir sur cette contribution."))
 
     contribution.expert = User.objects.get(pk=actor.pk)
     contribution.invited_email = actor.email
@@ -86,21 +89,41 @@ def _ensure_linked(contribution, actor):
 
 def _assert_company(contribution, actor):
     if not getattr(actor, "is_authenticated", False):
-        raise PermissionDeniedError(_("Authentication required."))
+        raise PermissionDeniedError(_("Authentification requise."))
     if contribution.added_by_id != actor.pk and not actor.is_superuser:
-        raise PermissionDeniedError(_("Only the publishing company can validate this wording."))
+        raise PermissionDeniedError(
+            _("Seule la structure qui a publié le projet peut valider cette formulation.")
+        )
 
 
-def declare_contributor(project, *, email, role_type, contribution_bullets, added_by):
+def declare_contributor(
+    project,
+    *,
+    email,
+    role_type,
+    contribution_bullets,
+    added_by,
+    confirmation_source=ConfirmationSource.EXPERT,
+):
     """
     Declare an expert contributor on a project (business rule 1).
 
     Auto-links to an existing expert account when the email already exists
     (rule 5); otherwise the contribution stays expert-less until the invited
     expert claims it through the magic-link landing (Epic 3).
+
+    T1 rule: a physical person cannot be both the declarant and the
+    confirmer of their own contribution. The project publisher is the
+    legitimate exception (the company attests its director's role at publish
+    time); anyone else trying to declare *themselves* on a project they do
+    not publish is refused here — and a refused declaration is never
+    persisted, so it can never surface as "certified".
     """
     if role_type not in RoleType.values:
-        raise InvalidTransitionError(f"Unknown role type: {role_type}")
+        raise InvalidTransitionError(f"Type de rôle inconnu : {role_type}")
+
+    if confirmation_source not in ConfirmationSource.values:
+        raise InvalidTransitionError(f"Source de confirmation inconnue : {confirmation_source}")
 
     from django.contrib.auth import get_user_model
 
@@ -109,8 +132,18 @@ def declare_contributor(project, *, email, role_type, contribution_bullets, adde
 
     existing = User.objects.filter(email__iexact=email).first()
     if existing:
-        if existing.pk == added_by.pk:
-            raise ValidationError(_("The publishing company cannot declare itself as contributor."))
+        owner = project.published_by
+        self_declared = existing.pk == added_by.pk
+        if self_declared and owner is not None and owner.pk != added_by.pk:
+            raise ValidationError(
+                _(
+                    "Vous ne pouvez pas vous déclarer vous-même comme "
+                    "contributeur : une personne physique ne peut pas être à la "
+                    "fois le déclarant et le confirmateur de la même "
+                    "contribution. Demandez à la structure qui publie le projet de vous "
+                    "déclarer à la place."
+                )
+            )
 
     contribution = ProjectContribution(
         project=project,
@@ -119,6 +152,7 @@ def declare_contributor(project, *, email, role_type, contribution_bullets, adde
         role_type=role_type,
         contribution_bullets=contribution_bullets.strip(),
         added_by=added_by,
+        confirmation_source=confirmation_source,
     )
     contribution.full_clean(exclude=["project"])
     contribution.save()
@@ -128,14 +162,14 @@ def declare_contributor(project, *, email, role_type, contribution_bullets, adde
 def _invitation_body(invitation):
     c = invitation.contribution
     return (
-        f"You have been identified as a contributor to project "
-        f"'{c.project.official_name}' by "
+        f"Vous avez été identifié comme contributeur au projet "
+        f"'{c.project.official_name}' par "
         f"{c.added_by.organisation_name or c.added_by.get_full_name()}.\n\n"
-        f"Proposed role: {c.get_role_type_display()}.\n"
-        f"Review and confirm your contribution before "
+        f"Rôle proposé : {c.get_role_type_display()}.\n"
+        f"Examinez et confirmez votre contribution avant le "
         f"{invitation.expires_at:%Y-%m-%d}:\n"
         f"{absolute_url(invitation.magic_link_path)}\n\n"
-        f"— Urban Track, the trust layer of urban development."
+        f"— Urban Track, la couche de confiance du développement urbain."
     )
 
 
@@ -146,17 +180,17 @@ def create_and_send_invitation(contribution):
     confirm_url = absolute_url(invitation.magic_link_path)
     send_branded_mail(
         subject=(
-            f"[Urban Track] You have been identified as a contributor to "
+            f"[Urban Track] Vous avez été identifié comme contributeur au projet "
             f"'{contribution.project.official_name}'"
         ),
         text=_invitation_body(invitation),
         recipient_list=[invitation.email],
         template="emails/invitation.html",
         context={
-            "heading": "You have been identified as a contributor",
+            "heading": "Vous avez été identifié comme contributeur",
             "preheader": (
-                "An expert on the project "
-                f"'{contribution.project.official_name}': confirm before "
+                "Un expert du projet "
+                f"'{contribution.project.official_name}' : confirmez avant le "
                 f"{invitation.expires_at:%Y-%m-%d}."
             ),
             "contribution": contribution,
@@ -175,27 +209,28 @@ def _notify_registered_expert(contribution):
     name = contribution.expert.get_full_name() or contribution.expert.username
     send_branded_mail(
         subject=(
-            f"[Urban Track] Confirm your contribution to '{contribution.project.official_name}'"
+            f"[Urban Track] Confirmez votre contribution au projet "
+            f"'{contribution.project.official_name}'"
         ),
         text=(
-            f"Hello {name},\n\n"
-            f"{contribution.added_by.organisation_name or 'A company'} identified you as "
-            f"{contribution.get_role_type_display()} on project "
+            f"Bonjour {name},\n\n"
+            f"{contribution.added_by.organisation_name or 'Une structure'} vous a identifié "
+            f"comme {contribution.get_role_type_display()} sur le projet "
             f"'{contribution.project.official_name}'.\n"
-            f"Open your Urban Track dashboard to confirm, adjust or reject "
-            f"this contribution.\n\n"
+            f"Ouvrez votre tableau de bord Urban Track pour confirmer, ajuster ou "
+            f"refuser cette contribution.\n\n"
             f"— Urban Track"
         ),
         recipient_list=[contribution.invited_email],
         template="emails/expert_notification.html",
         context={
-            "heading": "Confirm your contribution",
+            "heading": "Confirmez votre contribution",
             "preheader": (
-                f"{contribution.added_by.organisation_name or 'A company'} identified you "
-                f"on '{contribution.project.official_name}'."
+                f"{contribution.added_by.organisation_name or 'Une structure'} vous a identifié "
+                f"sur '{contribution.project.official_name}'."
             ),
             "contribution": contribution,
-            "company": (contribution.added_by.organisation_name or "A company"),
+            "company": (contribution.added_by.organisation_name or "Une structure"),
             "name": name,
             "dashboard_url": absolute_url("/accounts/dashboard/"),
         },
@@ -285,24 +320,24 @@ def mark_invitation_opened(invitation):
 def send_invitation_reminder(invitation):
     """Send a reminder, capped at settings.INVITATION_MAX_REMINDERS (rule 6)."""
     if invitation.reminder_count >= settings.INVITATION_MAX_REMINDERS:
-        raise InvalidTransitionError(_("Reminder budget exhausted."))
+        raise InvalidTransitionError(_("Budget de relance épuisé."))
     if not invitation.is_active:
-        raise InvalidTransitionError(_("This invitation is no longer active."))
+        raise InvalidTransitionError(_("Cette invitation n'est plus active."))
     contribution = invitation.contribution
     confirm_url = absolute_url(invitation.magic_link_path)
     send_branded_mail(
         subject=(
-            f"[Urban Track] Reminder: confirm your contribution to "
+            f"[Urban Track] Rappel : confirmez votre contribution au projet "
             f"'{contribution.project.official_name}'"
         ),
         text=_invitation_body(invitation),
         recipient_list=[invitation.email],
         template="emails/reminder.html",
         context={
-            "heading": "A gentle reminder",
+            "heading": "Un petit rappel",
             "preheader": (
-                f"Confirm your contribution to '{contribution.project.official_name}' "
-                f"before {invitation.expires_at:%Y-%m-%d}."
+                f"Confirmez votre contribution au projet '{contribution.project.official_name}' "
+                f"avant le {invitation.expires_at:%Y-%m-%d}."
             ),
             "contribution": contribution,
             "invitation": invitation,
@@ -330,12 +365,108 @@ def confirm_as_is(contribution, actor):
     """Rule 3: the expert personally confirms what was declared -> certified."""
     expert = _ensure_linked(contribution, actor)
     if contribution.status not in ContributionStatus.actionable():
-        raise InvalidTransitionError(f"Cannot confirm from status '{contribution.status}'.")
+        raise InvalidTransitionError(
+            f"Impossible de confirmer à partir du statut '{contribution.status}'."
+        )
     contribution.pending_company_validation = False
     contribution.status = ContributionStatus.CONFIRMED
     contribution.confirmed_at = timezone.now()
+    contribution.confirmed_by = ConfirmationSource.EXPERT
     contribution.save()
     _notify_company_of_certification(contribution, expert)
+    return contribution
+
+
+def request_client_confirmation(contribution, actor, *, client_email):
+    """
+    T1 path 1: a sole trader / small consultancy publishes; the client
+    (maître d'ouvrage) counter-signs the role instead of the expert.
+
+    Only the publishing user (or their company) can request this. An email
+    with a secure one-time link is sent to the client; the link holder can
+    confirm without an account. Returns the confirmation token.
+    """
+    _assert_company(contribution, actor)
+    if contribution.status in ContributionStatus.terminal():
+        raise InvalidTransitionError(
+            f"Impossible de demander une confirmation à partir du statut '{contribution.status}'."
+        )
+    if contribution.confirmation_source != ConfirmationSource.CLIENT:
+        raise InvalidTransitionError(
+            _("Cette contribution n'est pas configurée pour une confirmation par le client.")
+        )
+
+    token = uuid.uuid4()
+    contribution.client_confirm_token = token
+    contribution.save(update_fields=["client_confirm_token", "updated_at"])
+
+    from main.emails import absolute_url, send_branded_mail
+
+    confirm_path = f"/certification/client-confirm/{token}/"
+    send_branded_mail(
+        subject=(
+            f"[Urban Track] Confirmez la contribution de "
+            f"{contribution.expert or contribution.invited_email} au projet "
+            f"'{contribution.project.official_name}'"
+        ),
+        text=(
+            f"Bonjour,\n\n"
+            f"{contribution.added_by.organisation_name or contribution.added_by.get_full_name()} "
+            f"a publié le projet '{contribution.project.official_name}' et vous demande, "
+            f"en tant que client / maître d'ouvrage, de confirmer le rôle de "
+            f"{contribution.expert or contribution.invited_email} "
+            f"({contribution.get_role_type_display()}).\n\n"
+            f"Confirmez en tant que client / maître d'ouvrage en ouvrant ce lien à "
+            f"usage unique avant qu'il ne soit révoqué :\n"
+            f"{absolute_url(confirm_path)}\n\n"
+            f"— Urban Track, la couche de confiance du développement urbain."
+        ),
+        recipient_list=[client_email],
+        template="emails/client_confirmation.html",
+        context={
+            "heading": "Confirmer la contribution d'un expert",
+            "preheader": (
+                f"Confirmez la contribution au projet '{contribution.project.official_name}' "
+                "en tant que client / maître d'ouvrage."
+            ),
+            "contribution": contribution,
+            "client_email": client_email,
+            "confirm_url": absolute_url(confirm_path),
+        },
+    )
+    return contribution.client_confirm_token
+
+
+def confirm_by_client(contribution, token):
+    """
+    T1 path 1 (client side): certify a contribution via the one-time token.
+
+    Unauthenticated by design: the client has no Urban Track account. The
+    token is single-use and cannot be replayed after a successful
+    confirmation or a rejection.
+    """
+    if contribution.client_confirm_token != token:
+        raise PermissionDeniedError(
+            _("Ce lien de confirmation est invalide ou a déjà été utilisé.")
+        )
+    if contribution.status not in ContributionStatus.actionable():
+        raise InvalidTransitionError(
+            f"Impossible de confirmer à partir du statut '{contribution.status}'."
+        )
+    contribution.client_confirm_token = None
+    contribution.pending_company_validation = False
+    contribution.status = ContributionStatus.CONFIRMED
+    contribution.confirmed_at = timezone.now()
+    contribution.confirmed_by = ConfirmationSource.CLIENT
+    contribution.save()
+    return contribution
+
+
+def claim_client_contribution_token(token):
+    """Return the contribution behind a client-confirmation link, or None."""
+    contribution = ProjectContribution.objects.filter(client_confirm_token=token).first()
+    if contribution is None or contribution.status not in ContributionStatus.actionable():
+        return None
     return contribution
 
 
@@ -351,12 +482,14 @@ def adjust_contribution(contribution, actor, *, contribution_bullets, role_type=
     if contribution.status in ContributionStatus.terminal() or (
         contribution.status == ContributionStatus.DISPUTED
     ):
-        raise InvalidTransitionError(f"Cannot adjust from status '{contribution.status}'.")
+        raise InvalidTransitionError(
+            f"Impossible d'ajuster à partir du statut '{contribution.status}'."
+        )
     old_status = contribution.status
     contribution.contribution_bullets = contribution_bullets.strip()
     if role_type:
         if role_type not in RoleType.values:
-            raise InvalidTransitionError(f"Unknown role type: {role_type}")
+            raise InvalidTransitionError(f"Type de rôle inconnu : {role_type}")
         contribution.role_type = role_type
     contribution.pending_company_validation = True
     contribution.status = ContributionStatus.PENDING_CONFIRMATION
@@ -376,9 +509,13 @@ def approve_adjustment(contribution, actor):
     """
     _assert_company(contribution, actor)
     if not contribution.pending_company_validation:
-        raise InvalidTransitionError(_("No expert-adjusted wording awaits validation."))
+        raise InvalidTransitionError(
+            _("Aucune formulation ajustée par l'expert n'attend de validation.")
+        )
     if contribution.status != ContributionStatus.PENDING_CONFIRMATION:
-        raise InvalidTransitionError(f"Cannot approve from status '{contribution.status}'.")
+        raise InvalidTransitionError(
+            f"Impossible d'approuver à partir du statut '{contribution.status}'."
+        )
     contribution.pending_company_validation = False
     contribution.status = ContributionStatus.CONFIRMED
     contribution.confirmed_at = timezone.now()
@@ -390,7 +527,9 @@ def reject_contribution(contribution, actor, reason=""):
     """Expert refuses the declared contribution (terminal state)."""
     _ensure_linked(contribution, actor)
     if contribution.status not in ContributionStatus.actionable():
-        raise InvalidTransitionError(f"Cannot reject from status '{contribution.status}'.")
+        raise InvalidTransitionError(
+            f"Impossible de refuser à partir du statut '{contribution.status}'."
+        )
     contribution.rejection_reason = reason.strip()
     contribution.status = ContributionStatus.REJECTED
     contribution.save()
@@ -406,9 +545,11 @@ def dispute_contribution(contribution, actor, reason=""):
     """
     _ensure_linked(contribution, actor)
     if not reason.strip():
-        raise ValidationError({"dispute_reason": _("A dispute reason is required.")})
+        raise ValidationError({"dispute_reason": _("Un motif de contestation est requis.")})
     if contribution.status in ContributionStatus.terminal():
-        raise InvalidTransitionError(f"Cannot dispute from status '{contribution.status}'.")
+        raise InvalidTransitionError(
+            f"Impossible de contester à partir du statut '{contribution.status}'."
+        )
     contribution.dispute_reason = reason.strip()
     contribution.status = ContributionStatus.DISPUTED
     contribution.save()
@@ -423,9 +564,11 @@ def resolve_dispute(contribution, staff_user, *, outcome, note=""):
     expert), ``return_to_expert`` (send back for a fresh confirmation cycle).
     """
     if not getattr(staff_user, "is_staff", False):
-        raise PermissionDeniedError(_("Only administrators can arbitrate disputes."))
+        raise PermissionDeniedError(
+            _("Seuls les administrateurs peuvent arbitrer les contestations.")
+        )
     if contribution.status != ContributionStatus.DISPUTED:
-        raise InvalidTransitionError("Only disputed contributions can be arbitrated.")
+        raise InvalidTransitionError("Seules les contributions contestées peuvent être arbitrées.")
 
     if outcome == "confirm":
         contribution.status = ContributionStatus.CONFIRMED
@@ -438,9 +581,9 @@ def resolve_dispute(contribution, staff_user, *, outcome, note=""):
         contribution.status = ContributionStatus.PENDING_CONFIRMATION
         update_fields = ["status"]
     else:
-        raise InvalidTransitionError(f"Unknown arbitration outcome: {outcome}")
+        raise InvalidTransitionError(f"Issue d'arbitrage inconnue : {outcome}")
     contribution.dispute_reason = (
-        f"{contribution.dispute_reason}\n[arbitration] {note}".strip()
+        f"{contribution.dispute_reason}\n[arbitrage] {note}".strip()
         if note
         else contribution.dispute_reason
     )
@@ -452,19 +595,20 @@ def _notify_company_of_certification(contribution, expert):
     name = expert.get_full_name() or expert.email
     send_branded_mail(
         subject=(
-            f"[Urban Track] {name} confirmed "
-            f"their contribution to '{contribution.project.official_name}'"
+            f"[Urban Track] {name} a confirmé "
+            f"sa contribution au projet '{contribution.project.official_name}'"
         ),
         text=(
-            "The experience is now certified via cross-confirmation and "
-            "appears on the expert's public profile.\n\n— Urban Track"
+            "L'expérience est désormais certifiée via la double confirmation et "
+            "apparaît sur le profil public de l'expert.\n\n— Urban Track"
         ),
         recipient_list=[contribution.added_by.email],
         template="emails/company_confirmation.html",
         context={
-            "heading": "Contribution certified",
+            "heading": "Contribution certifiée",
             "preheader": (
-                f"{name} confirmed their contribution to '{contribution.project.official_name}'."
+                f"{name} a confirmé sa contribution au projet "
+                f"'{contribution.project.official_name}'."
             ),
             "contribution": contribution,
             "name": name,
@@ -478,20 +622,22 @@ def _request_company_revalidation(contribution, expert_actor):
     name = expert_actor.get_full_name() or expert_actor.username
     send_branded_mail(
         subject=(
-            f"[Urban Track] Action needed: {name} adjusted "
-            f"their contribution to '{contribution.project.official_name}'"
+            f"[Urban Track] Action requise : {name} a ajusté "
+            f"sa contribution au projet '{contribution.project.official_name}'"
         ),
         text=(
-            f"The expert adjusted the wording:\n\n"
+            f"L'expert a ajusté la formulation :\n\n"
             f"{contribution.contribution_bullets}\n\n"
-            f"Validate the adjusted wording from your company dashboard.\n\n— Urban Track"
+            f"Validez la formulation ajustée depuis le tableau de bord de votre "
+            f"structure.\n\n— Urban Track"
         ),
         recipient_list=[contribution.added_by.email],
         template="emails/company_revalidation.html",
         context={
-            "heading": "Action needed: validate adjusted wording",
+            "heading": "Action requise : valider la formulation ajustée",
             "preheader": (
-                f"{name} adjusted their contribution to '{contribution.project.official_name}'."
+                f"{name} a ajusté sa contribution au projet "
+                f"'{contribution.project.official_name}'."
             ),
             "contribution": contribution,
             "name": name,

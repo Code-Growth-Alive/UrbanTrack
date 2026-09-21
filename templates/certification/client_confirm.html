@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Confirmer une contribution : Urban Track{% endblock %}
+
+{% block content %}
+  <div class="mx-auto max-w-2xl px-4 py-16 sm:px-6">
+    <h1 class="text-2xl font-black tracking-tight text-charcoal-900">
+      Confirmer la contribution de {{ expert_name }}
+    </h1>
+    <p class="mt-3 text-charcoal-700">
+      {{ company_name }} vous demande, en tant que client / maître d'ouvrage, de
+      confirmer le rôle de <strong>{{ expert_name }}</strong> sur le projet
+      <strong>{{ project.official_name }}</strong>.
+    </p>
+
+    <div class="card mt-8">
+      <dl class="space-y-3 text-sm">
+        <div class="flex justify-between gap-4">
+          <dt class="text-charcoal-300">Projet</dt>
+          <dd class="text-right font-medium text-charcoal-900">{{ project.official_name }}</dd>
+        </div>
+        <div class="flex justify-between gap-4">
+          <dt class="text-charcoal-300">Client</dt>
+          <dd class="text-right font-medium text-charcoal-900">{{ project.client_name }}</dd>
+        </div>
+        <div class="flex justify-between gap-4">
+          <dt class="text-charcoal-300">Rôle</dt>
+          <dd class="text-right font-medium text-charcoal-900">{{ contribution.get_role_type_display }}</dd>
+        </div>
+        {% if contribution.contribution_bullets %}
+        <div class="flex justify-between gap-4">
+          <dt class="text-charcoal-300">Contribution</dt>
+          <dd class="text-right font-medium text-charcoal-900 whitespace-pre-line">{{ contribution.contribution_bullets }}</dd>
+        </div>
+        {% endif %}
+      </dl>
+    </div>
+
+    <p class="mt-6 text-sm text-charcoal-300">
+      Confirmer ici certifie le rôle de l'expert sur ce projet. Le lien est à
+      usage unique et personnel : seul le client / maître d'ouvrage doit l'utiliser.
+    </p>
+
+    <form method="post" class="mt-6">
+      {% csrf_token %}
+      <button type="submit" name="action" value="confirm" class="btn-primary">Confirmer cette contribution</button>
+    </form>
+  </div>
+{% endblock %}

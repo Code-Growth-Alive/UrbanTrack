@@ -1,12 +1,12 @@
 {% extends "adminpanel/base.html" %}
 
-{% block admin_title %}Edit user: {{ target.get_full_name|default:target.username }}{% endblock %}
+{% block admin_title %}Modifier l'utilisateur : {{ target.get_full_name|default:target.username }}{% endblock %}
 
 {% block admin_content %}
   <div class="card max-w-2xl">
     <p class="text-sm text-charcoal-700">
       {{ target.email }} · <span class="font-mono">{{ target.professional_id }}</span>
-      · joined {{ target.date_joined|date:"d M Y" }}
+      · inscrit le {{ target.date_joined|date:"d M Y" }}
     </p>
 
     {% if form.non_field_errors %}
@@ -42,19 +42,19 @@
 
       <div class="flex flex-wrap gap-4 pt-2">
         <label class="flex items-center gap-2 text-sm font-medium text-charcoal-900">
-          {{ form.is_active }} Active
+          {{ form.is_active }} Actif
         </label>
         <label class="flex items-center gap-2 text-sm font-medium text-charcoal-900">
-          {{ form.is_staff }} Staff
+          {{ form.is_staff }} Équipe
         </label>
         <label class="flex items-center gap-2 text-sm font-medium text-charcoal-900">
-          {{ form.is_superuser }} Superuser
+          {{ form.is_superuser }} Superutilisateur
         </label>
       </div>
 
       <div class="flex flex-wrap gap-3 pt-2">
-        <button type="submit" class="btn-primary">Save changes</button>
-        <a href="{% url 'adminpanel:user_list' %}" class="btn-outline">Cancel</a>
+        <button type="submit" class="btn-primary">Enregistrer les modifications</button>
+        <a href="{% url 'adminpanel:user_list' %}" class="btn-outline">Annuler</a>
       </div>
     </form>
   </div>

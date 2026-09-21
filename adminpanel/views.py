@@ -39,7 +39,9 @@ def is_system_admin(user):
 def admin_dashboard(request):
     """Operational overview: key counts + recent items per domain."""
     if not is_system_admin(request.user):
-        raise PermissionDenied(_("Only system administrators can access this page."))
+        raise PermissionDenied(
+            _("Seuls les administrateurs du système peuvent accéder à cette page.")
+        )
 
     by_role = User.objects.values("role").annotate(count=Count("id")).order_by("role")
     role_counts = {row["role"]: row["count"] for row in by_role}
@@ -84,7 +86,9 @@ def admin_dashboard(request):
 def admin_user_list(request):
     """All accounts with search, filterable by role."""
     if not is_system_admin(request.user):
-        raise PermissionDenied(_("Only system administrators can access this page."))
+        raise PermissionDenied(
+            _("Seuls les administrateurs du système peuvent accéder à cette page.")
+        )
 
     qs = User.objects.select_related("expert_profile").order_by("-date_joined")
     role = request.GET.get("role", "")
@@ -114,14 +118,19 @@ def admin_user_list(request):
 def admin_user_edit(request, pk):
     """Edit a user's role, organisation and account status."""
     if not is_system_admin(request.user):
-        raise PermissionDenied(_("Only system administrators can access this page."))
+        raise PermissionDenied(
+            _("Seuls les administrateurs du système peuvent accéder à cette page.")
+        )
     user = get_object_or_404(User, pk=pk)
 
     if request.method == "POST":
         form = AdminUserForm(request.POST, instance=user, acting_user=request.user)
         if form.is_valid():
             form.save()
-            messages.success(request, _("User “%(email)s” updated.") % {"email": user.email})
+            messages.success(
+            request,
+            _("Utilisateur « %(email)s » mis à jour.") % {"email": user.email},
+        )
             return redirect("adminpanel:user_list")
     else:
         form = AdminUserForm(instance=user, acting_user=request.user)
@@ -144,19 +153,27 @@ def admin_nominate_admin(request, pk):
         raise PermissionDenied(_("Only the platform superuser can nominate an admin."))
     user = get_object_or_404(User, pk=pk)
     if user == request.user:
-        messages.error(request, _("You cannot change your own admin role."))
+        messages.error(
+            request,
+            _("Vous ne pouvez pas modifier votre propre rôle d'administrateur."),
+        )
         return redirect("adminpanel:user_list")
     if user.is_superuser:
-        messages.error(request, _("Superuser accounts cannot be nominated here."))
+        messages.error(request, _("Les comptes superutilisateur ne peuvent pas être nommés ici."))
         return redirect("adminpanel:user_list")
 
     make_admin = request.POST.get("make_admin") == "1"
     user.role = Role.ADMIN if make_admin else Role.USER
     user.save(update_fields=["role"])
-    action = _("nominated as an admin") if make_admin else _("removed from the admin role")
+    action = (
+            _("nommé en tant qu'administrateur")
+            if make_admin
+            else _("retiré du rôle d'administrateur")
+        )
     messages.success(
         request,
-        _("User “%(email)s” was %(action)s.") % {"email": user.email, "action": action},
+        _("L'utilisateur « %(email)s » a été %(action)s.")
+        % {"email": user.email, "action": action},
     )
     return redirect("adminpanel:user_list")
 
@@ -166,20 +183,25 @@ def admin_nominate_admin(request, pk):
 def admin_user_toggle_active(request, pk):
     """Deactivate / reactivate an account (soft delete preserves data)."""
     if not is_system_admin(request.user):
-        raise PermissionDenied(_("Only system administrators can access this page."))
+        raise PermissionDenied(
+            _("Seuls les administrateurs du système peuvent accéder à cette page.")
+        )
     user = get_object_or_404(User, pk=pk)
     if user == request.user:
-        messages.error(request, _("You cannot deactivate your own account."))
+        messages.error(request, _("Vous ne pouvez pas désactiver votre propre compte."))
         return redirect("adminpanel:user_list")
     if user.is_superuser and not request.user.is_superuser:
-        messages.error(request, _("You cannot manage another superuser's account."))
+        messages.error(
+            request,
+            _("Vous ne pouvez pas gérer le compte d'un autre superutilisateur."),
+        )
         return redirect("adminpanel:user_list")
     user.is_active = not user.is_active
     user.save(update_fields=["is_active"])
-    state = _("activated") if user.is_active else _("deactivated")
+    state = _("activé") if user.is_active else _("désactivé")
     messages.success(
         request,
-        _("User “%(email)s” was %(state)s.") % {"email": user.email, "state": state},
+        _("L'utilisateur « %(email)s » a été %(state)s.") % {"email": user.email, "state": state},
     )
     return redirect("adminpanel:user_list")
 
@@ -189,14 +211,16 @@ def admin_user_toggle_active(request, pk):
 def admin_user_delete(request, pk):
     """Permanently remove an account (prefer deactivation for users with data)."""
     if not is_system_admin(request.user):
-        raise PermissionDenied(_("Only system administrators can access this page."))
+        raise PermissionDenied(
+            _("Seuls les administrateurs du système peuvent accéder à cette page.")
+        )
     user = get_object_or_404(User, pk=pk)
     if user == request.user:
-        messages.error(request, _("You cannot delete your own account."))
+        messages.error(request, _("Vous ne pouvez pas supprimer votre propre compte."))
         return redirect("adminpanel:user_list")
     email = user.email
     user.delete()
-    messages.success(request, _("User “%(email)s” deleted.") % {"email": email})
+    messages.success(request, _("Utilisateur « %(email)s » supprimé.") % {"email": email})
     return redirect("adminpanel:user_list")
 
 
@@ -204,7 +228,9 @@ def admin_user_delete(request, pk):
 def admin_job_list(request):
     """All job offers, across companies."""
     if not is_system_admin(request.user):
-        raise PermissionDenied(_("Only system administrators can access this page."))
+        raise PermissionDenied(
+            _("Seuls les administrateurs du système peuvent accéder à cette page.")
+        )
     jobs = (
         Job.objects.select_related("published_by")
         .prefetch_related("applications")
@@ -217,7 +243,9 @@ def admin_job_list(request):
 def admin_project_list(request):
     """All projects, across companies."""
     if not is_system_admin(request.user):
-        raise PermissionDenied(_("Only system administrators can access this page."))
+        raise PermissionDenied(
+            _("Seuls les administrateurs du système peuvent accéder à cette page.")
+        )
     projects = (
         Project.objects.select_related("published_by")
         .prefetch_related("contributions")
@@ -234,7 +262,9 @@ def admin_project_list(request):
 def admin_application_list(request):
     """All applications and their decisions."""
     if not is_system_admin(request.user):
-        raise PermissionDenied(_("Only system administrators can access this page."))
+        raise PermissionDenied(
+            _("Seuls les administrateurs du système peuvent accéder à cette page.")
+        )
     applications = JobApplication.objects.select_related(
         "job", "job__published_by", "applicant"
     ).order_by("-applied_at")

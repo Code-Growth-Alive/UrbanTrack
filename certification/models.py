@@ -17,20 +17,29 @@ from django.utils.translation import gettext_lazy as _
 
 
 class RoleType(models.TextChoices):
-    DIRECTOR = "director", _("Director")
-    MANAGER = "manager", _("Manager")
+    """Real role on a project (T6): wider and extensible than the original 4.
+
+    Mirrors the ROLE_LABELS used by the CV engine so every role renders in
+    FR/EN exports. Trust-score weights live in ``ExpertProfile.trust_score``.
+    """
+
+    DIRECTOR = "director", _("Directeur")
+    MANAGER = "manager", _("Responsable")
     ASSISTANT = "assistant", _("Assistant")
-    SPECIALIST = "specialist", _("Specialist")
+    SPECIALIST = "specialist", _("Spécialiste")
+    CONSULTANT = "consultant", _("Consultant")
+    ENGINEER = "engineer", _("Ingénieur")
+    OTHER = "other", _("Autre")
 
 
 class ContributionStatus(models.TextChoices):
     """Mandated lifecycle: invited -> pending_confirmation -> confirmed/rejected/disputed."""
 
-    INVITED = "invited", _("Invited")
-    PENDING_CONFIRMATION = "pending_confirmation", _("Pending confirmation")
-    CONFIRMED = "confirmed", _("Confirmed")
-    REJECTED = "rejected", _("Rejected")
-    DISPUTED = "disputed", _("Disputed")
+    INVITED = "invited", _("Invité")
+    PENDING_CONFIRMATION = "pending_confirmation", _("En attente de confirmation")
+    CONFIRMED = "confirmed", _("Confirmé")
+    REJECTED = "rejected", _("Refusé")
+    DISPUTED = "disputed", _("Contesté")
 
     @classmethod
     def actionable(cls):
@@ -42,11 +51,27 @@ class ContributionStatus(models.TextChoices):
         return {cls.REJECTED}
 
 
+class ConfirmationSource(models.TextChoices):
+    """
+    Who is expected to provide the counter-signature on a contribution (T1).
+
+    * ``expert``      — the named expert personally confirms (default path);
+    * ``client``      — the client / maître d'ouvrage confirms a sole-trader
+      or small consultancy lead (consultant individuel);
+    * ``lead_firm``   — the leader of a groupement confirms a sub-contracted
+      member (declaration by the chef de file).
+    """
+
+    EXPERT = "expert", _("Expert nommé")
+    CLIENT = "client", _("Client / maître d'ouvrage")
+    LEAD_FIRM = "lead_firm", _("Groupement / entreprise mandataire")
+
+
 class InvitationStatus(models.TextChoices):
-    SENT = "sent", _("Sent")
-    OPENED = "opened", _("Opened")
-    CONVERTED = "converted", _("Converted")
-    EXPIRED = "expired", _("Expired")
+    SENT = "sent", _("Envoyée")
+    OPENED = "opened", _("Ouverte")
+    CONVERTED = "converted", _("Convertie")
+    EXPIRED = "expired", _("Expirée")
 
 
 class ProjectContribution(models.Model):
@@ -83,7 +108,7 @@ class ProjectContribution(models.Model):
         "projects.Project",
         on_delete=models.CASCADE,
         related_name="contributions",
-        verbose_name=_("project"),
+        verbose_name=_("projet"),
     )
     expert = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -95,19 +120,19 @@ class ProjectContribution(models.Model):
         verbose_name=_("expert"),
     )
     invited_email = models.EmailField(
-        _("invited email"),
+        _("Email de l'invité"),
         help_text=_(
-            "Email used to reach the expert; mirrors the linked account email "
-            "when the expert already exists (deduplication rule 5)."
+            "Email utilisé pour joindre l'expert ; reflète l'email du compte lié "
+            "lorsque l'expert existe déjà (règle de déduplication 5)."
         ),
     )
-    role_type = models.CharField(_("role type"), max_length=20, choices=RoleType.choices)
+    role_type = models.CharField(_("type de rôle"), max_length=20, choices=RoleType.choices)
     contribution_bullets = models.TextField(
-        _("contribution bullets"),
-        help_text=_("One bullet per line describing what the expert actually delivered."),
+        _("Réalisations"),
+        help_text=_("Une réalisation par ligne décrivant ce que l'expert a réellement livré."),
     )
     status = models.CharField(
-        _("status"),
+        _("statut"),
         max_length=30,
         choices=ContributionStatus.choices,
         default=ContributionStatus.INVITED,
@@ -118,20 +143,54 @@ class ProjectContribution(models.Model):
         on_delete=models.PROTECT,
         related_name="declared_contributions",
         limit_choices_to=models.Q(email_confirmed=True),
-        verbose_name=_("added by"),
+        verbose_name=_("ajouté par"),
     )
-    confirmed_at = models.DateTimeField(_("confirmed at"), null=True, blank=True)
+    confirmed_at = models.DateTimeField(_("confirmé le"), null=True, blank=True)
 
     pending_company_validation = models.BooleanField(default=False, editable=False)
-    rejection_reason = models.TextField(_("rejection reason"), blank=True)
-    dispute_reason = models.TextField(_("dispute reason"), blank=True)
+    rejection_reason = models.TextField(_("motif de refus"), blank=True)
+    dispute_reason = models.TextField(_("motif de contestation"), blank=True)
 
-    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
-    updated_at = models.DateTimeField(_("updated at"), auto_now=True)
+    # T1: which counter-signature is expected, and where the confirmation
+    # actually came from. ``confirmation_source`` is declared when the
+    # contribution is created; ``confirmed_by`` records the physical actor
+    # who validated it ("expert" or "client") once ``status == confirmed``.
+    confirmation_source = models.CharField(
+        _("source de confirmation"),
+        max_length=20,
+        choices=ConfirmationSource.choices,
+        default=ConfirmationSource.EXPERT,
+        help_text=_(
+            "Qui doit contre-signer cette contribution : l'expert nommé, le "
+            "client / maître d'ouvrage, ou le groupement / entreprise mandataire."
+        ),
+    )
+    confirmed_by = models.CharField(
+        _("confirmé par"),
+        max_length=20,
+        choices=ConfirmationSource.choices,
+        blank=True,
+        help_text=_("Quel acteur contre-signataire a réellement validé la contribution."),
+    )
+    # One-time secret token for the unauthenticated client-confirmation path.
+    client_confirm_token = models.UUIDField(
+        _("jeton de confirmation client"),
+        unique=True,
+        null=True,
+        blank=True,
+        editable=False,
+        help_text=_(
+            "Jeton secret à usage unique envoyé par email au client / maître d'ouvrage "
+            "pour confirmer une contribution sans nécessiter de compte (T1)."
+        ),
+    )
+
+    created_at = models.DateTimeField(_("créé le"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("mis à jour le"), auto_now=True)
 
     class Meta:
-        verbose_name = _("project contribution")
-        verbose_name_plural = _("project contributions")
+        verbose_name = _("contribution de projet")
+        verbose_name_plural = _("contributions de projet")
         ordering = ["project_id", "id"]
         constraints = [
             models.UniqueConstraint(
@@ -179,8 +238,8 @@ class ProjectContribution(models.Model):
                 raise ValidationError(
                     {
                         field: _(
-                            "This contribution is certified; modifying it requires "
-                            "starting a new validation cycle."
+                            "Cette contribution est certifiée ; toute modification "
+                            "nécessite de démarrer un nouveau cycle de validation."
                         )
                         for field in tampered
                     }
@@ -212,21 +271,21 @@ class ExpertInvitation(models.Model):
         verbose_name=_("contribution"),
     )
     email = models.EmailField(_("email"))
-    token = models.UUIDField(_("token"), unique=True, editable=False, default=uuid.uuid4)
-    sent_at = models.DateTimeField(_("sent at"), auto_now_add=True)
-    expires_at = models.DateTimeField(_("expires at"))
+    token = models.UUIDField(_("jeton"), unique=True, editable=False, default=uuid.uuid4)
+    sent_at = models.DateTimeField(_("envoyé le"), auto_now_add=True)
+    expires_at = models.DateTimeField(_("expire le"))
     status = models.CharField(
-        _("status"),
+        _("statut"),
         max_length=20,
         choices=InvitationStatus.choices,
         default=InvitationStatus.SENT,
         db_index=True,
     )
-    reminder_count = models.PositiveSmallIntegerField(_("reminder count"), default=0)
+    reminder_count = models.PositiveSmallIntegerField(_("nombre de relances"), default=0)
 
     class Meta:
-        verbose_name = _("expert invitation")
-        verbose_name_plural = _("expert invitations")
+        verbose_name = _("invitation d'expert")
+        verbose_name_plural = _("invitations d'expert")
         ordering = ["-sent_at"]
 
     def __str__(self):

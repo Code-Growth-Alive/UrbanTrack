@@ -1,8 +1,8 @@
 {% extends "emails/base_email.html" %}
 {% block body %}
-  <p>Hi {{ first }},</p>
-  <p>Your application to <strong>“{{ title }}”</strong> ({{ org }}) has been sent.</p>
-  <p>Track its status from your Urban Track dashboard.</p>
+  <p>Bonjour {{ first }},</p>
+  <p>Votre candidature à <strong>« {{ title }} »</strong> ({{ org }}) a bien été envoyée.</p>
+  <p>Suivez son statut depuis votre tableau de bord Urban Track.</p>
 {% endblock %}
 {% block actions %}
   <tr>
@@ -11,7 +11,7 @@
          style="display:inline-block; background-color:#5c6b2f; color:#ffffff;
                 text-decoration:none; font-size:15px; font-weight:bold;
                 padding:13px 28px; border-radius:8px;">
-        Track my applications
+        Suivre mes candidatures
       </a>
     </td>
   </tr>

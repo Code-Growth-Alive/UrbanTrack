@@ -61,13 +61,13 @@ class InvitationFlowTests(TestCase):
     def test_unknown_token_returns_friendly_404(self):
         response = self.client.get(reverse("certification:invitation_landing", args=[uuid4()]))
         self.assertEqual(response.status_code, 404)
-        self.assertContains(response, "no longer valid", status_code=404)
+        self.assertContains(response, "Ce lien d'invitation n'est plus valide", status_code=404)
 
     def test_landing_marks_invitation_opened(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.project.official_name)
-        self.assertContains(response, "Confirm as-is")
+        self.assertContains(response, "Confirmer telle quelle")
         self.invitation.refresh_from_db()
         self.assertEqual(self.invitation.status, InvitationStatus.OPENED)
         self.contribution.refresh_from_db()

@@ -1,14 +1,15 @@
 {% extends "emails/base_email.html" %}
 {% block body %}
-  <p>Hi {{ first }},</p>
+  <p>Bonjour {{ first }},</p>
   {% if accepted %}
-    <p>Congratulations! Your application to <strong>“{{ title }}”</strong>
-       ({{ org }}) has been <strong style="color:#5c6b2f;">accepted</strong>.</p>
-    <p>The company will contact you at {{ email }} to define the next steps.</p>
+    <p>Félicitations ! Votre candidature à <strong>« {{ title }} »</strong>
+       ({{ org }}) a été <strong style="color:#5c6b2f;">acceptée</strong>.</p>
+    <p>La structure vous contactera à {{ email }} pour définir les prochaines étapes.</p>
   {% else %}
-    <p>After careful review, your application to <strong>“{{ title }}”</strong>
-       ({{ org }}) was not retained this time.</p>
-    <p>Your certified profile keeps growing: new missions are posted regularly.</p>
+    <p>Après examen approfondi, votre candidature à <strong>« {{ title }} »</strong>
+       ({{ org }}) n'a pas été retenue cette fois-ci.</p>
+    <p>Votre profil certifié continue de s'enrichir : de nouvelles missions sont
+       publiées régulièrement.</p>
   {% endif %}
 {% endblock %}
 {% block actions %}
@@ -18,7 +19,7 @@
          style="display:inline-block; background-color:#5c6b2f; color:#ffffff;
                 text-decoration:none; font-size:15px; font-weight:bold;
                 padding:13px 28px; border-radius:8px;">
-        Go to my dashboard
+        Aller à mon tableau de bord
       </a>
     </td>
   </tr>

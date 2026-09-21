@@ -56,15 +56,15 @@ class AdminDashboardTests(TestCase):
         response = self.client.get(reverse("adminpanel:dashboard"))
         self.assertEqual(response.status_code, 200)
         content = response.content.decode()
-        for label in ("Total accounts", "Projects published", "Jobs open", "Applications"):
+        for label in ("Total des comptes", "Projets publiés", "Emplois ouverts", "Candidatures"):
             self.assertIn(label, content)
 
     def test_dashboard_breaks_down_roles(self):
         response = self.client.get(reverse("adminpanel:dashboard"))
         content = response.content.decode()
-        self.assertIn("Users", content)
-        self.assertIn("Admins", content)
-        self.assertIn("Confirmed emails", content)
+        self.assertIn("Utilisateurs", content)
+        self.assertIn("Administrateurs", content)
+        self.assertIn("Emails confirmés", content)
 
 
 class AdminUserManagementTests(TestCase):

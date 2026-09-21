@@ -48,23 +48,23 @@ def send_confirmation_code(user):
     """Send the stored code to the user's email."""
     code = user.confirmation_code
     if not code:
-        raise ConfirmationError(_("No confirmation code has been issued for this account."))
+        raise ConfirmationError(_("Aucun code de confirmation n'a été émis pour ce compte."))
     name = user.get_full_name() or user.username
     send_branded_mail(
-        subject=_("[Urban Track] Confirm your email address"),
+        subject=_("[Urban Track] Confirmez votre adresse email"),
         text=_(
-            "Hello %(name)s,\n\n"
-            "Your Urban Track confirmation code is: %(code)s\n"
-            "Enter it on the confirmation page to activate your account.\n"
-            "The code expires in 24 hours.\n\n"
+            "Bonjour %(name)s,\n\n"
+            "Votre code de confirmation Urban Track est : %(code)s\n"
+            "Saisissez-le sur la page de confirmation pour activer votre compte.\n"
+            "Le code expire dans 24 heures.\n\n"
             "— Urban Track"
         )
         % {"name": name, "code": code},
         recipient_list=[user.email],
         template="emails/confirmation_code.html",
         context={
-            "heading": "Confirm your email address",
-            "preheader": "Your 6-digit Urban Track confirmation code.",
+            "heading": "Confirmez votre adresse email",
+            "preheader": "Votre code de confirmation Urban Track à 6 chiffres.",
             "name": name,
             "code": code,
             "expires_in": settings.CONFIRMATION_CODE_TTL_HOURS,
@@ -84,11 +84,11 @@ def _confirm_url():
 def confirm_email(user, code):
     """Validate ``code`` against the user's stored code; confirm on success."""
     if not code:
-        raise ConfirmationError(_("Please enter the 6-digit confirmation code."))
+        raise ConfirmationError(_("Veuillez saisir le code de confirmation à 6 chiffres."))
     if user.confirmation_code != code.strip():
-        raise ConfirmationError(_("That confirmation code is incorrect."))
+        raise ConfirmationError(_("Ce code de confirmation est incorrect."))
     if _is_code_expired(user):
-        raise ConfirmationError(_("This confirmation code has expired. Request a new one."))
+        raise ConfirmationError(_("Ce code de confirmation a expiré. Demandez-en un nouveau."))
     user.email_confirmed = True
     user.confirmation_code = ""
     user.confirmation_code_created_at = None

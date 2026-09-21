@@ -1,23 +1,24 @@
 {% extends "base.html" %}
 
-{% block title %}{% if editing %}Edit project: Urban Track{% else %}Publish a project: Urban Track{% endif %}{% endblock %}
+{% block title %}{% if editing %}Modifier le projet : Urban Track{% else %}Publier un projet : Urban Track{% endif %}{% endblock %}
 
 {% block content %}
   <div class="mx-auto max-w-2xl px-4 py-12 sm:px-6">
     {% if editing %}
-      <a href="{% url 'projects:manage' project.pk %}" class="text-sm font-semibold text-military-700 hover:underline">&larr; Back to {{ project.official_name }}</a>
+      <a href="{% url 'projects:manage' project.pk %}" class="text-sm font-semibold text-military-700 hover:underline">&larr; Retour à {{ project.official_name }}</a>
     {% endif %}
-    <h1 class="mt-3 text-2xl font-black tracking-tight">{% if editing %}Edit project{% else %}Publish a project{% endif %}</h1>
+    <h1 class="mt-3 text-2xl font-black tracking-tight">{% if editing %}Modifier le projet{% else %}Publier un projet{% endif %}</h1>
     <p class="mt-1 text-sm text-charcoal-700">
       {% if editing %}
-        Update the core details of this project. The contributors and their
-        certification history are managed on the workspace page.
+        Mettez à jour les informations principales du projet. Les contributeurs
+        et l'historique de certification se gèrent dans l'espace projet.
       {% else %}
-        Step 1 of 2: describe the project. You will declare the contributing
-        experts on the next screen: they personally confirm before anything is
-        certified.
+        Étape 1 sur 2 : décrivez le projet. Vous déclarerez ensuite les experts
+        contributeurs ; rien ne sera certifié sans leur confirmation.
       {% endif %}
     </p>
+
+    {% with half_fields="duration_start duration_end intervention_volume volume_unit personal_start personal_end budget client country funder" %}
 
     <form method="post" class="card mt-6 space-y-4">
       {% csrf_token %}
@@ -26,8 +27,9 @@
         <p class="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">{{ form.non_field_errors.0 }}</p>
       {% endif %}
 
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
       {% for field in form %}
-        <div>
+        <div class="{% if field.name not in half_fields %}sm:col-span-2{% endif %}">
           <label for="{{ field.id_for_label }}" class="form-label">
             {{ field.label }}{% if field.field.required %} <span class="text-accent-500">*</span>{% endif %}
           </label>
@@ -36,8 +38,10 @@
           {% if field.errors %}<p class="form-error">{{ field.errors.0 }}</p>{% endif %}
         </div>
       {% endfor %}
+      </div>
 
-      <button type="submit" class="btn-primary w-full sm:w-auto">{% if editing %}Save changes{% else %}Save draft &amp; continue{% endif %}</button>
+      <button type="submit" class="btn-primary w-full sm:w-auto">{% if editing %}Enregistrer{% else %}Enregistrer le brouillon et continuer{% endif %}</button>
     </form>
+    {% endwith %}
   </div>
 {% endblock %}

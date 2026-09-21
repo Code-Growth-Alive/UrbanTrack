@@ -3,17 +3,22 @@ Account views: public expert profile, expert directory, expert search,
 signup with email confirmation and the unified user dashboard.
 """
 
+from django.conf import settings
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView as DjangoLoginView
 from django.contrib.auth.views import LogoutView as DjangoLogoutView
 from django.contrib.auth.views import PasswordChangeView as DjangoPasswordChangeView
+from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
-from django.shortcuts import redirect, render
-from django.urls import reverse_lazy
+from django.shortcuts import get_object_or_404, redirect, render
+from django.templatetags.static import static
+from django.urls import reverse, reverse_lazy
 from django.utils.translation import gettext as _
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import DetailView, FormView, ListView
+
+from projects.models import Project, ProjectStatus, ProjectVisibility
 
 from .email_confirmation import (
     ConfirmationError,
@@ -59,6 +64,64 @@ class PublicExpertProfileView(DetailView):
                 "assistant": by_role.get("assistant", 0),
             },
             trust_score=profile.trust_score() if profile else 0,
+            # T7: certified synthesis indicators computed from confirmed
+            # contributions only — never hand-entered.
+            indicators=profile.synthesis_indicators() if contributions else {},
+            seo_title=f"{self.object.get_full_name() or self.object.username} : Urban Track",
+            seo_description=(
+                profile.headline
+                or f"Profil public de {self.object.get_full_name() or self.object.username}"
+                f" sur Urban Track."
+            ),
+            seo_image=self.request.build_absolute_uri(
+                self.object.avatar.url
+                if getattr(getattr(self.object, "avatar", None), "name", "")
+                else static("img/hero-city.jpg")
+            ),
+            seo_url=self.request.build_absolute_uri(
+                reverse("accounts:public_profile", args=[self.object.professional_id])
+            ),
+        )
+        return context
+
+
+class PublicCompanyView(DetailView):
+    model = None
+    template_name = "accounts/company.html"
+    context_object_name = "company"
+
+    def get_object(self, queryset=None):
+        from .models import Company
+
+        return get_object_or_404(Company, pk=self.kwargs["pk"])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        company = self.object
+        approved_members = company.approved_members().select_related("expert_profile")
+        projects = (
+            Project.objects.filter(
+                published_by__company=company,
+                status=ProjectStatus.PUBLISHED,
+                visibility=ProjectVisibility.PUBLIC,
+            )
+            .select_related("published_by", "country", "client", "funder")
+            .order_by("-updated_at")
+        )
+        context.update(
+            approved_members=approved_members,
+            projects=projects,
+            company_stats={
+                "members": approved_members.count(),
+                "projects": projects.count(),
+            },
+            seo_title=f"{company.name} : Urban Track",
+            seo_description=(
+                company.description
+                or f"Fiche société publique de {company.name} sur Urban Track."
+            ),
+            seo_image=self.request.build_absolute_uri(static("img/hero-building.jpg")),
+            seo_url=self.request.build_absolute_uri(company.get_absolute_url()),
         )
         return context
 
@@ -157,6 +220,19 @@ class LogInView(DjangoLoginView):
 class LogOutView(DjangoLogoutView):
     next_page = reverse_lazy("home")
 
+    def get_next_page(self):
+        next_url = self.request.POST.get("next") or self.request.GET.get("next")
+        if next_url:
+            from django.utils.http import url_has_allowed_host_and_scheme
+
+            if url_has_allowed_host_and_scheme(
+                next_url,
+                allowed_hosts={self.request.get_host()},
+                require_https=self.request.is_secure(),
+            ):
+                return next_url
+        return super().get_next_page()
+
 
 @login_required
 def dashboard(request):
@@ -191,9 +267,20 @@ def dashboard(request):
     )
     confirmed = profile.confirmed_contributions() if profile else []
 
+    # T2: membership approval queue for company administrators + the user's
+    # own pending affiliation request.
+    pending_membership = request.user.pending_membership
+    membership_queue = []
+    if request.user.company_id and request.user.is_company_admin:
+        membership_queue = list(
+            request.user.company.pending_memberships().exclude(user=request.user)
+        )
+
     context = {
         "projects": projects,
         "awaiting_validation": awaiting_validation,
+        "pending_membership": pending_membership,
+        "membership_queue": membership_queue,
         "counts": {
             "drafts": projects.filter(status="draft").count(),
             "published": projects.filter(status="published").count(),
@@ -203,9 +290,36 @@ def dashboard(request):
         "pending_reviews": pending_reviews,
         "confirmed_contributions": confirmed,
         "trust_score": profile.trust_score() if profile else 0,
+        "show_launch_stats": any(
+            value >= settings.LAUNCH_COUNTER_THRESHOLD
+            for value in (
+                projects.count(),
+                pending_reviews.count(),
+                profile.trust_score() if profile else 0,
+            )
+        ),
         "my_applications": (request.user.job_applications.select_related("job")[:5]),
     }
     return render(request, "accounts/dashboard.html", context)
+
+
+def trust_score_methodology(request):
+    """Public explanation of the trust-score formula used across the site."""
+    return render(
+        request,
+        "accounts/trust_score.html",
+        {
+            "role_weights": [
+                ("director", 4),
+                ("manager", 3),
+                ("specialist", 2),
+                ("consultant", 2),
+                ("engineer", 2),
+                ("assistant", 1),
+                ("other", 1),
+            ],
+        },
+    )
 
 
 class SignUpView(FormView):
@@ -243,6 +357,15 @@ class ConfirmEmailView(FormView):
             return redirect("accounts:dashboard")
         return super().dispatch(request, *args, **kwargs)
 
+    def get_context_data(self, **kwargs):
+        # A first-time signup is a user who never confirmed any email: the
+        # session marker set by SignUpView gives an honest signal.
+        context = super().get_context_data(**kwargs)
+        context["first_time_signup"] = (
+            self.request.session.get("pending_confirm_email") == self.request.user.email
+        )
+        return context
+
     def form_valid(self, form):
         user = self.request.user
         try:
@@ -262,6 +385,45 @@ def resend_confirmation_code(request):
     return redirect("accounts:confirm_email")
 
 
+@require_POST
+@login_required
+def correct_signup_email(request):
+    """
+    Let a first-time signup fix a mistyped email before the account is
+    purged. Restricted to unconfirmed accounts that just signed up (the
+    session marker set by SignUpView), so a confirmed account's email can
+    never be redirected by this route.
+    """
+    from django.contrib import messages
+
+    user = request.user
+    original_email = request.session.get("pending_confirm_email")
+    if user.email_confirmed or original_email != user.email:
+        return redirect("accounts:dashboard")
+    form = EmailChangeForm(request.POST, instance=user)
+    if form.is_valid():
+        new_email = form.cleaned_data["email"]
+        user = form.save(commit=False)
+        if user.username == original_email:
+            user.username = new_email
+        user.email_confirmed = False
+        user.save()
+        issue_confirmation_code(user)
+        request.session["pending_confirm_email"] = new_email
+        messages.success(
+            request,
+            _(
+                "Adresse email corrigée : un nouveau code de confirmation "
+                "a été envoyé à %(email)s."
+            )
+            % {"email": new_email},
+        )
+    else:
+        for error in form.errors.get("email", []):
+            messages.error(request, error)
+    return redirect("accounts:confirm_email")
+
+
 # ---------------------------------------------------------------------------
 # Portfolio self-service (each user edits their own contextual profile data)
 # ---------------------------------------------------------------------------
@@ -269,28 +431,79 @@ def resend_confirmation_code(request):
 
 @login_required
 def profile_edit(request):
-    """Edit headline, bio, location, skills, trainings and CV preference."""
+    """Edit the full contextual portfolio (bio, skills, trainings, positions,
+    mandates, publications, teaching, media, languages…) plus CV preference."""
     from django.contrib import messages
 
-    from .portfolio_forms import ProfileForm, SkillsForm, TrainingFormSet
+    from .portfolio_forms import (
+        MandateFormSet,
+        MediaFormSet,
+        PositionFormSet,
+        ProfileForm,
+        PublicationFormSet,
+        SkillsForm,
+        TeachingFormSet,
+        TrainingFormSet,
+    )
 
     profile = request.user.expert_profile
+    formset_kwargs = {"instance": profile}
+
+    def _initial_profile_data(profile):
+        def join(items):
+            return ", ".join(items)
+
+        languages = "\n".join(
+            "{name}, {read}, {spoken}, {written}".format(
+                **{k: (v or "") for k, v in entry.items()}
+            )
+            for entry in profile.languages
+            if entry.get("name")
+        )
+        return {
+            "strengths": join(profile.strengths or []),
+            "countries_of_intervention": join(profile.countries_of_intervention or []),
+            "languages": languages,
+        }
 
     if request.method == "POST":
         profile_form = ProfileForm(request.POST, instance=profile)
         skills_form = SkillsForm(request.POST)
-        formset = TrainingFormSet(request.POST, instance=profile)
-        if profile_form.is_valid() and skills_form.is_valid() and formset.is_valid():
+        training_formset = TrainingFormSet(request.POST, **formset_kwargs)
+        position_formset = PositionFormSet(request.POST, **formset_kwargs)
+        mandate_formset = MandateFormSet(request.POST, **formset_kwargs)
+        publication_formset = PublicationFormSet(request.POST, **formset_kwargs)
+        teaching_formset = TeachingFormSet(request.POST, **formset_kwargs)
+        media_formset = MediaFormSet(request.POST, **formset_kwargs)
+        formsets = [
+            training_formset,
+            position_formset,
+            mandate_formset,
+            publication_formset,
+            teaching_formset,
+            media_formset,
+        ]
+        if profile_form.is_valid() and skills_form.is_valid() and all(
+            fs.is_valid() for fs in formsets
+        ):
             profile_form.save()
             skills_form.save(profile)
-            formset.save()
-            messages.success(request, _("Portfolio updated."))
+            for fs in formsets:
+                fs.save()
+            messages.success(request, _("Portfolio mis à jour."))
             return redirect("accounts:profile_edit")
     else:
         initial_skills = ", ".join(skill.name for skill in profile.skills.all().order_by("name"))
-        profile_form = ProfileForm(instance=profile)
+        profile_form = ProfileForm(
+            instance=profile, initial=_initial_profile_data(profile)
+        )
         skills_form = SkillsForm(initial={"skills": initial_skills})
-        formset = TrainingFormSet(instance=profile)
+        training_formset = TrainingFormSet(**formset_kwargs)
+        position_formset = PositionFormSet(**formset_kwargs)
+        mandate_formset = MandateFormSet(**formset_kwargs)
+        publication_formset = PublicationFormSet(**formset_kwargs)
+        teaching_formset = TeachingFormSet(**formset_kwargs)
+        media_formset = MediaFormSet(**formset_kwargs)
 
     return render(
         request,
@@ -299,7 +512,12 @@ def profile_edit(request):
             "profile": profile,
             "profile_form": profile_form,
             "skills_form": skills_form,
-            "formset": formset,
+            "training_formset": training_formset,
+            "position_formset": position_formset,
+            "mandate_formset": mandate_formset,
+            "publication_formset": publication_formset,
+            "teaching_formset": teaching_formset,
+            "media_formset": media_formset,
         },
     )
 
@@ -316,7 +534,7 @@ def set_cv_template(request):
         if template in CvTemplate.values:
             request.user.expert_profile.cv_template = template
             request.user.expert_profile.save(update_fields=["cv_template", "updated_at"])
-            messages.success(request, _("Preferred CV template saved."))
+            messages.success(request, _("Modèle de CV préféré enregistré."))
     return redirect("cv_generator:builder")
 
 
@@ -330,10 +548,35 @@ def account_settings(request):
     from django.contrib import messages
 
     if request.method == "POST":
+        # Capture before the model form mutates the instance in memory.
+        previous_company_id = request.user.company_id
         form = AccountSettingsForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
             form.save()
-            messages.success(request, _("Account settings updated."))
+            new_company = form.cleaned_data.get("company")
+            if new_company is not None and new_company.pk != previous_company_id:
+                # T2: switching company opens a membership request, never an
+                # implicit join. The affiliation is kept pending until an
+                # administrator of the target company approves it.
+                from .models import MembershipStatus
+
+                membership = new_company.request_membership(request.user)
+                if membership.status == MembershipStatus.APPROVED:
+                    request.user.company = new_company
+                    request.user.save(update_fields=["company"])
+                else:
+                    request.user.company = None
+                    request.user.save(update_fields=["company"])
+                    messages.success(
+                        request,
+                        _(
+                            "Une demande d'affiliation a été envoyée aux administrateurs "
+                            "de %(company)s. Une fois approuvée, elle apparaîtra sur votre profil."
+                        )
+                        % {"company": new_company.name},
+                    )
+                    return redirect("accounts:settings")
+            messages.success(request, _("Paramètres du compte mis à jour."))
             return redirect("accounts:settings")
     else:
         form = AccountSettingsForm(instance=request.user)
@@ -343,6 +586,48 @@ def account_settings(request):
         "accounts/settings.html",
         {"form": form},
     )
+
+
+@login_required
+@require_POST
+def company_membership_action(request, pk):
+    """
+    Approve or decline a pending company membership (T2).
+
+    Only an approved administrator of the company may act. The review is
+    recorded on the membership (``reviewed_by``/``reviewed_at``) for audit.
+    """
+    from django.contrib import messages
+
+    from .models import CompanyMembership
+
+    membership = get_object_or_404(
+        CompanyMembership.objects.select_related("company", "user"), pk=pk
+    )
+    if not membership.company.is_admin(request.user):
+        raise PermissionDenied(
+            _("Seul un administrateur de cette structure peut examiner les affiliations.")
+        )
+
+    action = request.POST.get("action")
+    if action == "approve":
+        membership.company.approve_membership(membership, reviewed_by=request.user)
+        messages.success(
+            request,
+            _("%(name)s est désormais membre de %(company)s.")
+            % {"name": membership.user.get_full_name() or membership.user.username,
+               "company": membership.company.name},
+        )
+    elif action == "decline":
+        membership.company.decline_membership(membership, reviewed_by=request.user)
+        messages.success(
+            request,
+            _("La demande d'affiliation de %(name)s a été refusée.")
+            % {"name": membership.user.get_full_name() or membership.user.username},
+        )
+    else:
+        messages.error(request, _("Action d'affiliation inconnue."))
+    return redirect("accounts:dashboard")
 
 
 @login_required
@@ -364,8 +649,8 @@ def change_email(request):
             messages.success(
                 request,
                 _(
-                    "A confirmation code has been sent to your new email. "
-                    "Enter it to finish the change."
+                    "Un code de confirmation a été envoyé à votre nouvelle adresse email. "
+                    "Saisissez-le pour finaliser le changement."
                 ),
             )
             return redirect("accounts:confirm_email")
@@ -388,5 +673,5 @@ class PasswordChangeView(DjangoPasswordChangeView):
     def form_valid(self, form):
         from django.contrib import messages
 
-        messages.success(self.request, _("Your password has been changed."))
+        messages.success(self.request, _("Votre mot de passe a été modifié."))
         return super().form_valid(form)

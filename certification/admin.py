@@ -55,18 +55,18 @@ class ProjectContributionAdmin(admin.ModelAdmin):
             resolved += 1
         self.message_user(
             request,
-            f"{resolved} dispute(s) resolved as '{outcome}'.",
+            f"{resolved} contestation(s) résolue(s) en tant que '{outcome}'.",
         )
 
-    @admin.action(description=_("Arbitrate: certify as declared"))
+    @admin.action(description=_("Arbitrer : certifier tel que déclaré"))
     def arbitrate_confirm(self, request, queryset):
         self._arbitrate(request, queryset, "confirm")
 
-    @admin.action(description=_("Arbitrate: side with the expert (reject)"))
+    @admin.action(description=_("Arbitrer : donner raison à l'expert (refuser)"))
     def arbitrate_reject(self, request, queryset):
         self._arbitrate(request, queryset, "reject")
 
-    @admin.action(description=_("Arbitrate: return to expert for confirmation"))
+    @admin.action(description=_("Arbitrer : renvoyer à l'expert pour confirmation"))
     def arbitrate_return_to_expert(self, request, queryset):
         self._arbitrate(request, queryset, "return_to_expert")
 

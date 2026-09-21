@@ -1,5 +1,5 @@
 ```yaml
-name: Deploy to VPS
+name: Deploy UrbanTrack to VPS
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   deploy:
-    name: Deploy application
+    name: Deploy to production
     runs-on: ubuntu-latest
 
     steps:
@@ -36,7 +36,7 @@ jobs:
             "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
             "echo 'SSH connection successful'"
 
-      - name: Deploy application
+      - name: Deploy UrbanTrack
         run: |
           ssh \
             -i ~/.ssh/github_deploy \
@@ -46,9 +46,9 @@ jobs:
 
           set -e
 
-          cd ~/UrbanTrack
+          cd /home/ubuntu/UrbanTrack
 
-          echo "==> Pulling latest code"
+          echo "==> Updating source code"
           git fetch origin main
           git reset --hard origin/main
 
@@ -64,13 +64,13 @@ jobs:
           echo "==> Collecting static files"
           python manage.py collectstatic --noinput
 
-          echo "==> Restarting application"
-          sudo systemctl restart gunicorn
+          echo "==> Restarting UrbanTrack"
+          sudo systemctl restart UrbanTrack.service
 
-          echo "==> Restarting Celery"
-          sudo systemctl restart celery
+          echo "==> Checking UrbanTrack status"
+          sudo systemctl is-active --quiet UrbanTrack.service
 
-          echo "==> Deployment completed"
+          echo "==> Deployment successful"
 
           EOF
 ```

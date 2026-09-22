@@ -162,12 +162,12 @@ USE_TZ = True
 
 # Static files
 
-STATIC_URL = "static/"
-STATICFILES_DIRS = [BASE_DIR / "static"]
+STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-MEDIA_URL = "media/"
-MEDIA_ROOT = BASE_DIR / "media"
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 
 # WhiteNoise serves the collected static files directly from the VPS (no nginx
 # required); CompressedManifestStorage adds hashing + gzip/brotli compression.

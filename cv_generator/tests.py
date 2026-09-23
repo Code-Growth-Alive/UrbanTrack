@@ -390,6 +390,26 @@ class CvViewTests(TestCase):
         builder = self.client.get(reverse("cv_generator:builder"), {"projects": [project_one.id]})
         self.assertContains(builder, f"projects={project_one.id}")
 
+    def test_world_bank_targeting_filters_publications_and_courses(self):
+        self.client.force_login(self.expert)
+        profile = self.expert.expert_profile
+        company = Company.objects.create(name="WB Target Corp")
+        profile.publications.create(title="Chosen pub", venue="Journal A", year=2020)
+        profile.publications.create(title="Excluded pub", venue="Journal B", year=2021)
+        chosen_course = profile.teaching_entries.create(title="Chosen course", institution="Univ A")
+        profile.teaching_entries.create(title="Excluded course", institution="Univ B")
+        chosen_pub = profile.publications.get(title="Chosen pub")
+
+        response = self.client.get(
+            reverse("cv_generator:preview", args=["world_bank_new"]),
+            {"publications": [chosen_pub.id], "teaching": [chosen_course.id], "format": "html"},
+        )
+        html = response.content.decode()
+        self.assertIn("Chosen pub", html)
+        self.assertNotIn("Excluded pub", html)
+        self.assertIn("Chosen course", html)
+        self.assertNotIn("Excluded course", html)
+
     def test_profile_edit_updates_skills_and_trainings(self):
         from accounts.portfolio_forms import SkillsForm
 

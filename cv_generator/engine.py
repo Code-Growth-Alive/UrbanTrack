@@ -435,11 +435,11 @@ def _world_bank_context(profile, user, declared, experiences, indicators_items):
     publications = [
         {
             "authors": user.get_full_name() or user.username,
-            "year": publication.year or "",
-            "title": publication.title,
-            "venue": publication.venue,
+            "year": publication["year"],
+            "title": publication["title"],
+            "venue": publication["venue"],
         }
-        for publication in profile.publications.all()
+        for publication in declared["sections"]["publications"]
     ]
     teaching = {
         "masters": [
@@ -455,11 +455,11 @@ def _world_bank_context(profile, user, declared, experiences, indicators_items):
         "moocs": [],
         "courses": [
             {
-                "title": entry.title,
-                "institution": entry.institution,
+                "title": entry["title"],
+                "institution": entry["institution"],
                 "role": "",
             }
-            for entry in profile.teaching_entries.all()
+            for entry in declared["sections"]["teaching"]
         ],
     }
     positions = [

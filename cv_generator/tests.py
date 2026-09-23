@@ -302,7 +302,9 @@ class CvViewTests(TestCase):
         self.client.force_login(self.expert)
         preview = self.client.get(reverse("cv_generator:preview", args=["afd"]))
         self.assertEqual(preview.status_code, 200)
-        self.assertIn("Moussa Fall", preview.content.decode())
+        self.assertEqual(preview["Content-Type"], "application/pdf")
+        self.assertIn("inline", preview["Content-Disposition"])
+        self.assertTrue(preview.content.startswith(b"%PDF"))
 
         pdf_response = self.client.get(reverse("cv_generator:pdf", args=["academic_harvard_mit"]))
         self.assertEqual(pdf_response.status_code, 200)
@@ -379,7 +381,7 @@ class CvViewTests(TestCase):
 
         response = self.client.get(
             reverse("cv_generator:preview", args=["afd"]),
-            {"projects": [project_one.id]},
+            {"projects": [project_one.id], "format": "html"},
         )
         html = response.content.decode()
         self.assertIn("Target project A", html)

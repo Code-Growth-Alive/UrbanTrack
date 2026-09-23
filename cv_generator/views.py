@@ -1,6 +1,6 @@
 """
-CV generator views: builder/selector screen, per-skin preview (HTML) and
-PDF export via WeasyPrint. Only certified facts ever reach a CV.
+CV generator views: builder/selector screen, per-skin inline A4 PDF preview
+and PDF export via WeasyPrint. Only certified facts ever reach a CV.
 """
 
 from django.contrib import messages
@@ -133,11 +133,28 @@ def cv_builder(request):
 
 @login_required
 def cv_preview(request, skin):
-    """Standalone HTML preview of one skin."""
+    """Inline A4 PDF preview of one skin (HTML fallback for print/debug)."""
     if skin not in CV_SKINS:
         messages.error(request, _("Modèle de CV inconnu."))
         return redirect("cv_generator:builder")
-    html = render_cv_html(_context_for(request, _lang(request)), skin, _lang(request))
+
+    lang = _lang(request)
+    html = render_cv_html(_context_for(request, lang), skin, lang)
+
+    if request.GET.get("format") != "html":
+        try:
+            from weasyprint import HTML
+
+            pdf = HTML(string=html, base_url="").write_pdf()
+        except ImportError:
+            pdf = None
+        if pdf is not None:
+            response = HttpResponse(pdf, content_type="application/pdf")
+            name = request.user.get_full_name() or request.user.username
+            filename = f"CV_{name.replace(' ', '_')}_{skin}_apercu.pdf"
+            response["Content-Disposition"] = f'inline; filename="{filename}"'
+            return response
+
     return HttpResponse(html)
 
 

@@ -103,7 +103,7 @@ projects/           Project model + publishing flow + company workspace; optiona
                     intervention volume + personal window, thematic tags, filterable dir
 certification/      ProjectContribution + ExpertInvitation flows,
                     magic-link landing AND logged-in review route          [Epic 3-5]
-cv_generator/       Multi-skin CV engine (academic Harvard/MIT · AFD · World Bank,
+cv_generator/       Multi-skin CV engine (AFD · World Bank,
                     FR/EN), certified experiences vs. self-declared sections with
                     explicit marker/legend (T4/T5), certified synthesis indicators
                     computed from confirmed contributions (T7), preview + WeasyPrint
@@ -161,7 +161,7 @@ builder examples (all three skins, FR/EN) and the public profile.
 | 4 | Certification & public profile (directory, project pages, cross-links, trust score) | ✅ done |
 | 5 | Edge cases: `process_invitations` command (reminders/expiry), disputes + admin arbitration actions | ✅ done |
 | 6 | Email infrastructure (SendGrid) & open/click tracking | 🚧 console backend works; provider integration pending |
-| 7 | Multi-template CV generator (WeasyPrint): Harvard/MIT, AFD and World Bank skins, FR/EN + portfolio self-edit | ✅ done |
+| 7 | Multi-template CV generator (WeasyPrint): AFD and World Bank skins, FR/EN + portfolio self-edit | ✅ done |
 | 8 | Job board: publish, apply, accept/decline notifications, deadline reminders | ✅ done |
 | 9 | External connectors (World Bank API, AFD API) | pending |
 | 10 | AI matchmaking & success prediction | pending |

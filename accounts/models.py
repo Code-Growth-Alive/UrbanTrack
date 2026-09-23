@@ -426,7 +426,6 @@ class User(AbstractUser):
 class CvTemplate(models.TextChoices):
     """Pluggable CV skins consumed by the cv_generator app (Epic 7)."""
 
-    ACADEMIC_HARVARD_MIT = "academic_harvard_mit", _("Académique (Harvard/MIT)")
     AFD = "afd", _("AFD")
     WORLD_BANK = "world_bank_new", _("Banque mondiale")
 
@@ -517,7 +516,7 @@ class ExpertProfile(models.Model):
         _("modèle de CV"),
         max_length=40,
         choices=CvTemplate.choices,
-        default=CvTemplate.ACADEMIC_HARVARD_MIT,
+        default=CvTemplate.WORLD_BANK,
         help_text=_("Réservé au générateur de CV."),
     )
     updated_at = models.DateTimeField(_("mis à jour le"), auto_now=True)

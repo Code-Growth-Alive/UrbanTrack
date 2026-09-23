@@ -37,7 +37,7 @@ class ExpertProfileSignalTests(TestCase):
     def test_profile_auto_created_for_experts(self):
         expert = make_expert()
         profile = ExpertProfile.objects.get(user=expert)
-        self.assertEqual(profile.cv_template, CvTemplate.ACADEMIC_HARVARD_MIT)
+        self.assertEqual(profile.cv_template, CvTemplate.WORLD_BANK)
 
     def test_profile_created_for_all_users(self):
         user = User.objects.create_user(username="late", email="late@example.com", role=Role.USER)
@@ -65,10 +65,10 @@ class PortfolioTests(TestCase):
         titles = list(self.profile.trainings.values_list("title", flat=True))
         self.assertEqual(titles, ["New cert", "Old cert"])
 
-    def test_cv_template_choices_cover_all_three_skins(self):
+    def test_cv_template_choices_cover_all_skins(self):
         self.assertEqual(
             set(CvTemplate.values),
-            {"academic_harvard_mit", "afd", "world_bank_new"},
+            {"afd", "world_bank_new"},
         )
 
     def test_absolute_url_uses_permanent_oxid(self):

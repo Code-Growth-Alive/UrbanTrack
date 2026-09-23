@@ -162,7 +162,7 @@ class DataContractTests(TestCase):
         broken = demo_cv_context()
         broken["is_demo"] = "yes"
         with self.assertRaises(CvContextError):
-            render_cv_html(broken, "academic_harvard_mit", "en")
+            render_cv_html(broken, "afd", "en")
 
     def test_world_bank_new_context_validates(self):
         minimal = {
@@ -212,7 +212,7 @@ class EngineTests(TestCase):
 
         from docx import Document
 
-        docx = render_cv_docx(demo_cv_context("en"), "academic_harvard_mit", "en")
+        docx = render_cv_docx(demo_cv_context("en"), "afd", "en")
         self.assertTrue(docx.startswith(b"PK"))
         document = Document(BytesIO(docx))
         text = "\n".join(paragraph.text for paragraph in document.paragraphs)
@@ -291,9 +291,8 @@ class CvViewTests(TestCase):
     def test_builder_lists_skins_and_examples(self):
         self.client.force_login(self.expert)
         response = self.client.get(reverse("cv_generator:builder"))
-        self.assertContains(response, "Académique")
-        self.assertContains(response, "AFD")
         self.assertContains(response, "Banque mondiale")
+        self.assertContains(response, "AFD")
         self.assertContains(response, "example=1")
         self.assertNotContains(response, "Language:")
         self.assertNotContains(response, "Generate my CV")
@@ -306,7 +305,7 @@ class CvViewTests(TestCase):
         self.assertIn("inline", preview["Content-Disposition"])
         self.assertTrue(preview.content.startswith(b"%PDF"))
 
-        pdf_response = self.client.get(reverse("cv_generator:pdf", args=["academic_harvard_mit"]))
+        pdf_response = self.client.get(reverse("cv_generator:pdf", args=["world_bank_new"]))
         self.assertEqual(pdf_response.status_code, 200)
         self.assertEqual(pdf_response["Content-Type"], "application/pdf")
 

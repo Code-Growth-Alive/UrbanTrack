@@ -7,79 +7,77 @@
 <style>
   @page {
     size: A4; margin: 16mm;
-    @bottom-center { content: counter(page) " / " counter(pages); font-size: 8pt; color: #7a93ad; }
+    @bottom-center { content: counter(page) " / " counter(pages); font-size: 8pt; color: #666; }
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: "DejaVu Sans", Helvetica, Arial, sans-serif; font-size: 10pt; color: #1a1a1a; line-height: 1.5; }
-  header { border-bottom: 4pt solid #0055a4; padding-bottom: 10pt; margin-bottom: 4pt;
-           background: linear-gradient(90deg, #002244 0%, #003a75 100%); margin: -10mm -10mm 0;
-           padding: 18pt 10mm 12pt; color: #fff; }
-  h1 { font-size: 19pt; font-weight: bold; line-height: 1.05; overflow-wrap: anywhere; word-break: break-word; }
-  .headline { margin-top: 2pt; font-size: 10.5pt; color: #9fc3e8; }
-  .meta { margin-top: 8pt; font-size: 9pt; color: #cfe0f2; }
-  .rule { height: 3pt; background: #33a02c; width: 42pt; margin-top: 6pt; }
-  main { margin-top: 12pt; }
-  h2 { font-size: 10.5pt; text-transform: uppercase; letter-spacing: 1.1pt; color: #0055a4;
-       border-bottom: 0.75pt solid #b9cfe4; padding-bottom: 3pt; margin: 14pt 0 6pt; font-weight: bold; }
-  p.bio { text-align: justify; color: #333; }
+  body { font-family: "DejaVu Sans", Helvetica, Arial, sans-serif; font-size: 10pt; color: #111; line-height: 1.5; }
+  header { border-bottom: 3pt solid #000; padding-bottom: 10pt; margin-bottom: 4pt; }
+  h1 { font-size: 20pt; font-weight: 800; letter-spacing: .3pt; line-height: 1.05; text-transform: uppercase; overflow-wrap: anywhere; word-break: break-word; }
+  .headline { margin-top: 3pt; font-size: 11pt; font-weight: 600; color: #333; }
+  .meta { margin-top: 8pt; font-size: 9pt; color: #555; }
+  .rule { height: 2pt; background: #000; width: 42pt; margin-top: 8pt; }
+  main { margin-top: 14pt; }
+  h2 { font-size: 10.5pt; text-transform: uppercase; letter-spacing: 1.2pt; color: #000; font-weight: 800;
+       border-bottom: 1pt solid #000; padding-bottom: 3pt; margin: 15pt 0 7pt; }
+  p.bio { text-align: justify; color: #222; }
 
   ul.skills { list-style: none; }
-  ul.skills li::before { content: "■"; color: #0055a4; font-size: 7pt; vertical-align: 1.5pt; margin-right: 5pt; }
+  ul.skills li::before { content: "■"; color: #000; font-size: 7pt; vertical-align: 1.5pt; margin-right: 5pt; }
   ul.skills li { display: inline-block; margin-right: 9pt; margin-bottom: 2.5pt; font-size: 9.5pt; }
 
   ul.plain { list-style: none; }
   ul.plain li { margin-bottom: 3pt; font-size: 9.5pt; }
-  ul.bullets { list-style: disc; margin-left: 13pt; color: #333; }
+  ul.bullets { list-style: disc; margin-left: 13pt; color: #222; }
   ul.bullets li { margin-bottom: 2pt; }
 
   /* Section 3 — points forts */
   ul.strengths { list-style: none; }
   ul.strengths li { position: relative; padding-left: 12pt; margin-bottom: 4pt; font-size: 9.5pt; }
-  ul.strengths li::before { content: "›"; position: absolute; left: 0; color: #33a02c; font-weight: bold; }
+  ul.strengths li::before { content: "›"; position: absolute; left: 0; color: #000; font-weight: bold; }
 
   /* Section 4 — indicateurs de synthèse (calculés et certifiés automatiquement) */
   .indicator-block { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8pt 12pt; margin-bottom: 4pt; }
-  .indicator { border-left: 2pt solid #0055a4; padding-left: 6pt; }
-  .indicator .num { font-size: 14pt; font-weight: bold; color: #002244; line-height: 1; }
-  .indicator .lbl { font-size: 7.5pt; color: #555; margin-top: 1pt; }
-  p.legend { font-size: 7.5pt; color: #7a93ad; font-style: italic; margin-top: 2pt; }
+  .indicator { border-left: 2pt solid #000; padding-left: 6pt; }
+  .indicator .num { font-size: 15pt; font-weight: 800; color: #000; line-height: 1; }
+  .indicator .lbl { font-size: 7.5pt; color: #555; margin-top: 2pt; text-transform: uppercase; letter-spacing: .5pt; }
+  p.legend { font-size: 7.5pt; color: #666; font-style: italic; margin-top: 2pt; }
 
   /* T4/T5 auto-déclaration : repère et légende partagés par tous les skins */
-  .declared-tag { font-size: 7.5pt; font-weight: normal; letter-spacing: 0.4pt; text-transform: uppercase;
-                  color: #33a02c; border: 0.6pt solid #6fbf73; padding: 1pt 5pt; border-radius: 8pt; vertical-align: 2pt; }
+  .declared-tag { font-size: 7.5pt; font-weight: 600; letter-spacing: .4pt; text-transform: uppercase;
+                  color: #000; border: 0.6pt solid #000; padding: 1pt 5pt; vertical-align: 2pt; }
   .declared-legend { margin-top: 10pt; font-size: 8pt; color: #555; font-style: italic;
-                     border-top: 0.4pt dotted #9fc3e8; padding-top: 4pt; }
+                     border-top: 0.4pt dotted #999; padding-top: 4pt; }
 
   /* Section 5 — domaines d'expertise, avec hiérarchie famille > détail */
   .domain { margin-bottom: 4pt; font-size: 9.5pt; }
-  .domain .family { font-weight: bold; color: #002244; }
-  .domain .items { color: #444; }
+  .domain .family { font-weight: bold; color: #000; }
+  .domain .items { color: #333; }
 
   /* Sections tabulaires : formation, autres formations, langues */
   table.grid { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin-bottom: 4pt; }
-  table.grid th, table.grid td { border: 0.5pt solid #cfe0f2; padding: 4pt 8pt; text-align: left; vertical-align: top; }
-  table.grid th { background: #eef4fb; color: #0055a4; font-size: 8pt; text-transform: uppercase; letter-spacing: .4pt; }
+  table.grid th, table.grid td { border: 0.5pt solid #ccc; padding: 4pt 8pt; text-align: left; vertical-align: top; }
+  table.grid th { background: #000; color: #fff; font-size: 8pt; text-transform: uppercase; letter-spacing: .4pt; }
   table.grid td.center, table.grid th.center { text-align: center; }
 
   /* Sections 11/12 — postes et projets */
   .exp { margin-bottom: 9pt; page-break-inside: avoid; }
-  .exp-title { font-weight: bold; color: #002244; }
-  .exp-period { float: right; font-size: 8.5pt; color: #555; }
-  .exp-sub { font-size: 9pt; color: #444; font-style: italic; }
-  .exp ul { list-style: disc; margin: 3pt 0 0 13pt; color: #333; }
-  .exp p.desc { font-size: 9.5pt; color: #333; margin-top: 3pt; }
+  .exp-title { font-weight: bold; color: #000; }
+  .exp-period { float: right; font-size: 8.5pt; color: #555; font-style: italic; }
+  .exp-sub { font-size: 9pt; color: #333; font-style: italic; }
+  .exp ul { list-style: disc; margin: 3pt 0 0 13pt; color: #222; }
+  .exp p.desc { font-size: 9.5pt; color: #222; margin-top: 3pt; }
 
   .badge { display: inline-block; font-size: 7pt; font-weight: bold; letter-spacing: .3pt;
-           padding: 1pt 5pt; border-radius: 2pt; margin-left: 5pt; vertical-align: 1pt; }
-  .badge.confirmed { background: #e3f3e1; color: #256029; border: 0.5pt solid #9fd39a; }
-  .badge.declared { background: #fbf1da; color: #8a6d1f; border: 0.5pt solid #e3c878; }
+           padding: 1pt 5pt; margin-left: 5pt; vertical-align: 1pt; }
+  .badge.confirmed { background: #000; color: #fff; }
+  .badge.declared { background: #fff; color: #000; border: 0.5pt solid #000; }
 
   /* Sections 13/14/15 — publications, enseignement, médias */
   .teach-group { margin-bottom: 6pt; }
-  .teach-group h3 { font-size: 8.5pt; text-transform: uppercase; letter-spacing: .5pt; color: #33a02c; margin-bottom: 2pt; }
+  .teach-group h3 { font-size: 8.5pt; text-transform: uppercase; letter-spacing: .5pt; color: #000; font-weight: bold; margin-bottom: 2pt; }
 
-  footer { margin-top: 18pt; border-top: 1.5pt solid #0055a4; padding-top: 6pt; font-size: 8pt; color: #0055a4; }
-  footer .cert { display: block; margin-bottom: 3pt; color: #444; font-style: italic; }
+  footer { margin-top: 18pt; border-top: 2pt solid #000; padding-top: 6pt; font-size: 8pt; color: #000; }
+  footer .cert { display: block; margin-bottom: 3pt; color: #333; font-style: italic; }
 </style>
 </head>
 <body>

@@ -73,6 +73,11 @@ jobs:
         run: |
           ssh-keygen -lf ~/.ssh/github_deploy
 
+      - name: Show public key to authorize on the VPS
+        run: |
+          echo "==> Paste this line into VPS ~/.ssh/authorized_keys =="
+          ssh-keygen -y -f ~/.ssh/github_deploy
+
       - name: Test SSH connection
         run: |
           ssh \

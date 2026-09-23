@@ -69,10 +69,15 @@ jobs:
           printf '%s\n' "${{ secrets.VPS_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
+      - name: Show deployment key fingerprint
+        run: |
+          ssh-keygen -lf ~/.ssh/github_deploy
+
       - name: Test SSH connection
         run: |
           ssh \
             -i ~/.ssh/github_deploy \
+            -o IdentitiesOnly=yes \
             -o BatchMode=yes \
             -o StrictHostKeyChecking=yes \
             "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
@@ -82,6 +87,7 @@ jobs:
         run: |
           ssh \
             -i ~/.ssh/github_deploy \
+            -o IdentitiesOnly=yes \
             -o BatchMode=yes \
             -o StrictHostKeyChecking=yes \
             "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" << 'EOF'

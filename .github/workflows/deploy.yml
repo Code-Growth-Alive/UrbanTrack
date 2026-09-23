@@ -105,10 +105,25 @@ jobs:
           git fetch origin main
           git reset --hard origin/main
 
+          echo "==> Ensuring a working virtual environment"
+          if [ ! -x .venv/bin/pip ]; then
+            echo "==> .venv is missing pip; recreating it"
+            sudo chown -R "$(whoami)":"$(whoami)" .venv 2>/dev/null || true
+            rm -rf .venv
+            if ! python3 -m venv .venv; then
+              echo "==> python3-venv not installed; installing it"
+              sudo apt-get update -qq
+              sudo apt-get install -y -qq python3.12-venv
+              rm -rf .venv
+              python3 -m venv .venv
+            fi
+          fi
+
           echo "==> Activating virtual environment"
           source .venv/bin/activate
 
           echo "==> Installing dependencies"
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
 
           echo "==> Running migrations"

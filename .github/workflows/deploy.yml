@@ -119,6 +119,13 @@ jobs:
             fi
           fi
 
+          echo "==> Ensuring PDF system libraries"
+          sudo dpkg -s libpango-1.0-0 >/dev/null 2>&1 || {
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq libpango-1.0-0 libpangocairo-1.0-0 libcairo2 \
+              libgdk-pixbuf-2.0-0 shared-mime-info
+          }
+
           echo "==> Activating virtual environment"
           source .venv/bin/activate
 

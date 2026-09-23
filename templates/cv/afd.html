@@ -1,64 +1,71 @@
-{# AFD skin: burgundy accents, sans-serif, institutional French-agency look. #}
+{# AFD skin: clean institutional document, burgundy accents kept subtle. #}
 <!DOCTYPE html>
 <html lang="{{ lang }}">
 <head>
 <meta charset="UTF-8">
 <title>{{ cv.identity.name }}: {{ labels.curriculum }}</title>
 <style>
-  @page { size: A4; margin: 0 16mm 14mm; }
+  @page {
+    size: A4; margin: 18mm 16mm 16mm;
+    @bottom-center { content: counter(page) " / " counter(pages); font-size: 8pt; color: #666; }
+  }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: "DejaVu Sans", Helvetica, Arial, sans-serif; font-size: 10pt; color: #222; line-height: 1.5; }
-  header { background: #7c1127; color: #fff; margin: 0 -16mm; padding: 22pt 16mm 16pt; }
-  header .band { border-bottom: 3pt solid #d4a017; padding-bottom: 12pt; }
-  h1 { font-size: 19pt; font-weight: bold; letter-spacing: 0.25pt; line-height: 1.05; overflow-wrap: anywhere; word-break: break-word; }
-  .headline { margin-top: 2pt; font-size: 11pt; color: #f3d9b0; }
-  .meta { margin-top: 8pt; font-size: 9pt; color: #f0e3ea; }
-  h2 { font-size: 10.5pt; text-transform: uppercase; letter-spacing: 1.2pt; color: #7c1127;
-       margin: 15pt 0 6pt; padding-left: 7pt; border-left: 3pt solid #d4a017; font-weight: bold; }
-  p.bio { text-align: justify; color: #333; }
-  ul.skills { list-style: none; }
-  ul.skills li { display: inline-block; background: #f7ecce; border: 0.5pt solid #d4a017;
-                 border-radius: 8pt; padding: 1.5pt 7pt; margin: 0 3pt 3pt 0; font-size: 8.5pt; }
-  .exp { margin-bottom: 9pt; page-break-inside: avoid; }
-  .exp-head { border-bottom: 0.5pt dotted #bbb; padding-bottom: 2pt; }
-  .exp-title { font-weight: bold; color: #5a0d1d; }
-  .exp-period { float: right; font-size: 8.5pt; color: #666; }
-  .exp-sub { font-size: 9pt; color: #444; }
-  .exp ul { list-style: square; margin: 3pt 0 0 13pt; color: #333; }
-  footer { margin-top: 18pt; background: #f5f0f2; margin-left: -16mm; margin-right: -16mm;
-           padding: 8pt 16mm; font-size: 8pt; color: #7c1127; }
-  /* T4/T5 declared (non-certified) sections share the same look across skins */
-  section.declared { margin-top: 15pt; }
-  .declared-tag { font-size: 7.5pt; font-weight: normal; letter-spacing: 0.4pt; text-transform: uppercase;
-                  color: #8a3; border: 0.6pt solid #c97; padding: 1pt 5pt; border-radius: 8pt; vertical-align: 2pt; }
-  .declared-note { font-size: 8.5pt; color: #666; font-style: italic; margin-bottom: 6pt; }
-  .dpos { margin-bottom: 8pt; page-break-inside: avoid; }
-  .dpos-period { float: right; font-size: 8.5pt; color: #666; }
-  .dpos-title { font-weight: bold; color: #5a0d1d; }
-  .dpos-sub { font-size: 9pt; color: #444; }
-  .dpos-desc { font-size: 9pt; color: #444; margin: 2pt 0 0; }
-  .pub-title { font-weight: bold; }
-  .declared-legend { margin-top: 10pt; font-size: 8pt; color: #666; font-style: italic;
-                     border-top: 0.4pt dotted #bbb; padding-top: 4pt; }
-  /* T7: certified synthesis indicators row */
-  .indicator-row { display: flex; gap: 6pt; }
-  .indicator-cell { flex: 1; background: #f7ecce; border: 0.5pt solid #d4a017;
-                    border-radius: 3pt; padding: 5pt 8pt; }
-  .indicator-value { display: block; font-size: 14pt; font-weight: bold; color: #5a0d1d; }
-  .indicator-label { font-size: 7.5pt; letter-spacing: 0.3pt; text-transform: uppercase; color: #666; }
+  body { font-family: "DejaVu Sans", Helvetica, Arial, sans-serif; font-size: 9.5pt; color: #111; line-height: 1.45; }
+  header { border-bottom: 2pt solid #7c1127; padding-bottom: 8pt; margin-bottom: 10pt; }
+  h1 { font-size: 16.5pt; font-weight: 700; letter-spacing: 0.4pt; text-transform: uppercase;
+       line-height: 1.1; color: #7c1127; overflow-wrap: anywhere; word-break: break-word; }
+  .headline { margin-top: 2pt; font-size: 10pt; font-style: italic; color: #444; }
+  .meta { margin-top: 5pt; font-size: 8.3pt; color: #333; }
+  .meta strong { color: #7c1127; }
+  h2 { font-size: 9pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4pt;
+       color: #7c1127; border-bottom: 0.7pt solid #c9a0ab; padding-bottom: 2.5pt;
+       margin: 13pt 0 6.5pt; }
+  p.bio { text-align: justify; }
+  ul { list-style: none; }
+  ul.skills li { display: inline; font-size: 9.5pt; }
+  ul.skills li + li::before { content: " · "; }
+  .exp { margin-bottom: 7.5pt; page-break-inside: avoid; }
+  .exp-title { font-weight: 700; font-size: 10pt; color: #111; }
+  .exp-period { float: right; font-size: 8.5pt; color: #444; }
+  .exp-sub { font-size: 9pt; font-style: italic; color: #333; }
+  .exp p.desc, .exp ul { margin-top: 2pt; }
+  .exp ul { list-style: disc; margin-left: 14pt; }
+  .badge { font-size: 7pt; font-weight: 700; letter-spacing: .5pt; text-transform: uppercase;
+           margin-left: 4pt; color: #2a6e3b; font-style: normal; }
+  .badge.declared { color: #6b6b6b; font-style: italic; }
+  table.grid { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+  table.grid th, table.grid td { padding: 3pt 6pt; text-align: left; vertical-align: top; border: none; }
+  table.grid th { font-size: 8pt; text-transform: uppercase; letter-spacing: .8pt;
+                  color: #7c1127; border-bottom: 0.8pt solid #c9a0ab; }
+  table.grid td { border-bottom: 0.4pt solid #e3d4d8; }
+  .declared-tag { font-size: 7pt; font-weight: 700; letter-spacing: .5pt; text-transform: uppercase;
+                  color: #6b6b6b; vertical-align: 1pt; }
+  .declared-note, .declared-legend { font-size: 8pt; color: #555; font-style: italic; }
+  .dpos { margin-bottom: 6pt; page-break-inside: avoid; }
+  .dpos-title { font-weight: 700; }
+  .dpos-sub { color: #333; }
+  .dpos-desc { color: #444; }
+  .indicator-block h2 { margin-top: 14pt; }
+  .indicator-row { display: table; width: 100%; border-collapse: separate; border-spacing: 4pt 0; margin: 0 -4pt; }
+  .indicator-cell { display: table-cell; width: 1%; border-left: 2.5pt solid #7c1127; padding: 3pt 6pt; }
+  .indicator-value { display: block; font-size: 13.5pt; font-weight: 700; color: #7c1127; }
+  .indicator-label { font-size: 7pt; letter-spacing: .3pt; text-transform: uppercase; color: #555; }
+  footer { margin-top: 16pt; border-top: 0.8pt solid #c9a0ab; padding-top: 5pt;
+           text-align: center; font-size: 8pt; color: #555; }
+  footer .cert { display: block; margin-bottom: 2.5pt; font-style: italic; }
+  section.declared { margin-top: 14pt; }
 </style>
 </head>
 <body>
 <header>
-  <div class="band">
-    <h1>{{ cv.identity.name }}</h1>
-    {% if cv.identity.headline %}<p class="headline">{{ cv.identity.headline }}</p>{% endif %}
-    <p class="meta">
-      {{ labels.professional_id }} : <strong>{{ cv.identity.professional_id }}</strong>
-      &nbsp;·&nbsp; {{ cv.identity.email }}
-      {% if cv.identity.city %}&nbsp;·&nbsp; {{ cv.identity.city }}, {{ cv.identity.country }}{% endif %}
-    </p>
-  </div>
+  <h1>{{ cv.identity.name }}</h1>
+  {% if cv.identity.headline %}<p class="headline">{{ cv.identity.headline }}</p>{% endif %}
+  <p class="meta">
+    {% if cv.identity.professional_id %}{{ labels.professional_id }} : <strong>{{ cv.identity.professional_id }}</strong>{% endif %}
+    &nbsp;·&nbsp; {{ cv.identity.email }}
+    {% if cv.identity.city %}&nbsp;·&nbsp; {{ cv.identity.city }}{% if cv.identity.country %}, {{ cv.identity.country }}{% endif %}{% endif %}
+    {% if cv.identity.nationality %}&nbsp;·&nbsp; {{ cv.identity.nationality }}{% endif %}
+  </p>
 </header>
 
 {% if cv.bio %}
@@ -72,25 +79,26 @@
 <h2>{{ labels.experience }}</h2>
 {% for exp in cv.experiences %}
 <div class="exp">
-  <div class="exp-head">
-    <span class="exp-period">{{ exp.period }}</span>
-    <span class="exp-title">{{ exp.title }}</span>: {{ exp.role }}
-    <p class="exp-sub">{{ labels.client }} : {{ exp.client }}</p>
-  </div>
-  <ul>
-    {% for bullet in exp.bullets %}<li>{{ bullet }}</li>{% endfor %}
-  </ul>
+  <span class="exp-period">{{ exp.period }}</span>
+  <p class="exp-title">{{ exp.title }}{% if exp.status != "confirmed" %} <span class="badge declared">{{ labels.status_declared }}</span>{% endif %}</p>
+  <p class="exp-sub">{{ exp.role }}{% if exp.client %}{% if exp.role %} · {% endif %}{{ labels.client }} : {{ exp.client }}{% endif %}{% if exp.country %}{% if exp.role or exp.client %} · {% endif %}{{ exp.country }}{% endif %}</p>
+  {% if exp.bullets %}
+  <ul>{% for bullet in exp.bullets %}<li>{{ bullet }}</li>{% endfor %}</ul>
+  {% elif exp.description %}
+  <p class="desc">{{ exp.description }}</p>
+  {% endif %}
 </div>
 {% endfor %}
 {% endif %}
 
 {% if cv.trainings %}
 <h2>{{ labels.trainings }}</h2>
-<ul style="list-style:none">
+<table class="grid">
+  <tr><th>{{ labels.date }}</th><th>{{ labels.institution }}</th><th>{{ labels.degree }}</th></tr>
   {% for t in cv.trainings %}
-  <li><strong>{{ t.degree }}</strong>, {{ t.institution }}{% if t.year %} ({{ t.year }}){% endif %}</li>
+  <tr><td>{{ t.year }}</td><td>{{ t.institution }}</td><td>{{ t.degree }}</td></tr>
   {% endfor %}
-</ul>
+</table>
 {% endif %}
 
 {% if cv.skills %}
@@ -103,6 +111,9 @@
 {% include "cv/_declared_sections.html" %}
 
 <footer>
+  {% if cv.certification %}
+  <span class="cert">{{ labels.certified_conform }} {{ cv.certification.place }}{% if cv.certification.date %}, {{ labels.on_date }} {{ cv.certification.date }}{% endif %}.</span>
+  {% endif %}
   {{ labels.certified_cv }} · {{ labels.generated_on }} {{ today }} · {{ labels.references }}
 </footer>
 </body>

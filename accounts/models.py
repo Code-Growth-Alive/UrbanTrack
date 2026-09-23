@@ -309,6 +309,16 @@ class User(AbstractUser):
         blank=True,
         help_text=_("Utilisé pour faire expirer le code 24 heures après son émission."),
     )
+    email_confirmed_at = models.DateTimeField(
+        _("email confirmé le"),
+        null=True,
+        blank=True,
+        help_text=_(
+            "Date de la confirmation de l'adresse email. Vide tant qu'aucun email "
+            "n'a jamais été confirmé : distingue une première inscription d'un "
+            "changement d'email en attente."
+        ),
+    )
 
     REQUIRED_FIELDS = ["email"]
 

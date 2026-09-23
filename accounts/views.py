@@ -357,11 +357,13 @@ class ConfirmEmailView(FormView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        # A first-time signup is a user who never confirmed any email: the
-        # session marker set by SignUpView gives an honest signal.
+        # A first-time signup is a user who never confirmed any email. The
+        # "email_confirmed_at" timestamp is only set on successful confirmation,
+        # so it keeps working even if the signup session (and thus the
+        # "pending_confirm_email" marker) is lost.
         context = super().get_context_data(**kwargs)
         context["first_time_signup"] = (
-            self.request.session.get("pending_confirm_email") == self.request.user.email
+            not self.request.user.email_confirmed and self.request.user.email_confirmed_at is None
         )
         return context
 
@@ -389,22 +391,23 @@ def resend_confirmation_code(request):
 def correct_signup_email(request):
     """
     Let a first-time signup fix a mistyped email before the account is
-    purged. Restricted to unconfirmed accounts that just signed up (the
-    session marker set by SignUpView), so a confirmed account's email can
-    never be redirected by this route.
+    purged. Restricted to accounts that never confirmed any email (i.e. only
+    fresh signups, detected via ``email_confirmed_at``), so a confirmed
+    account's email can never be redirected by this route and a pending
+    email change keeps going through the settings form.
     """
     from django.contrib import messages
 
     user = request.user
-    original_email = request.session.get("pending_confirm_email")
-    if user.email_confirmed or original_email != user.email:
+    if user.email_confirmed or user.email_confirmed_at is not None:
         return redirect("accounts:dashboard")
     form = EmailChangeForm(request.POST, instance=user)
+    old_email = user.email
     if form.is_valid():
         new_email = form.cleaned_data["email"]
-        user = form.save(commit=False)
-        if user.username == original_email:
+        if user.username == old_email:
             user.username = new_email
+        user.email = new_email
         user.email_confirmed = False
         user.save()
         issue_confirmation_code(user)

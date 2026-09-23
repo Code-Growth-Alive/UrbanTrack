@@ -268,6 +268,56 @@ class ConfirmEmailTests(TestCase):
         self.assertNotEqual(self.user.confirmation_code, old)
 
 
+class SignupEmailCorrectionTests(TestCase):
+    def setUp(self):
+        self.client.post(reverse("accounts:signup"), SIGNUP_PAYLOAD)
+        self.user = User.objects.get(email="aminata@example.com")
+        self.assertIsNone(self.user.email_confirmed_at)
+
+    def test_first_time_signup_can_correct_email_after_session_loss(self):
+        # A fresh browser/session loses the signup marker, but the user can
+        # log back in and must still be able to correct a mistyped email.
+        self.client.logout()
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("accounts:confirm_email"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Corriger mon email")
+
+        response = self.client.post(
+            reverse("accounts:correct_signup_email"), {"email": "sow.correct@example.com"}
+        )
+        self.assertRedirects(response, reverse("accounts:confirm_email"))
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, "sow.correct@example.com")
+        # The login username followed the email (signup convention).
+        self.assertEqual(self.user.username, "sow.correct@example.com")
+        self.assertFalse(self.user.email_confirmed)
+        self.assertIsNone(self.user.email_confirmed_at)
+        self.assertEqual(len(self.user.confirmation_code), 6)
+
+    def test_pending_email_change_cannot_correct_signup_email(self):
+        confirm_email(self.user, self.user.confirmation_code)
+        response = self.client.post(reverse("accounts:change_email"), {"email": "new@example.com"})
+        self.assertRedirects(response, reverse("accounts:confirm_email"))
+
+        response = self.client.post(
+            reverse("accounts:correct_signup_email"), {"email": "hijack@example.com"}
+        )
+        # Already confirmed once -> correction is a signed-out redirect.
+        self.assertRedirects(
+            response,
+            reverse("accounts:dashboard"),
+            fetch_redirect_response=False,
+        )
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, "new@example.com")
+
+    def test_confirm_page_offers_other_account_login(self):
+        response = self.client.get(reverse("accounts:confirm_email"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Se connecter avec un autre compte")
+
+
 class ConfirmationExpiryTests(TestCase):
     def test_expired_code_rejected(self):
         payload = dict(SIGNUP_PAYLOAD, email="x@example.com")

@@ -99,6 +99,7 @@ class UserAdmin(DjangoUserAdmin):
                     "professional_id",
                     "company",
                     "email_confirmed",
+                    "email_confirmed_at",
                     "confirmation_code",
                     "confirmation_code_created_at",
                 )

@@ -90,10 +90,16 @@ def confirm_email(user, code):
     if _is_code_expired(user):
         raise ConfirmationError(_("Ce code de confirmation a expiré. Demandez-en un nouveau."))
     user.email_confirmed = True
+    user.email_confirmed_at = timezone.now()
     user.confirmation_code = ""
     user.confirmation_code_created_at = None
     user.save(
-        update_fields=["email_confirmed", "confirmation_code", "confirmation_code_created_at"]
+        update_fields=[
+            "email_confirmed",
+            "email_confirmed_at",
+            "confirmation_code",
+            "confirmation_code_created_at",
+        ]
     )
     return user
 

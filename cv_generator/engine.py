@@ -65,6 +65,10 @@ CV_SKINS = {
         "name": "Banque mondiale",
         "description": "Format Banque mondiale détaillé selon les 18 rubriques de référence.",
     },
+    "world_bank": {
+        "name": "Banque mondiale (classique)",
+        "description": "Format classique Banque mondiale, consultation en 15 rubriques.",
+    },
     "academic_harvard_mit": {
         "name": "Académique : Harvard/MIT",
         "description": "Mise en page serif sobre pour les candidatures académiques et"

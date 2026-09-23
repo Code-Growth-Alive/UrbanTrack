@@ -43,7 +43,7 @@ class ContributionReviewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         content = response.content.decode()
         self.assertIn("Led the feasibility study", content)
-        self.assertIn("Confirm as-is", content)
+        self.assertIn("Confirmer telle quelle", content)
 
     def test_other_users_get_403_even_when_logged_in(self):
         stranger = make_expert(username="stranger", email="stranger@example.com")

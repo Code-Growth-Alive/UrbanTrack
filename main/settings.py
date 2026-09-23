@@ -180,6 +180,10 @@ STORAGES = {
     },
 }
 
+# Media (user uploads: avatars, project media)
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
 
 # Email
 # Transactional provider decision: SendGrid (documented in README).

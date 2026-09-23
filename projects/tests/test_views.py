@@ -282,7 +282,7 @@ class CertificationSurfacingTests(TestCase):
         detail = self.client.get(reverse("projects:detail", args=[project.pk]))
         self.assertContains(profile, project.official_name)
         self.assertContains(detail, "Awa Diop")
-        self.assertContains(profile, "Trust score")
+        self.assertContains(profile, "Score de confiance")
 
 
 class ProjectCrudTests(TestCase):

@@ -711,11 +711,11 @@ class CertifiedIndicatorsTests(TestCase):
         url = reverse("accounts:public_profile", args=[self.expert.professional_id])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Certified indicators")
-        self.assertContains(response, "Donor-funded programs")
+        self.assertContains(response, "Indicateurs certifiés")
+        self.assertContains(response, "Programmes financés par des bailleurs")
 
     def test_public_profile_hides_indicators_when_none(self):
         url = reverse("accounts:public_profile", args=[self.expert.professional_id])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertNotContains(response, "Certified indicators")
+        self.assertNotContains(response, "Indicateurs certifiés")

@@ -38,11 +38,17 @@
   ul.strengths li::before { content: "›"; position: absolute; left: 0; color: #33a02c; font-weight: bold; }
 
   /* Section 4 — indicateurs de synthèse (calculés et certifiés automatiquement) */
-  .indicators { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8pt 12pt; margin-bottom: 4pt; }
+  .indicator-block { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8pt 12pt; margin-bottom: 4pt; }
   .indicator { border-left: 2pt solid #0055a4; padding-left: 6pt; }
   .indicator .num { font-size: 14pt; font-weight: bold; color: #002244; line-height: 1; }
   .indicator .lbl { font-size: 7.5pt; color: #555; margin-top: 1pt; }
   p.legend { font-size: 7.5pt; color: #7a93ad; font-style: italic; margin-top: 2pt; }
+
+  /* T4/T5 auto-déclaration : repère et légende partagés par tous les skins */
+  .declared-tag { font-size: 7.5pt; font-weight: normal; letter-spacing: 0.4pt; text-transform: uppercase;
+                  color: #33a02c; border: 0.6pt solid #6fbf73; padding: 1pt 5pt; border-radius: 8pt; vertical-align: 2pt; }
+  .declared-legend { margin-top: 10pt; font-size: 8pt; color: #555; font-style: italic;
+                     border-top: 0.4pt dotted #9fc3e8; padding-top: 4pt; }
 
   /* Section 5 — domaines d'expertise, avec hiérarchie famille > détail */
   .domain { margin-bottom: 4pt; font-size: 9.5pt; }
@@ -110,7 +116,7 @@
 {# 5. Expertise en un coup d'œil — calculée et certifiée automatiquement (T7) #}
 {% if cv.indicators_list %}
 <h2>{{ labels.indicators|default:"Expertise at a glance" }}</h2>
-<div class="indicators">
+<div class="indicator-block">
   {% for i in cv.indicators_list %}
   <div class="indicator">
     <div class="num">{{ i.value }}</div>
@@ -168,7 +174,7 @@
 {# 10. Pays d'intervention — dérivé automatiquement des projets certifiés #}
 {% if cv.countries %}
 <h2>{{ labels.countries|default:"Countries of intervention" }}</h2>
-<p>{{ cv.countries | join(" · ") }}</p>
+<p>{{ cv.countries|join:" · " }}</p>
 <p class="legend">{{ labels.countries_legend|default:"List automatically derived from the profile's certified projects." }}</p>
 {% endif %}
 
@@ -200,12 +206,12 @@
 {% endif %}
 
 {# 13. Principaux projets — repli sur l'ancien cv.experiences pour compatibilité #}
-{% set project_list = cv.projects if cv.projects else cv.experiences %}
-{% if project_list %}
+{% if cv.projects %}
+{% with project_list=cv.projects %}
 <h2>{{ labels.projects|default:"Key projects" }}</h2>
 {% for exp in project_list %}
 <div class="exp">
-  <span class="exp-period">{{ exp.period if exp.period else exp.dates }}</span>
+  <span class="exp-period">{{ exp.period|default:exp.dates }}</span>
   <span class="exp-title">{{ exp.title }}</span>
   <p class="exp-sub">
     {{ exp.role }}
@@ -220,6 +226,7 @@
   {% endif %}
 </div>
 {% endfor %}
+{% endwith %}
 {% endif %}
 
 {# 14. Publications #}
@@ -283,6 +290,14 @@
 <ul class="plain">
   {% for item in cv.miscellaneous %}<li>{{ item }}</li>{% endfor %}
 </ul>
+{% endif %}
+
+{# T4/T5 — repère et légende des éléments auto-déclarés, partagés par tous les skins #}
+{% if cv.has_declared %}
+<section class="declared">
+  <h2>{{ labels.declared|default:"Declared" }}</h2>
+  <p class="declared-legend">{{ labels.declared_legend|default:"Sections above marked “declared” rely on the expert's own statement." }}</p>
+</section>
 {% endif %}
 
 </main>

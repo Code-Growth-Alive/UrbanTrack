@@ -58,6 +58,9 @@ jobs:
       - name: Detect missing migrations
         run: python manage.py makemigrations --check --dry-run
 
+      - name: Collect static files (build manifest for {% static %} during tests)
+        run: python manage.py collectstatic --noinput
+
       - name: Run tests with coverage
         run: |
           coverage run --source='.' manage.py test -v 1

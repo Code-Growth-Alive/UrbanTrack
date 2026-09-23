@@ -692,13 +692,19 @@ class CertifiedIndicatorsTests(TestCase):
         for skin in CV_SKINS:
             for lang in ("fr", "en"):
                 html = render_cv_html(cv_context_from_user(self.expert, lang), skin, lang)
-                self.assertIn('class="indicator-block"', html)
+                indicators_markup = (
+                    'class="indicators-line"'
+                    if skin == "world_bank_new"
+                    else 'class="indicator-block"'
+                )
+                self.assertIn(indicators_markup, html)
                 self.assertIn(LABELS[lang]["indicators"], html)
 
     def test_empty_context_skips_the_indicator_block(self):
         for skin in CV_SKINS:
             html = render_cv_html(cv_context_from_user(self.expert, "en"), skin, "en")
             self.assertNotIn('class="indicator-block"', html)
+            self.assertNotIn('class="indicators-line"', html)
 
     def test_public_profile_shows_certified_indicators(self):
         country = projects_models.Country.objects.create(name="Senegal")

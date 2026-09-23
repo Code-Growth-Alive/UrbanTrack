@@ -93,7 +93,6 @@
     {% if cv.identity.city %}&nbsp;·&nbsp; {{ cv.identity.city }}{% if cv.identity.country %}, {{ cv.identity.country }}{% endif %}{% endif %}
     {% if cv.identity.birth_date %}&nbsp;·&nbsp; {{ labels.born_on|default:"born" }} {{ cv.identity.birth_date }}{% endif %}
     {% if cv.identity.nationality %}&nbsp;·&nbsp; {{ cv.identity.nationality }}{% endif %}
-    {% if cv.trust_score %}&nbsp;·&nbsp; {{ labels.trust_score|default:"Trust score" }} : {{ cv.trust_score }}/100{% endif %}
   </p>
 </header>
 

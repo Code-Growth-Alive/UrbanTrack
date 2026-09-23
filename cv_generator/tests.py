@@ -155,7 +155,7 @@ class DataContractTests(TestCase):
         broken = demo_cv_context()
         del broken["experiences"]
         with self.assertRaises(CvContextError) as caught:
-            validate_cv_context(broken, "world_bank")
+            validate_cv_context(broken, "afd")
         self.assertIn("experiences", str(caught.exception))
 
     def test_rendering_with_bad_data_raises_not_broken_output(self):
@@ -212,7 +212,7 @@ class EngineTests(TestCase):
 
         from docx import Document
 
-        docx = render_cv_docx(demo_cv_context("en"), "world_bank", "en")
+        docx = render_cv_docx(demo_cv_context("en"), "academic_harvard_mit", "en")
         self.assertTrue(docx.startswith(b"PK"))
         document = Document(BytesIO(docx))
         text = "\n".join(paragraph.text for paragraph in document.paragraphs)
@@ -274,7 +274,7 @@ class CertificationOnlyDataTests(TestCase):
             added_by=self.company,
         )
         adjust_contribution(contribution, self.expert, contribution_bullets="Adjusted wording")
-        html = render_cv_html(cv_context_from_user(self.expert, "en"), "world_bank", "en")
+        html = render_cv_html(cv_context_from_user(self.expert, "en"), "world_bank_new", "en")
         self.assertNotIn("Adjusted wording", html)
         self.assertNotIn("Original wording", html)
 
@@ -308,7 +308,7 @@ class CvViewTests(TestCase):
         self.assertEqual(pdf_response.status_code, 200)
         self.assertEqual(pdf_response["Content-Type"], "application/pdf")
 
-        docx_response = self.client.get(reverse("cv_generator:docx", args=["world_bank"]))
+        docx_response = self.client.get(reverse("cv_generator:docx", args=["world_bank_new"]))
         self.assertEqual(docx_response.status_code, 200)
         self.assertEqual(
             docx_response["Content-Type"],

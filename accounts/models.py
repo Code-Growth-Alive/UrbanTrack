@@ -428,7 +428,7 @@ class CvTemplate(models.TextChoices):
 
     ACADEMIC_HARVARD_MIT = "academic_harvard_mit", _("Académique (Harvard/MIT)")
     AFD = "afd", _("AFD")
-    WORLD_BANK = "world_bank", _("Banque mondiale")
+    WORLD_BANK = "world_bank_new", _("Banque mondiale")
 
 
 class Skill(models.Model):

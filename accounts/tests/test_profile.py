@@ -68,7 +68,7 @@ class PortfolioTests(TestCase):
     def test_cv_template_choices_cover_all_three_skins(self):
         self.assertEqual(
             set(CvTemplate.values),
-            {"academic_harvard_mit", "afd", "world_bank"},
+            {"academic_harvard_mit", "afd", "world_bank_new"},
         )
 
     def test_absolute_url_uses_permanent_oxid(self):

@@ -65,10 +65,6 @@ CV_SKINS = {
         "name": "Banque mondiale",
         "description": "Format Banque mondiale détaillé selon les 18 rubriques de référence.",
     },
-    "world_bank": {
-        "name": "Banque mondiale (classique)",
-        "description": "Format classique Banque mondiale, consultation en 15 rubriques.",
-    },
     "academic_harvard_mit": {
         "name": "Académique : Harvard/MIT",
         "description": "Mise en page serif sobre pour les candidatures académiques et"
@@ -115,7 +111,7 @@ _CLASSIC_SKIN_FIELDS = (
 
 CV_CONTRACTS = {
     skin: {field: (expected, required) for field, expected, required in _CLASSIC_SKIN_FIELDS}
-    for skin in ("academic_harvard_mit", "afd", "world_bank")
+    for skin in ("academic_harvard_mit", "afd")
 }
 # T17 v2 template (world_bank_new.html, 18 sections) — fills several blocks
 # with dedicated fields instead of the single legacy "declared" dict.

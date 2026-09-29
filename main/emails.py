@@ -36,6 +36,7 @@ def send_branded_mail(subject, text, recipient_list, template, context=None):
     """
     ctx = dict(context or {})
     ctx.setdefault("subject", subject)
+    ctx.setdefault("site_base_url", absolute_url(""))
     html = render_to_string(template, ctx)
     return send_mail(
         subject=subject,

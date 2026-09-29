@@ -15,9 +15,8 @@
       class="absolute inset-0 h-full w-full object-cover opacity-30 mix-blend-luminosity">
     <div class="absolute inset-0 bg-gradient-to-br from-military-900/90 via-military-900/70 to-military-700/60"></div>
     <div class="relative flex h-full flex-col justify-between p-12 text-white">
-      <a href="{% url 'home' %}" class="flex items-center gap-2 text-lg font-black tracking-tight">
-        <span class="flex h-9 w-9 items-center justify-center rounded-md bg-accent-500 font-black">U</span>
-        Urban&nbsp;Track
+      <a href="{% url 'home' %}" class="flex items-center">
+        <img src="{% static 'img/logo_large_white.png' %}" alt="Urban Track" width="480" height="144" class="h-9 w-auto">
       </a>
       <div>
         <h2 class="max-w-md text-3xl font-black leading-tight tracking-tight">
@@ -68,10 +67,8 @@
   {# Form panel #}
   <div class="flex items-center justify-center bg-charcoal-50 px-4 py-12 sm:px-6">
     <div class="w-full max-w-md">
-      <a href="{% url 'home' %}"
-        class="mb-8 flex items-center justify-center gap-2 text-xl font-black tracking-tight text-military-900 lg:hidden">
-        <span class="flex h-9 w-9 items-center justify-center rounded-md bg-accent-500 font-black text-white">U</span>
-        Urban&nbsp;Track
+      <a href="{% url 'home' %}" class="mb-8 flex items-center justify-center lg:hidden">
+        <img src="{% static 'img/logo_large_dark.png' %}" alt="Urban Track" width="480" height="144" class="h-9 w-auto">
       </a>
       {% block auth_form %}{% endblock %}
     </div>

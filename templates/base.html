@@ -12,11 +12,16 @@
   <meta property="og:title" content="{{ seo_title|default:'Urban Track : la couche de confiance du développement urbain' }}">
   <meta property="og:description" content="{{ seo_description|default:'Urban Track : la couche de confiance du développement urbain' }}">
   <meta property="og:url" content="{{ seo_url|default:'' }}">
-  <meta property="og:image" content="{{ seo_image|default:'' }}">
+  <meta property="og:image" content="{{ seo_image|default:default_seo_image }}">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{{ seo_title|default:'Urban Track : la couche de confiance du développement urbain' }}">
   <meta name="twitter:description" content="{{ seo_description|default:'Urban Track : la couche de confiance du développement urbain' }}">
-  <meta name="twitter:image" content="{{ seo_image|default:'' }}">
+  <meta name="twitter:image" content="{{ seo_image|default:default_seo_image }}">
+
+  <link rel="icon" href="{% static 'img/favicon.ico' %}" sizes="any">
+  <link rel="icon" href="{% static 'img/favicon-32.png' %}" type="image/png" sizes="32x32">
+  <link rel="icon" href="{% static 'img/favicon-48.png' %}" type="image/png" sizes="48x48">
+  <link rel="apple-touch-icon" href="{% static 'img/favicon-180.png' %}">
 
   {# Force light color-scheme: prevents OS dark mode from inverting form controls. #}
   <style>
@@ -154,9 +159,8 @@
   <header class="relative bg-military-900 text-white">
     <div class="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
       <input type="checkbox" id="nav-toggle" class="peer hidden" aria-hidden="true">
-      <a href="{% url 'home' %}" class="flex items-center gap-2 text-lg font-bold tracking-tight">
-        <span aria-hidden="true" class="grid h-8 w-8 place-items-center rounded-md bg-accent-500 text-sm font-black">UT</span>
-        Urban&nbsp;Track
+      <a href="{% url 'home' %}" class="flex items-center">
+        <img src="{% static 'img/logo_large_white.png' %}" alt="Urban Track" width="480" height="144" class="h-8 w-auto sm:h-9">
       </a>
       <nav class="absolute inset-x-0 top-full z-10 hidden flex-col gap-1 border-t border-white/10 bg-military-900 px-4 py-4 peer-checked:flex md:relative md:flex md:flex-row md:items-center md:gap-6 md:border-0 md:bg-transparent md:p-0" aria-label="Main navigation">
         {% if user.is_authenticated %}
@@ -258,10 +262,13 @@
   {% block footer %}
   <!-- Footer: charcoal = strong contrast -->
   <footer class="bg-charcoal-900 text-charcoal-300">
-    <div class="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-6 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-      <p>&copy; {% now "Y" %} Urban Track : la couche de confiance du développement urbain en Afrique. Tous droits réservés.</p>
-      <p>Chaque expérience renvoie à un projet documenté et à une contribution confirmée par les parties.</p>
-      <p>Développé avec méthode par <a href="https://www.codegrowthalive.com" class="text-charcoal-100 underline decoration-accent-500 text-bold hover:text-white">Code, Growth Alive</a></p>
+    <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <img src="{% static 'img/logo_large_white.png' %}" alt="Urban Track" width="480" height="144" class="h-8 w-auto">
+      <div class="mt-5 flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between">
+        <p>&copy; {% now "Y" %} Urban Track : la couche de confiance du développement urbain en Afrique. Tous droits réservés.</p>
+        <p>Chaque expérience renvoie à un projet documenté et à une contribution confirmée par les parties.</p>
+        <p>Développé avec méthode par <a href="https://www.codegrowthalive.com" class="text-charcoal-100 underline decoration-accent-500 text-bold hover:text-white">Code, Growth Alive</a></p>
+      </div>
     </div>
   </footer>
   {% endblock footer %}

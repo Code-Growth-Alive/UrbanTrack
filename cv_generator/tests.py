@@ -392,7 +392,6 @@ class CvViewTests(TestCase):
     def test_world_bank_targeting_filters_publications_and_courses(self):
         self.client.force_login(self.expert)
         profile = self.expert.expert_profile
-        company = Company.objects.create(name="WB Target Corp")
         profile.publications.create(title="Chosen pub", venue="Journal A", year=2020)
         profile.publications.create(title="Excluded pub", venue="Journal B", year=2021)
         chosen_course = profile.teaching_entries.create(title="Chosen course", institution="Univ A")

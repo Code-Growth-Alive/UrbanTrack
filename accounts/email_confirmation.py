@@ -16,6 +16,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from main.emails import send_branded_mail
+from main.logging import audit
 
 
 class ConfirmationError(Exception):
@@ -41,6 +42,7 @@ def issue_confirmation_code(user, *, send=True):
     user.save(update_fields=["confirmation_code", "confirmation_code_created_at"])
     if send:
         send_confirmation_code(user)
+    audit("accounts.confirmation_code_issued", user_id=user.pk, sent=send)
     return user.confirmation_code
 
 
@@ -101,6 +103,7 @@ def confirm_email(user, code):
             "confirmation_code_created_at",
         ]
     )
+    audit("accounts.email_confirmed", user_id=user.pk)
     return user
 
 
@@ -127,4 +130,6 @@ def purge_expired_unconfirmed(hours=None):
     ).filter(Q(confirmation_code_created_at__isnull=False) & ~Q(is_superuser=True))
     count = qs.count()
     qs.delete()
+    if count:
+        audit("accounts.unconfirmed_purged", count=count)
     return count

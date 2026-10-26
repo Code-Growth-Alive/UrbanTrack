@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from main.emails import absolute_url, send_branded_mail
+from main.logging import audit
 
 from .models import ApplicationStatus, Job, JobApplication
 
@@ -90,6 +91,12 @@ def apply_to_job(job, applicant, cover_letter):
             "manage_url": absolute_url(f"/jobs/{job.pk}/manage/"),
         },
     )
+    audit(
+        "jobs.application_submitted",
+        job_id=job.pk,
+        application_id=application.pk,
+        applicant_id=applicant.pk,
+    )
     return application
 
 
@@ -146,6 +153,13 @@ def decide_application(application, actor, accept):
             "dashboard_url": absolute_url("/accounts/dashboard/"),
         },
     )
+    audit(
+        "jobs.application_decided",
+        job_id=application.job_id,
+        application_id=application.pk,
+        actor_id=getattr(actor, "pk", None),
+        accepted=accept,
+    )
     return application
 
 
@@ -160,6 +174,11 @@ def close_job(job, actor):
         raise JobsError(_("Cette mission est déjà clôturée."))
     job.status = JobStatus.CLOSED
     job.save(update_fields=["status", "updated_at"])
+    audit(
+        "jobs.closed",
+        job_id=job.pk,
+        actor_id=getattr(actor, "pk", None),
+    )
     return job
 
 

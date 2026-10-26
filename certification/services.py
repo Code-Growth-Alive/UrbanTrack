@@ -31,6 +31,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from main.emails import absolute_url, send_branded_mail
+from main.logging import audit
 
 from .models import (
     ConfirmationSource,
@@ -156,6 +157,14 @@ def declare_contributor(
     )
     contribution.full_clean(exclude=["project"])
     contribution.save()
+    audit(
+        "certification.contribution_declared",
+        contribution_id=contribution.pk,
+        project_id=project.pk,
+        actor_id=getattr(added_by, "pk", None),
+        role=role_type,
+        linked_expert_id=contribution.expert_id,
+    )
     return contribution
 
 
@@ -201,6 +210,13 @@ def create_and_send_invitation(contribution):
             "confirm_url": confirm_url,
         },
     )
+    audit(
+        "certification.invitation_sent",
+        contribution_id=contribution.pk,
+        project_id=contribution.project_id,
+        invitation_id=invitation.pk,
+        actor_id=contribution.added_by_id,
+    )
     return invitation
 
 
@@ -238,6 +254,13 @@ def _notify_registered_expert(contribution):
     if contribution.status == ContributionStatus.INVITED:
         contribution.status = ContributionStatus.PENDING_CONFIRMATION
         contribution.save(update_fields=["status", "updated_at"])
+    audit(
+        "certification.expert_notified",
+        contribution_id=contribution.pk,
+        project_id=contribution.project_id,
+        expert_id=contribution.expert_id,
+        actor_id=contribution.added_by_id,
+    )
 
 
 def notify_contribution(contribution):
@@ -349,6 +372,13 @@ def send_invitation_reminder(invitation):
     )
     invitation.reminder_count += 1
     invitation.save(update_fields=["reminder_count"])
+    audit(
+        "certification.reminder_sent",
+        contribution_id=contribution.pk,
+        project_id=contribution.project_id,
+        invitation_id=invitation.pk,
+        reminder_count=invitation.reminder_count,
+    )
     return invitation
 
 
@@ -358,7 +388,10 @@ def expire_stale_invitations(now=None):
     stale = ExpertInvitation.objects.filter(expires_at__lt=now).exclude(
         status=InvitationStatus.EXPIRED
     )
-    return stale.update(status=InvitationStatus.EXPIRED)
+    count = stale.update(status=InvitationStatus.EXPIRED)
+    if count:
+        audit("certification.invitations_expired", count=count)
+    return count
 
 
 def confirm_as_is(contribution, actor):
@@ -373,6 +406,14 @@ def confirm_as_is(contribution, actor):
     contribution.confirmed_at = timezone.now()
     contribution.confirmed_by = ConfirmationSource.EXPERT
     contribution.save()
+    audit(
+        "certification.contribution_confirmed",
+        contribution_id=contribution.pk,
+        project_id=contribution.project_id,
+        expert_id=contribution.expert_id,
+        actor_id=getattr(actor, "pk", None),
+        source=ConfirmationSource.EXPERT,
+    )
     _notify_company_of_certification(contribution, expert)
     return contribution
 
@@ -399,8 +440,6 @@ def request_client_confirmation(contribution, actor, *, client_email):
     token = uuid.uuid4()
     contribution.client_confirm_token = token
     contribution.save(update_fields=["client_confirm_token", "updated_at"])
-
-    from main.emails import absolute_url, send_branded_mail
 
     confirm_path = f"/certification/client-confirm/{token}/"
     send_branded_mail(
@@ -459,6 +498,13 @@ def confirm_by_client(contribution, token):
     contribution.confirmed_at = timezone.now()
     contribution.confirmed_by = ConfirmationSource.CLIENT
     contribution.save()
+    audit(
+        "certification.contribution_confirmed",
+        contribution_id=contribution.pk,
+        project_id=contribution.project_id,
+        expert_id=contribution.expert_id,
+        source=ConfirmationSource.CLIENT,
+    )
     return contribution
 
 
@@ -497,6 +543,12 @@ def adjust_contribution(contribution, actor, *, contribution_bullets, role_type=
     if old_status == ContributionStatus.CONFIRMED:
         contribution.confirmed_at = None
         contribution.save(update_fields=["confirmed_at"])
+    audit(
+        "certification.contribution_adjusted",
+        contribution_id=contribution.pk,
+        project_id=contribution.project_id,
+        actor_id=getattr(actor, "pk", None),
+    )
     _request_company_revalidation(contribution, actor)
     return contribution
 
@@ -520,6 +572,12 @@ def approve_adjustment(contribution, actor):
     contribution.status = ContributionStatus.CONFIRMED
     contribution.confirmed_at = timezone.now()
     contribution.save()
+    audit(
+        "certification.adjustment_approved",
+        contribution_id=contribution.pk,
+        project_id=contribution.project_id,
+        actor_id=getattr(actor, "pk", None),
+    )
     return contribution
 
 
@@ -533,6 +591,12 @@ def reject_contribution(contribution, actor, reason=""):
     contribution.rejection_reason = reason.strip()
     contribution.status = ContributionStatus.REJECTED
     contribution.save()
+    audit(
+        "certification.contribution_rejected",
+        contribution_id=contribution.pk,
+        project_id=contribution.project_id,
+        actor_id=getattr(actor, "pk", None),
+    )
     return contribution
 
 
@@ -553,6 +617,12 @@ def dispute_contribution(contribution, actor, reason=""):
     contribution.dispute_reason = reason.strip()
     contribution.status = ContributionStatus.DISPUTED
     contribution.save()
+    audit(
+        "certification.contribution_disputed",
+        contribution_id=contribution.pk,
+        project_id=contribution.project_id,
+        actor_id=getattr(actor, "pk", None),
+    )
     return contribution
 
 
@@ -588,6 +658,13 @@ def resolve_dispute(contribution, staff_user, *, outcome, note=""):
         else contribution.dispute_reason
     )
     contribution.save(update_fields=[*update_fields, "dispute_reason", "updated_at"])
+    audit(
+        "certification.dispute_resolved",
+        contribution_id=contribution.pk,
+        project_id=contribution.project_id,
+        staff_id=getattr(staff_user, "pk", None),
+        outcome=outcome,
+    )
     return contribution
 
 

@@ -87,6 +87,23 @@ ruff check .                   # lint (config in pyproject.toml)
 
 CI runs both on every push/PR (`.github/workflows/ci.yml`).
 
+## Logging
+
+Structured logging is configured in `main/settings.py`:
+
+- every HTTP request is logged by `main.middleware.RequestLogMiddleware`
+  (method, path, status, duration, user id, IP) and carries a correlation
+  id returned in the `X-Request-ID` response header;
+- logs go to stdout (captured by systemd/journald) and, outside tests, to
+  rotating files `logs/urbantrack.log` and `logs/errors.log`;
+- business events (publishing, certifications, memberships, job decisions,
+  signup/login) are written to the `urbantrack.audit` logger with identifiers
+  only, never secrets or personal data.
+
+Tune it with `LOG_LEVEL`, `LOG_FORMAT=json` (for log collectors), `LOG_DIR`,
+`LOG_TO_FILE`, `LOG_MAX_BYTES`, `LOG_BACKUP_COUNT` and `LOG_SKIP_PATHS`
+(see `.env.example`).
+
 ## Layout
 
 ```

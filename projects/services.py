@@ -10,6 +10,8 @@ declared contribution.
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
 
+from main.logging import audit
+
 from .models import ProjectStatus
 
 
@@ -74,6 +76,11 @@ def publish_project(project):
     from certification.services import notify_contributions_for_project
 
     notify_contributions_for_project(project)
+    audit(
+        "projects.published",
+        project_id=project.pk,
+        actor_id=getattr(project.published_by, "pk", None),
+    )
     return project
 
 
@@ -95,4 +102,9 @@ def archive_project(project):
         project.refresh_from_db()
         raise
     project.save(update_fields=["status", "updated_at"])
+    audit(
+        "projects.archived",
+        project_id=project.pk,
+        actor_id=getattr(project.published_by, "pk", None),
+    )
     return project

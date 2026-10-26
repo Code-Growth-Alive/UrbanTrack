@@ -5,6 +5,8 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from main.logging import audit
+
 from .utils import MAX_ID_GENERATION_ATTEMPTS, generate_professional_id
 
 
@@ -107,7 +109,7 @@ class Company(models.Model):
 
     def request_membership(self, user, *, requested_by=None):
         """Open a membership request from ``user`` (existing company join)."""
-        membership, _ = CompanyMembership.objects.get_or_create(
+        membership, created = CompanyMembership.objects.get_or_create(
             user=user,
             company=self,
             defaults={
@@ -116,6 +118,14 @@ class Company(models.Model):
                 "requested_by": requested_by or user,
             },
         )
+        if created:
+            audit(
+                "accounts.membership_requested",
+                membership_id=membership.pk,
+                company_id=self.pk,
+                user_id=user.pk,
+                requested_by_id=getattr(requested_by, "pk", None) or user.pk,
+            )
         return membership
 
     def invite_membership(self, user, *, invited_by):
@@ -133,6 +143,13 @@ class Company(models.Model):
             membership.status = MembershipStatus.INVITED
             membership.requested_by = invited_by
             membership.save()
+            audit(
+                "accounts.membership_invited",
+                membership_id=membership.pk,
+                company_id=self.pk,
+                user_id=user.pk,
+                invited_by_id=getattr(invited_by, "pk", None),
+            )
         return membership
 
     def approve_membership(self, membership, *, reviewed_by):
@@ -147,6 +164,13 @@ class Company(models.Model):
         if user.company_id != self.pk:
             user.company = self
             user.save(update_fields=["company"])
+        audit(
+            "accounts.membership_approved",
+            membership_id=membership.pk,
+            company_id=self.pk,
+            user_id=user.pk,
+            reviewed_by_id=getattr(reviewed_by, "pk", None),
+        )
         return membership
 
     def decline_membership(self, membership, *, reviewed_by):
@@ -161,6 +185,13 @@ class Company(models.Model):
         if user.company_id == self.pk:
             user.company = None
             user.save(update_fields=["company"])
+        audit(
+            "accounts.membership_declined",
+            membership_id=membership.pk,
+            company_id=self.pk,
+            user_id=user.pk,
+            reviewed_by_id=getattr(reviewed_by, "pk", None),
+        )
         return membership
 
 

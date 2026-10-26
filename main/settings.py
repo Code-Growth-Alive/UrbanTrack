@@ -32,6 +32,13 @@ def env(key, default=None):
     return os.environ.get(key, default)
 
 
+def env_bool(key, default=False):
+    """Read a boolean environment variable (1/true/yes/on)."""
+    return str(env(key, str(default))).strip().lower() in ("1", "true", "yes", "on")
+
+
+TESTING = "test" in sys.argv
+
 SECRET_KEY = env(
     "DJANGO_SECRET_KEY",
     "django-insecure-dev-only-key-do-not-use-in-production",
@@ -74,6 +81,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "accounts.middleware.RequireEmailConfirmationMiddleware",
+    "main.middleware.RequestLogMiddleware",
 ]
 
 ROOT_URLCONF = "main.urls"
@@ -230,7 +238,112 @@ CONFIRMATION_CODE_LENGTH = 6  # number of digits in the code
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+
+# Logging
+# Console output is always available (systemd/journald captures gunicorn's
+# stdout); rotating files are enabled outside the test suite. Set
+# LOG_FORMAT=json for a log collector (one JSON object per line).
+LOG_LEVEL = env("LOG_LEVEL", "INFO").strip().upper()
+DJANGO_LOG_LEVEL = env("DJANGO_LOG_LEVEL", "INFO").strip().upper()
+LOG_FORMAT = env("LOG_FORMAT", "text").strip().lower()
+if LOG_FORMAT not in ("text", "json"):
+    LOG_FORMAT = "text"
+LOG_DIR = Path(env("LOG_DIR", "logs"))
+if not LOG_DIR.is_absolute():
+    LOG_DIR = BASE_DIR / LOG_DIR
+LOG_TO_FILE = env_bool("LOG_TO_FILE", True) and not TESTING
+LOG_MAX_BYTES = int(env("LOG_MAX_BYTES", str(10 * 1024 * 1024)))
+LOG_BACKUP_COUNT = int(env("LOG_BACKUP_COUNT", "5"))
+LOG_SKIP_PATHS = tuple(
+    path.strip()
+    for path in env("LOG_SKIP_PATHS", "/static/,/media/,/favicon.ico").split(",")
+    if path.strip()
+)
+
+_log_handlers = ["null"] if TESTING else ["console"]
+if LOG_TO_FILE:
+    try:
+        LOG_DIR.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        LOG_TO_FILE = False
+    else:
+        _log_handlers.extend(["file", "error_file"])
+
+_log_formatter = "json" if LOG_FORMAT == "json" else "verbose"
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "filters": {
+        "request_id": {"()": "main.logging.RequestIDFilter"},
+    },
+    "formatters": {
+        "verbose": {
+            "format": "%(asctime)s %(levelname)s [%(request_id)s] %(name)s: %(message)s",
+            "datefmt": "%Y-%m-%dT%H:%M:%S%z",
+        },
+        "json": {"()": "main.logging.JsonFormatter"},
+    },
+    "handlers": {
+        "null": {"class": "logging.NullHandler"},
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": _log_formatter,
+            "filters": ["request_id"],
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": _log_handlers,
+            "level": DJANGO_LOG_LEVEL,
+            "propagate": False,
+        },
+        "django.request": {
+            "handlers": _log_handlers,
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "django.security": {
+            "handlers": _log_handlers,
+            "level": "WARNING",
+            "propagate": False,
+        },
+        # Access logs, audit events and every app logger (accounts, projects...)
+        "urbantrack": {
+            "handlers": _log_handlers,
+            "level": LOG_LEVEL,
+            "propagate": False,
+        },
+    },
+    "root": {
+        "handlers": _log_handlers,
+        "level": LOG_LEVEL,
+    },
+}
+
+if LOG_TO_FILE:
+    LOGGING["handlers"]["file"] = {
+        "class": "logging.handlers.RotatingFileHandler",
+        "filename": str(LOG_DIR / "urbantrack.log"),
+        "maxBytes": LOG_MAX_BYTES,
+        "backupCount": LOG_BACKUP_COUNT,
+        "formatter": _log_formatter,
+        "filters": ["request_id"],
+        "encoding": "utf-8",
+    }
+    LOGGING["handlers"]["error_file"] = {
+        "class": "logging.handlers.RotatingFileHandler",
+        "filename": str(LOG_DIR / "errors.log"),
+        "maxBytes": LOG_MAX_BYTES,
+        "backupCount": LOG_BACKUP_COUNT,
+        "formatter": _log_formatter,
+        "filters": ["request_id"],
+        "encoding": "utf-8",
+        "level": "ERROR",
+    }
+
+
 # Test-suite speed-up: PBKDF2 (default, ~600k iterations) dominates runtime;
 # a weak hasher is acceptable because tests never persist real credentials.
-if "test" in sys.argv:
+if TESTING:
     PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]

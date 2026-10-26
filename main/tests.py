@@ -38,3 +38,60 @@ class ErrorPageTests(TestCase):
         response = handler500(self.request)
         self.assertEqual(response.status_code, 500)
         self.assertContains(response, "Une erreur est survenue de notre côté.", status_code=500)
+
+
+class RequestLoggingTests(TestCase):
+    def test_request_is_logged_with_correlation_id(self):
+        with self.assertLogs("urbantrack.requests", level="INFO") as captured:
+            response = self.client.get("/")
+
+        self.assertEqual(response.status_code, 200)
+        request_id = response["X-Request-ID"]
+        self.assertEqual(len(request_id), 32)
+        self.assertEqual(captured.records[0].request_id, request_id)
+        self.assertEqual(captured.records[0].status_code, 200)
+        self.assertIn("status=200", captured.records[0].getMessage())
+
+    def test_incoming_request_id_is_reused(self):
+        response = self.client.get("/", headers={"X-Request-ID": "client-request-123"})
+
+        self.assertEqual(response["X-Request-ID"], "client-request-123")
+
+    def test_invalid_incoming_request_id_is_replaced(self):
+        response = self.client.get("/", headers={"X-Request-ID": "bad value with spaces"})
+
+        self.assertNotEqual(response["X-Request-ID"], "bad value with spaces")
+        self.assertEqual(len(response["X-Request-ID"]), 32)
+
+    def test_static_paths_are_not_logged(self):
+        with self.assertNoLogs("urbantrack.requests", level="INFO"):
+            self.client.get("/static/missing.css")
+
+
+class JsonLogFormatterTests(TestCase):
+    def test_json_payload_contains_structured_fields(self):
+        import json
+        import logging
+
+        from main.logging import JsonFormatter
+
+        record = logging.LogRecord(
+            name="urbantrack.audit",
+            level=logging.INFO,
+            pathname=__file__,
+            lineno=1,
+            msg="event=%s",
+            args=("projects.published",),
+            exc_info=None,
+        )
+        record.request_id = "abc123"
+        record.event = "projects.published"
+        record.fields = {"project_id": 42, "actor_id": 7}
+
+        payload = json.loads(JsonFormatter().format(record))
+
+        self.assertEqual(payload["level"], "INFO")
+        self.assertEqual(payload["request_id"], "abc123")
+        self.assertEqual(payload["event"], "projects.published")
+        self.assertEqual(payload["project_id"], 42)
+        self.assertEqual(payload["actor_id"], 7)

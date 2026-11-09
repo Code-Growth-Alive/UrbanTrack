@@ -30,3 +30,10 @@ htmlcov/
 .vscode/
 .idea/
 .DS_Store
+
+#Latex
+.toc
+.out
+.log
+.aux
+.gz

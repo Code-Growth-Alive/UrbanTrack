@@ -32,8 +32,8 @@ htmlcov/
 .DS_Store
 
 #Latex
-.toc
-.out
-.log
-.aux
-.gz
+*.toc
+*.out
+*.log
+*.aux
+*.gz
